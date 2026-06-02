@@ -22,7 +22,8 @@ class CloudAdapter extends FileSync {
   }
 }
 
-let db;
+// Initialize db synchronously so routes can use it immediately
+const db = low(new CloudAdapter(dbPath));
 
 const SEED_EMPLOYEES = [
   { id: 1,  displayName: 'אבי',       firstName: 'אבי',      lastName: 'עזר',         ftePercent: 1.0,  type: 'expert',   meetingHours: 7.5, supReceivedHours: 1,   supGivenHours: 20,  therapyHours: 0,   roleHours: 0,   roleName: '',                officeHours: 11.5, notes: '' },
@@ -263,8 +264,6 @@ async function initDB() {
       mongoCollection = null;
     }
   }
-
-  db = low(new CloudAdapter(dbPath));
 
   db.defaults({
     employees: [],
