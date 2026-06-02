@@ -1,0 +1,224 @@
+import { useEffect, useState, useCallback } from 'react';
+import { getEmployees, updateEmployee, getAssignments, updateAssignment, getFrameworks, createEmployee, deleteEmployee } from '../api';
+
+const HOURS_FIELDS = [
+  { key: 'meetingHours',       label: 'ישיבות' },
+  { key: 'supReceivedHours',   label: 'הדרכה - מקבל' },
+  { key: 'supGivenHours',      label: 'הדרכה - נותן' },
+  { key: 'therapyHours',       label: 'טיפול' },
+  { key: 'roleHours',          label: 'תפקיד' },
+  { key: 'officeHours',        label: 'משרד' },
+];
+
+function BalanceBadge({ balance }) {
+  if (Math.abs(balance) < 0.1) return <span className="badge bg-green-100 text-green-800">מאוזן</span>;
+  if (balance > 0) return <span className="badge bg-yellow-100 text-yellow-800">+{balance} פנוי</span>;
+  return <span className="badge bg-red-100 text-red-800">{balance} חריגה</span>;
+}
+
+function EditableCell({ value, onSave, type = 'number' }) {
+  const [editing, setEditing] = useState(false);
+  const [val, setVal] = useState(value);
+
+  useEffect(() => { setVal(value); }, [value]);
+
+  if (!editing) {
+    return (
+      <span
+        className="cursor-pointer hover:bg-blue-50 px-1 rounded min-w-[2rem] inline-block text-center"
+        onDoubleClick={() => setEditing(true)}
+        title="לחץ פעמיים לעריכה"
+      >
+        {val || '—'}
+      </span>
+    );
+  }
+  return (
+    <input
+      autoFocus
+      type={type}
+      step="0.5"
+      className="input w-16 text-center"
+      value={val}
+      onChange={e => setVal(e.target.value)}
+      onBlur={() => { setEditing(false); onSave(parseFloat(val) || 0); }}
+      onKeyDown={e => {
+        if (e.key === 'Enter') { setEditing(false); onSave(parseFloat(val) || 0); }
+        if (e.key === 'Escape') { setEditing(false); setVal(value); }
+      }}
+    />
+  );
+}
+
+export default function WorkPlan() {
+  const [employees, setEmployees] = useState([]);
+  const [assignments, setAssignments] = useState([]);
+  const [frameworks, setFrameworks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState('');
+  const [showAdd, setShowAdd] = useState(false);
+  const [newEmp, setNewEmp] = useState({ displayName: '', ftePercent: 1.0, type: 'expert' });
+
+  const load = useCallback(async () => {
+    const [emps, asgns, fws] = await Promise.all([getEmployees(), getAssignments(), getFrameworks()]);
+    setEmployees(emps);
+    setAssignments(asgns);
+    setFrameworks(fws);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const saveEmpField = async (id, field, value) => {
+    const updated = await updateEmployee(id, { [field]: value });
+    setEmployees(prev => prev.map(e => e.id === id ? { ...e, ...updated } : e));
+  };
+
+  const saveAsgn = async (empId, field, value) => {
+    const asgn = assignments.find(a => a.employeeId === empId);
+    if (!asgn) return;
+    const updated = await updateAssignment(asgn.id, { [field]: value });
+    setAssignments(prev => prev.map(a => a.id === asgn.id ? updated : a));
+    const emps = await getEmployees();
+    setEmployees(emps);
+  };
+
+  const addEmployee = async () => {
+    const emp = await createEmployee(newEmp);
+    setEmployees(prev => [...prev, emp]);
+    setShowAdd(false);
+    setNewEmp({ displayName: '', ftePercent: 1.0, type: 'expert' });
+  };
+
+  const removeEmployee = async (id, name) => {
+    if (!confirm(`למחוק את ${name}?`)) return;
+    await deleteEmployee(id);
+    setEmployees(prev => prev.filter(e => e.id !== id));
+  };
+
+  const filtered = employees.filter(e =>
+    !filter || e.displayName.includes(filter) || e.firstName?.includes(filter) || e.lastName?.includes(filter)
+  );
+
+  if (loading) return <div className="p-6 text-gray-500">טוען...</div>;
+
+  const getAsgn = (empId) => assignments.find(a => a.employeeId === empId) || {};
+  const getFwName = (asgn) => {
+    if (!asgn.frameworkId) return '—';
+    const fw = frameworks.find(f => f.id === asgn.frameworkId);
+    return fw?.name || '—';
+  };
+
+  const overBudget = employees.filter(e => e.balance < -0.1);
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-xl font-bold text-gray-800">תוכנית עבודה</h1>
+        <div className="flex gap-2 items-center">
+          {overBudget.length > 0 && (
+            <span className="badge bg-red-100 text-red-800">
+              ⚠️ {overBudget.length} עובדים בחריגה
+            </span>
+          )}
+          <input
+            className="input"
+            placeholder="חיפוש עובד..."
+            value={filter}
+            onChange={e => setFilter(e.target.value)}
+          />
+          <button className="btn-primary" onClick={() => setShowAdd(true)}>+ עובד חדש</button>
+        </div>
+      </div>
+
+      {showAdd && (
+        <div className="bg-blue-50 border border-blue-200 rounded p-4 mb-4 flex gap-3 items-end">
+          <div>
+            <label className="block text-xs text-gray-600 mb-1">שם תצוגה</label>
+            <input className="input" value={newEmp.displayName} onChange={e => setNewEmp(p => ({...p, displayName: e.target.value}))} />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-600 mb-1">אחוז משרה</label>
+            <input className="input w-20" type="number" step="0.01" min="0" max="2" value={newEmp.ftePercent} onChange={e => setNewEmp(p => ({...p, ftePercent: parseFloat(e.target.value)}))} />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-600 mb-1">סוג</label>
+            <select className="input" value={newEmp.type} onChange={e => setNewEmp(p => ({...p, type: e.target.value}))}>
+              <option value="expert">מומחה/ית</option>
+              <option value="trainee">מתמחה</option>
+            </select>
+          </div>
+          <button className="btn-primary" onClick={addEmployee}>שמור</button>
+          <button className="btn-secondary" onClick={() => setShowAdd(false)}>ביטול</button>
+        </div>
+      )}
+
+      <div className="overflow-x-auto bg-white rounded shadow">
+        <table className="w-full text-sm" style={{ minWidth: '1100px' }}>
+          <thead>
+            <tr className="text-right">
+              <th className="table-header sticky right-0 bg-gray-50 z-10 min-w-[100px]">פסיכולוג</th>
+              <th className="table-header text-center">סוג</th>
+              <th className="table-header text-center">ש׳ משרה</th>
+              <th className="table-header text-center bg-blue-50">ישיבות</th>
+              <th className="table-header text-center bg-blue-50">הדרכה<br/>מקבל</th>
+              <th className="table-header text-center bg-blue-50">הדרכה<br/>נותן</th>
+              <th className="table-header text-center bg-blue-50">טיפול</th>
+              <th className="table-header text-center bg-blue-50">תפקיד</th>
+              <th className="table-header text-center bg-blue-50">משרד</th>
+              <th className="table-header text-center bg-blue-100">סה"כ פנימי</th>
+              <th className="table-header text-center bg-green-50">בי"ס</th>
+              <th className="table-header text-center bg-green-50">ח"מ</th>
+              <th className="table-header text-center bg-green-50">גנים</th>
+              <th className="table-header text-center bg-green-100">סה"כ מסגרות</th>
+              <th className="table-header text-center">שם בי"ס/מסגרת</th>
+              <th className="table-header text-center">מאזן</th>
+              <th className="table-header"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.map(emp => {
+              const asgn = getAsgn(emp.id);
+              const rowBg = emp.balance < -0.1 ? 'bg-red-50' : '';
+              return (
+                <tr key={emp.id} className={`hover:bg-gray-50 ${rowBg}`}>
+                  <td className="table-cell sticky right-0 bg-white font-medium">
+                    <EditableCell value={emp.displayName} onSave={v => saveEmpField(emp.id, 'displayName', v)} type="text" />
+                  </td>
+                  <td className="table-cell text-center">
+                    <span className={`badge ${emp.type === 'expert' ? 'bg-purple-100 text-purple-700' : 'bg-orange-100 text-orange-700'}`}>
+                      {emp.type === 'expert' ? 'מומחה' : 'מתמחה'}
+                    </span>
+                  </td>
+                  <td className="table-cell text-center font-semibold">{emp.fteHours}</td>
+                  {HOURS_FIELDS.map(f => (
+                    <td key={f.key} className="table-cell text-center bg-blue-50/30">
+                      <EditableCell value={emp[f.key]} onSave={v => saveEmpField(emp.id, f.key, v)} />
+                    </td>
+                  ))}
+                  <td className="table-cell text-center bg-blue-50 font-semibold">{emp.totalInternal}</td>
+                  <td className="table-cell text-center bg-green-50/40">
+                    <EditableCell value={asgn.hours ?? 0} onSave={v => saveAsgn(emp.id, 'hours', v)} />
+                  </td>
+                  <td className="table-cell text-center bg-green-50/40">
+                    <EditableCell value={asgn.specEdHours ?? 0} onSave={v => saveAsgn(emp.id, 'specEdHours', v)} />
+                  </td>
+                  <td className="table-cell text-center bg-green-50/40">
+                    <EditableCell value={asgn.kinderHours ?? 0} onSave={v => saveAsgn(emp.id, 'kinderHours', v)} />
+                  </td>
+                  <td className="table-cell text-center bg-green-50 font-semibold">{emp.totalFrameworks}</td>
+                  <td className="table-cell text-center text-xs text-gray-500">{getFwName(asgn)}</td>
+                  <td className="table-cell text-center"><BalanceBadge balance={emp.balance} /></td>
+                  <td className="table-cell">
+                    <button className="text-red-400 hover:text-red-600 text-xs" onClick={() => removeEmployee(emp.id, emp.displayName)}>מחק</button>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      <p className="text-xs text-gray-400 mt-2">לחץ פעמיים על תא כדי לערוך</p>
+    </div>
+  );
+}
