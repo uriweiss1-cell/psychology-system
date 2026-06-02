@@ -16,19 +16,41 @@ router.get('/', (req, res) => {
   res.json(enriched);
 });
 
+router.post('/', (req, res) => {
+  const ids = db.get('assignments').value().map(a => a.id);
+  const nextId = ids.length ? Math.max(...ids) + 1 : 1;
+  const a = {
+    id: nextId,
+    employeeId: +req.body.employeeId || 0,
+    frameworkId: +req.body.frameworkId || 0,
+    hours: +req.body.hours || 0,
+    specEdHours: +req.body.specEdHours || 0,
+    kinderHours: +req.body.kinderHours || 0,
+  };
+  db.get('assignments').push(a).write();
+  const emp = db.get('employees').find({ id: a.employeeId }).value();
+  const fw = db.get('frameworks').find({ id: a.frameworkId }).value();
+  res.json({ ...a, employeeName: emp?.displayName || '?', frameworkName: fw?.name || '(לא מוגדר)' });
+});
+
 router.put('/:id', (req, res) => {
   const id = +req.params.id;
   const a = db.get('assignments').find({ id }).value();
   if (!a) return res.status(404).json({ error: 'לא נמצא' });
-  const allowed = ['frameworkId','hours','specEdHours','kinderHours'];
+  const allowed = ['employeeId','frameworkId','hours','specEdHours','kinderHours'];
   const update = {};
-  allowed.forEach(k => { if (req.body[k] !== undefined) update[k] = req.body[k]; });
+  allowed.forEach(k => { if (req.body[k] !== undefined) update[k] = +req.body[k] || 0; });
   db.get('assignments').find({ id }).assign(update).write();
 
   const updated = db.get('assignments').find({ id }).value();
   const emp = db.get('employees').find({ id: updated.employeeId }).value();
   const fw = db.get('frameworks').find({ id: updated.frameworkId }).value();
   res.json({ ...updated, employeeName: emp?.displayName || '?', frameworkName: fw?.name || '(לא מוגדר)' });
+});
+
+router.delete('/:id', (req, res) => {
+  db.get('assignments').remove({ id: +req.params.id }).write();
+  res.json({ ok: true });
 });
 
 // Summary per framework: total hours assigned vs allocated

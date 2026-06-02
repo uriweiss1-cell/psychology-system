@@ -26,10 +26,10 @@ function EditableCell({ value, onSave, type = 'number' }) {
     return (
       <span
         className="cursor-pointer hover:bg-blue-50 px-1 rounded min-w-[2rem] inline-block text-center"
-        onDoubleClick={() => setEditing(true)}
-        title="לחץ פעמיים לעריכה"
+        onClick={() => setEditing(true)}
+        title="לחץ לעריכה"
       >
-        {val || '—'}
+        {(val !== undefined && val !== null && val !== '') ? val : '—'}
       </span>
     );
   }
@@ -41,9 +41,9 @@ function EditableCell({ value, onSave, type = 'number' }) {
       className="input w-16 text-center"
       value={val}
       onChange={e => setVal(e.target.value)}
-      onBlur={() => { setEditing(false); onSave(parseFloat(val) || 0); }}
+      onBlur={() => { setEditing(false); onSave(type === 'number' ? (parseFloat(val) || 0) : val); }}
       onKeyDown={e => {
-        if (e.key === 'Enter') { setEditing(false); onSave(parseFloat(val) || 0); }
+        if (e.key === 'Enter') { setEditing(false); onSave(type === 'number' ? (parseFloat(val) || 0) : val); }
         if (e.key === 'Escape') { setEditing(false); setVal(value); }
       }}
     />
