@@ -2,13 +2,27 @@ const low = require('lowdb');
 const FileSync = require('lowdb/adapters/FileSync');
 const path = require('path');
 const fs = require('fs');
+const { MongoClient } = require('mongodb');
 
 const dataDir = process.env.DATA_DIR || path.join(__dirname, 'data');
 if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
 
 const dbPath = path.join(dataDir, 'db.json');
-const adapter = new FileSync(dbPath);
-const db = low(adapter);
+
+let mongoCollection = null;
+
+class CloudAdapter extends FileSync {
+  write(data) {
+    super.write(data);
+    if (mongoCollection) {
+      mongoCollection
+        .replaceOne({ _id: 'db' }, { _id: 'db', data }, { upsert: true })
+        .catch(e => console.error('Cloud sync error:', e.message));
+    }
+  }
+}
+
+let db;
 
 const SEED_EMPLOYEES = [
   { id: 1,  displayName: 'אבי',       firstName: 'אבי',      lastName: 'עזר',         ftePercent: 1.0,  type: 'expert',   meetingHours: 7.5, supReceivedHours: 1,   supGivenHours: 20,  therapyHours: 0,   roleHours: 0,   roleName: '',                officeHours: 11.5, notes: '' },
@@ -229,7 +243,29 @@ const SEED_KINDER_ASSIGNMENTS = [
   { id: 243, employeeId: 38, gardenName: 'ארגמן (2)',      ageGroup: 'חובה',  address: 'נחשול 11',              phone: '03-7759582',  teacher: 'טל גרינפלד',               teacherPhone: '050-3590043',   email: '' },
 ];
 
-function initDB() {
+async function initDB() {
+  const MONGODB_URI = process.env.MONGODB_URI;
+  if (MONGODB_URI) {
+    try {
+      const client = new MongoClient(MONGODB_URI);
+      await client.connect();
+      mongoCollection = client.db('psychology-system').collection('store');
+      if (!fs.existsSync(dbPath)) {
+        const doc = await mongoCollection.findOne({ _id: 'db' });
+        if (doc?.data) {
+          fs.writeFileSync(dbPath, JSON.stringify(doc.data));
+          console.log('✅ Database restored from cloud');
+        }
+      }
+      console.log('✅ MongoDB connected');
+    } catch (e) {
+      console.error('⚠️ MongoDB unavailable:', e.message);
+      mongoCollection = null;
+    }
+  }
+
+  db = low(new CloudAdapter(dbPath));
+
   db.defaults({
     employees: [],
     frameworks: [],
