@@ -4,7 +4,7 @@ const path = require('path');
 const fs = require('fs');
 const { MongoClient } = require('mongodb');
 
-const dataDir = process.env.DATA_DIR || path.join(__dirname, 'data');
+const dataDir = process.env.DATA_DIR || path.join(require('os').tmpdir(), 'psychology-data');
 if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
 
 const dbPath = path.join(dataDir, 'db.json');

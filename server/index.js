@@ -5,7 +5,7 @@ const fs = require('fs');
 const { initDB } = require('./database');
 
 async function main() {
-  initDB();
+  await initDB();
 
   const app = express();
   app.use(cors({ origin: true }));
@@ -24,7 +24,7 @@ async function main() {
   }
 
   const PORT = process.env.PORT || 3002;
-  app.listen(PORT, () => console.log(`Psychology system running on http://localhost:${PORT}`));
+  app.listen(PORT, '0.0.0.0', () => console.log(`Server running on port ${PORT}`));
 }
 
 main().catch(console.error);
