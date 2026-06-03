@@ -196,35 +196,65 @@ const SEED_TEAMS = [
 ];
 
 
-// הדרכות - מתוך שיבוץ הדרכות תשפו + פירוט מהסשן
+// הדרכות - מתוך שיבוץ הדרכות תשפו 2026
 const SEED_SUPERVISIONS = [
   // הדרכה חינוכית פרטנית - 1 שעה לכל מודרך
-  { id: 1, type: 'educational', supervisorName: 'אורי',        superviseeNames: ['מאיה','צוף','רועי','אן','שניר'],            hoursPerSession: 1, isExternal: false, notes: '' },
-  { id: 2, type: 'educational', supervisorName: 'אבי',         superviseeNames: ['נועם','אסף','יובל','אודי'],                  hoursPerSession: 1, isExternal: false, notes: '' },
-  { id: 3, type: 'educational', supervisorName: 'עדי',         superviseeNames: ['אורה','מיכל','טל','יהודית'],                 hoursPerSession: 1, isExternal: false, notes: '' },
-  { id: 4, type: 'educational', supervisorName: 'אורית נ.',    superviseeNames: ['שחר','אורית ס.','אור א.'],                   hoursPerSession: 1, isExternal: false, notes: '' },
-  { id: 5, type: 'educational', supervisorName: 'ניצן',        superviseeNames: ['אופק','עמית'],                               hoursPerSession: 1, isExternal: false, notes: '' },
-  { id: 6, type: 'educational', supervisorName: 'סיגל',        superviseeNames: ['אורית נ.','טטיאנה','פדות','לירון'],          hoursPerSession: 1, isExternal: false, notes: '' },
-  { id: 7, type: 'educational', supervisorName: 'אן',          superviseeNames: ['עמיחי','דרור'],                              hoursPerSession: 1, isExternal: false, notes: '' },
-  { id: 8, type: 'educational', supervisorName: 'דניאל',       superviseeNames: [],                                            hoursPerSession: 1, isExternal: true,  notes: 'חיצוני — ללא חישוב שעות' },
-  { id: 9, type: 'educational', supervisorName: 'מיכל מפ"ת',  superviseeNames: [],                                            hoursPerSession: 1, isExternal: true,  notes: 'חיצוני — ללא חישוב שעות' },
-  { id: 10, type: 'educational', supervisorName: 'שרון פ"ת',  superviseeNames: [],                                            hoursPerSession: 1, isExternal: true,  notes: 'חיצוני — ללא חישוב שעות' },
+  { id: 1,  type: 'educational', supervisorName: 'אורי',       superviseeNames: ['מאיה','צוף','רועי','אן','שניר'],                  hoursPerSession: 1, isExternal: false, notes: '' },
+  { id: 2,  type: 'educational', supervisorName: 'אבי',        superviseeNames: ['נועם','אסף','יובל נוס','אודי'],                   hoursPerSession: 1, isExternal: false, notes: '' },
+  { id: 3,  type: 'educational', supervisorName: 'עדי',        superviseeNames: ['אור ה.','מיכל','טל','יהודית'],                   hoursPerSession: 1, isExternal: false, notes: '' },
+  { id: 4,  type: 'educational', supervisorName: 'אורית נ.',   superviseeNames: ['שחר','אורית ס.','אריאל','אור א.'],               hoursPerSession: 1, isExternal: false, notes: '' },
+  { id: 5,  type: 'educational', supervisorName: 'ניצן',       superviseeNames: ['אופק','עמית'],                                    hoursPerSession: 1, isExternal: false, notes: '' },
+  { id: 6,  type: 'educational', supervisorName: 'סיגל',       superviseeNames: ['אורית נ.','עבדאללה','פדות','לירון'],             hoursPerSession: 1, isExternal: false, notes: '' },
+  { id: 7,  type: 'educational', supervisorName: 'אן',         superviseeNames: ['עמיחי','דרור'],                                   hoursPerSession: 1, isExternal: false, notes: '' },
+  { id: 8,  type: 'educational', supervisorName: 'דניאל',      superviseeNames: [],                                                 hoursPerSession: 1, isExternal: true,  notes: 'מדריך חיצוני' },
+  { id: 9,  type: 'educational', supervisorName: 'מיכל מפ"ת', superviseeNames: [],                                                 hoursPerSession: 1, isExternal: true,  notes: 'מדריך חיצוני' },
+  { id: 10, type: 'educational', supervisorName: 'שרון פ"ת',  superviseeNames: [],                                                 hoursPerSession: 1, isExternal: true,  notes: 'מדריך חיצוני' },
+
   // הדרכה קלינית פרטנית - 1 שעה לכל מודרך
-  { id: 11, type: 'clinical', supervisorName: 'בועז',          superviseeNames: ['נועמה'],                                     hoursPerSession: 1, isExternal: false, notes: '' },
-  { id: 12, type: 'clinical', supervisorName: 'נעמה',          superviseeNames: ['שניר','לירון','פדות'],                       hoursPerSession: 1, isExternal: false, notes: '' },
-  { id: 13, type: 'clinical', supervisorName: 'תהילה',         superviseeNames: ['רוסלנה','אור א.'],                           hoursPerSession: 1, isExternal: false, notes: '' },
-  { id: 14, type: 'clinical', supervisorName: 'אבי',           superviseeNames: ['אורית ס.'],                                  hoursPerSession: 1, isExternal: false, notes: '' },
-  { id: 15, type: 'clinical', supervisorName: 'אודי',          superviseeNames: ['עמית'],                                      hoursPerSession: 1, isExternal: false, notes: '' },
-  { id: 16, type: 'clinical', supervisorName: 'ניצן יפרח',     superviseeNames: [],                                            hoursPerSession: 1, isExternal: true,  notes: 'חיצוני — ללא חישוב שעות' },
-  // הדרכת מטפלות באומנות - 1.5 שעות
-  { id: 17, type: 'art_therapy', supervisorName: 'תהילה',      superviseeNames: [],                                            hoursPerSession: 1.5, isExternal: false, notes: 'מדריכת מטפלות באומנות' },
-  { id: 18, type: 'art_therapy', supervisorName: 'אסף',        superviseeNames: [],                                            hoursPerSession: 1.5, isExternal: false, notes: 'מדריך מטפלות באומנות' },
-  { id: 19, type: 'art_therapy', supervisorName: 'סיון ג.',    superviseeNames: [],                                            hoursPerSession: 1.5, isExternal: false, notes: 'מדריכת מטפלות באומנות' },
-  // קבוצות - 1.5 שעות למשתתף
-  { id: 20, type: 'group', supervisorName: 'אבי',              superviseeNames: ['אבי','נעמה','תהילה','סיון ג.','יהודית'],     hoursPerSession: 1.5, isExternal: false, notes: 'קבוצת פסיכותרפיה' },
-  { id: 21, type: 'group', supervisorName: 'חיצוני',           superviseeNames: ['קבוצת אוריינטציה'],                          hoursPerSession: 1.5, isExternal: true,  notes: 'אוריינטציה' },
-  { id: 22, type: 'group', supervisorName: 'חיצוני',           superviseeNames: ['קבוצת הדרכה על הדרכה'],                      hoursPerSession: 1.5, isExternal: true,  notes: 'הדרכה על הדרכה' },
-  { id: 23, type: 'group', supervisorName: 'סיגל',             superviseeNames: ['סיגל'],                                      hoursPerSession: 1.5, isExternal: false, notes: 'הכנה לבחינה' },
+  { id: 11, type: 'clinical', supervisorName: 'בועז',   superviseeNames: ['נועה'],                    hoursPerSession: 1, isExternal: false, notes: 'פעם בשבועיים' },
+  { id: 12, type: 'clinical', supervisorName: 'נעמה',   superviseeNames: ['שניר','לירון','פדות'],     hoursPerSession: 1, isExternal: false, notes: '' },
+  { id: 13, type: 'clinical', supervisorName: 'יובל',   superviseeNames: ['נועם','אור א.'],           hoursPerSession: 1, isExternal: false, notes: '' },
+  { id: 14, type: 'clinical', supervisorName: 'אודי',   superviseeNames: ['עמית'],                    hoursPerSession: 1, isExternal: false, notes: '' },
+  { id: 15, type: 'clinical', supervisorName: 'אבי',    superviseeNames: ['אורית ס.'],                hoursPerSession: 1, isExternal: false, notes: '' },
+  { id: 16, type: 'clinical', supervisorName: 'תהילה',  superviseeNames: ['רוסלנה'],                  hoursPerSession: 1, isExternal: false, notes: '' },
+  { id: 17, type: 'clinical', supervisorName: 'ניצן',   superviseeNames: ['בר'],                      hoursPerSession: 1, isExternal: false, notes: '' },
+
+  // הדרכת מטפלות באומנות - 1.5 שעות לכל מודרכת
+  { id: 18, type: 'art_therapy', supervisorName: 'תהילה',   superviseeNames: ['איילת'],          hoursPerSession: 1.5, isExternal: false, notes: '' },
+  { id: 19, type: 'art_therapy', supervisorName: 'סיון ג.', superviseeNames: ["ז'אנה"],          hoursPerSession: 1.5, isExternal: false, notes: '' },
+  { id: 20, type: 'art_therapy', supervisorName: 'אסף',     superviseeNames: ['איסנה','חן'],     hoursPerSession: 1.5, isExternal: false, notes: '' },
+  { id: 21, type: 'art_therapy', supervisorName: 'יהודית',  superviseeNames: ['ניצן י.','תמר'], hoursPerSession: 1.5, isExternal: false, notes: '' },
+  { id: 22, type: 'art_therapy', supervisorName: 'מיה',     superviseeNames: ['יפעת'],           hoursPerSession: 1.5, isExternal: true,  notes: 'מדריכה חיצונית' },
+  { id: 23, type: 'art_therapy', supervisorName: 'אירית',   superviseeNames: ['מיטל'],           hoursPerSession: 1.5, isExternal: true,  notes: 'מדריכה חיצונית' },
+  { id: 24, type: 'art_therapy', supervisorName: 'טליה',    superviseeNames: ['סתיו ק.'],        hoursPerSession: 1.5, isExternal: true,  notes: 'מדריכה חיצונית' },
+
+  // קבוצות פסיכותרפיה - 1.5 שעות למשתתף
+  { id: 25, type: 'psychotherapy', supervisorName: 'אבי',      superviseeNames: ['טטיאנה','אופק','שחר'],                   hoursPerSession: 1.5, isExternal: false, notes: 'קבוצה 1' },
+  { id: 26, type: 'psychotherapy', supervisorName: 'אבי',      superviseeNames: ['נועם','שניר','פדות','לירון','אור א.'],   hoursPerSession: 1.5, isExternal: false, notes: 'קבוצה קלינית' },
+  { id: 27, type: 'psychotherapy', supervisorName: 'אבי',      superviseeNames: ['דרור','מאיה','עומר'],                    hoursPerSession: 1.5, isExternal: false, notes: 'קבוצה 3' },
+  { id: 28, type: 'psychotherapy', supervisorName: 'נעמה',     superviseeNames: ['אור ה.','מיכל','עבדאללה'],              hoursPerSession: 1.5, isExternal: false, notes: '' },
+  { id: 29, type: 'psychotherapy', supervisorName: 'תהילה',    superviseeNames: ['אוראל כ.','עמיחי','רועי'],              hoursPerSession: 1.5, isExternal: false, notes: '' },
+  { id: 30, type: 'psychotherapy', supervisorName: 'סיון ג.', superviseeNames: ['אריאל','מאיה','עומר','צוף'],            hoursPerSession: 1.5, isExternal: false, notes: '' },
+  { id: 31, type: 'psychotherapy', supervisorName: 'יהודית',   superviseeNames: ['גילי','טל','רוני'],                     hoursPerSession: 1.5, isExternal: false, notes: '' },
+  { id: 32, type: 'psychotherapy', supervisorName: 'סיגל',     superviseeNames: ['מאי','מריה','סיון ב.'],                 hoursPerSession: 1.5, isExternal: false, notes: '' },
+
+  // קבוצת אוריינטציה - 1.5 שעות
+  { id: 33, type: 'orientation', supervisorName: 'אבי', superviseeNames: ['טטיאנה','אופק','שחר','אור א.','אסף','יובל','עמית','אודי'], hoursPerSession: 1.5, isExternal: false, notes: '' },
+
+  // הדרכה על הדרכה - 1.5 שעות
+  { id: 34, type: 'sup_of_sup', supervisorName: 'אבי',  superviseeNames: ['סיון ג.','תהילה','סיגל'], hoursPerSession: 1.5, isExternal: false, notes: '' },
+  { id: 35, type: 'sup_of_sup', supervisorName: 'בועז', superviseeNames: ['יהודית','ניצן','אסף'],   hoursPerSession: 1.5, isExternal: false, notes: '' },
+
+  // דיאגנוסטיקה - 1.5 שעות
+  { id: 36, type: 'diagnostics', supervisorName: 'בועז', superviseeNames: ['אור א.','שניר','נועם','לירון','ספיר','פדות'], hoursPerSession: 1.5, isExternal: false, notes: 'קבוצה 1' },
+  { id: 37, type: 'diagnostics', supervisorName: 'בועז', superviseeNames: ['שיר','רז','עמית'],                              hoursPerSession: 1.5, isExternal: false, notes: 'קבוצה 2' },
+
+  // קבוצות מטפלות - 1.5 שעות
+  { id: 38, type: 'therapist_group', supervisorName: 'תהילה',   superviseeNames: ['תמר',"ז'אנה",'סתיו','חן'], hoursPerSession: 1.5, isExternal: false, notes: '' },
+  { id: 39, type: 'therapist_group', supervisorName: 'סיון ג.', superviseeNames: ['יפעת','ניצן','מיטל'],       hoursPerSession: 1.5, isExternal: false, notes: '' },
+
+  // הכנה לבחינה - 1.5 שעות
+  { id: 40, type: 'exam_prep', supervisorName: '', superviseeNames: ['מיכל','טל','עבדאללה','אור ה.'], hoursPerSession: 1.5, isExternal: false, notes: '' },
 ];
 
 // Kindergarten assignments - from רשימת גנים (sample - first 30)
@@ -407,7 +437,7 @@ async function initDB() {
     _nextId: { employees: 100, frameworks: 300, assignments: 500, kinderAssignments: 600, supervisions: 100 }
   }).write();
 
-  const CURRENT_SEED_VERSION = 3;
+  const CURRENT_SEED_VERSION = 4;
   if (db.get('_seedVersion').value() < CURRENT_SEED_VERSION) {
     console.log('Reseeding database (version ' + CURRENT_SEED_VERSION + ')...');
     db.set('employees', SEED_EMPLOYEES).write();

@@ -2,24 +2,33 @@ import { useEffect, useState } from 'react';
 import { getSupervisions, createSupervision, updateSupervision, deleteSupervision } from '../api';
 
 const TYPE_LABELS = {
-  educational: 'הדרכה חינוכית פרטנית',
-  clinical:    'הדרכה קלינית פרטנית',
-  art_therapy: 'הדרכת מטפלות באומנות',
-  group:       'קבוצות',
+  educational:    'הדרכה חינוכית פרטנית',
+  clinical:       'הדרכה קלינית פרטנית',
+  art_therapy:    'הדרכת מטפלות באומנות',
+  psychotherapy:  'קבוצות פסיכותרפיה',
+  orientation:    'קבוצת אוריינטציה',
+  sup_of_sup:     'הדרכה על הדרכה',
+  diagnostics:    'דיאגנוסטיקה',
+  therapist_group:'קבוצות מטפלות',
+  exam_prep:      'הכנה לבחינה',
 };
 
 const TYPE_COLORS = {
-  educational: 'bg-teal-600',
-  clinical:    'bg-indigo-600',
-  art_therapy: 'bg-pink-600',
-  group:       'bg-amber-600',
+  educational:    'bg-teal-700',
+  clinical:       'bg-indigo-700',
+  art_therapy:    'bg-pink-700',
+  psychotherapy:  'bg-purple-700',
+  orientation:    'bg-amber-700',
+  sup_of_sup:     'bg-orange-700',
+  diagnostics:    'bg-red-700',
+  therapist_group:'bg-rose-700',
+  exam_prep:      'bg-sky-700',
 };
 
 const TYPE_HOURS = {
-  educational: 1,
-  clinical:    1,
-  art_therapy: 1.5,
-  group:       1.5,
+  educational: 1, clinical: 1, art_therapy: 1.5,
+  psychotherapy: 1.5, orientation: 1.5, sup_of_sup: 1.5,
+  diagnostics: 1.5, therapist_group: 1.5, exam_prep: 1.5,
 };
 
 export default function Supervisions() {
@@ -31,8 +40,7 @@ export default function Supervisions() {
   const [newSup, setNewSup] = useState({ type: 'educational', supervisorName: '', superviseeNames: '', hoursPerSession: 1, isExternal: false, notes: '' });
 
   const load = async () => {
-    const data = await getSupervisions();
-    setSupervisions(data);
+    setSupervisions(await getSupervisions());
     setLoading(false);
   };
 
@@ -54,11 +62,11 @@ export default function Supervisions() {
   };
 
   const handleAdd = async () => {
-    if (!newSup.supervisorName.trim()) return;
+    if (!newSup.supervisorName.trim() && newSup.type !== 'exam_prep') return;
     const created = await createSupervision({
       ...newSup,
       superviseeNames: newSup.superviseeNames.split('\n').map(x => x.trim()).filter(Boolean),
-      hoursPerSession: parseFloat(newSup.hoursPerSession) || 1,
+      hoursPerSession: TYPE_HOURS[newSup.type] || 1,
     });
     setSupervisions(prev => [...prev, created]);
     setNewSup({ type: 'educational', supervisorName: '', superviseeNames: '', hoursPerSession: 1, isExternal: false, notes: '' });
@@ -91,7 +99,7 @@ export default function Supervisions() {
           <div className="grid grid-cols-2 gap-3 mb-3">
             <div>
               <label className="block text-xs text-gray-600 mb-1">סוג הדרכה</label>
-              <select className="input w-full" value={newSup.type} onChange={e => setNewSup(p => ({...p, type: e.target.value, hoursPerSession: TYPE_HOURS[e.target.value] || 1}))}>
+              <select className="input w-full" value={newSup.type} onChange={e => setNewSup(p => ({...p, type: e.target.value}))}>
                 {Object.entries(TYPE_LABELS).map(([k,v]) => <option key={k} value={k}>{v}</option>)}
               </select>
             </div>
@@ -99,21 +107,17 @@ export default function Supervisions() {
               <label className="block text-xs text-gray-600 mb-1">מדריך/ה</label>
               <input className="input w-full" value={newSup.supervisorName} onChange={e => setNewSup(p => ({...p, supervisorName: e.target.value}))} placeholder="שם המדריך" />
             </div>
-            <div>
-              <label className="block text-xs text-gray-600 mb-1">שעות לפגישה</label>
-              <input className="input w-full" type="number" step="0.5" value={newSup.hoursPerSession} onChange={e => setNewSup(p => ({...p, hoursPerSession: e.target.value}))} />
-            </div>
             <div className="flex items-center gap-2 pt-5">
               <input type="checkbox" id="ext" checked={newSup.isExternal} onChange={e => setNewSup(p => ({...p, isExternal: e.target.checked}))} />
-              <label htmlFor="ext" className="text-sm text-gray-700">חיצוני (ללא חישוב שעות)</label>
+              <label htmlFor="ext" className="text-sm text-gray-700">חיצוני</label>
+            </div>
+            <div>
+              <label className="block text-xs text-gray-600 mb-1">הערות</label>
+              <input className="input w-full" value={newSup.notes} onChange={e => setNewSup(p => ({...p, notes: e.target.value}))} />
             </div>
             <div className="col-span-2">
               <label className="block text-xs text-gray-600 mb-1">מודרכים (שם אחד בכל שורה)</label>
               <textarea className="input w-full h-24 text-sm" value={newSup.superviseeNames} onChange={e => setNewSup(p => ({...p, superviseeNames: e.target.value}))} />
-            </div>
-            <div className="col-span-2">
-              <label className="block text-xs text-gray-600 mb-1">הערות</label>
-              <input className="input w-full" value={newSup.notes} onChange={e => setNewSup(p => ({...p, notes: e.target.value}))} />
             </div>
           </div>
           <div className="flex gap-2">
@@ -123,7 +127,7 @@ export default function Supervisions() {
         </div>
       )}
 
-      <div className="space-y-6">
+      <div className="space-y-5">
         {Object.entries(TYPE_LABELS).map(([type, label]) => {
           const items = grouped[type] || [];
           if (items.length === 0) return null;
@@ -131,7 +135,7 @@ export default function Supervisions() {
           return (
             <div key={type}>
               <h2 className={`text-white text-sm font-semibold px-3 py-2 rounded-t ${color}`}>
-                {label} — {TYPE_HOURS[type]} שעות למודרך
+                {label}
               </h2>
               <div className="bg-white border border-gray-200 rounded-b overflow-hidden">
                 <table className="w-full text-sm">
@@ -139,7 +143,6 @@ export default function Supervisions() {
                     <tr>
                       <th className="table-header w-36">מדריך/ה</th>
                       <th className="table-header">מודרכים</th>
-                      <th className="table-header text-center w-24">שעות</th>
                       <th className="table-header w-48">הערות</th>
                       <th className="table-header text-center w-20">פעולות</th>
                     </tr>
@@ -153,9 +156,6 @@ export default function Supervisions() {
                         <td className="table-cell">
                           <textarea className="input w-full text-sm h-20" value={editData.superviseeNamesText} onChange={e => setEditData(p => ({...p, superviseeNamesText: e.target.value}))} />
                         </td>
-                        <td className="table-cell text-center">
-                          <input className="input w-16 text-sm" type="number" step="0.5" value={editData.hoursPerSession} onChange={e => setEditData(p => ({...p, hoursPerSession: e.target.value}))} />
-                        </td>
                         <td className="table-cell">
                           <input className="input w-full text-sm" value={editData.notes} onChange={e => setEditData(p => ({...p, notes: e.target.value}))} />
                         </td>
@@ -167,25 +167,27 @@ export default function Supervisions() {
                     ) : (
                       <tr key={s.id} className="hover:bg-gray-50">
                         <td className="table-cell font-medium">
-                          {s.isExternal ? <span className="text-gray-400 italic">{s.supervisorName} (חיצוני)</span> : s.supervisorName}
+                          {s.supervisorName
+                            ? s.isExternal
+                              ? <span className="text-gray-400 italic">{s.supervisorName} (חיצוני)</span>
+                              : s.supervisorName
+                            : <span className="text-gray-400">—</span>
+                          }
                         </td>
                         <td className="table-cell">
                           {(s.superviseeNames || []).length === 0
                             ? <span className="text-gray-400 italic">—</span>
                             : <div className="flex flex-wrap gap-1">
-                                {(s.superviseeNames).map((name, i) => (
+                                {s.superviseeNames.map((name, i) => (
                                   <span key={i} className="badge bg-gray-100 text-gray-700">{name}</span>
                                 ))}
                               </div>
                           }
                         </td>
-                        <td className="table-cell text-center">
-                          {s.isExternal ? <span className="text-gray-400">—</span> : s.hoursPerSession}
-                        </td>
                         <td className="table-cell text-gray-500 text-xs">{s.notes}</td>
                         <td className="table-cell text-center">
                           <button className="text-blue-400 hover:text-blue-600 text-xs ml-1" onClick={() => startEdit(s)}>✏️</button>
-                          <button className="text-red-400 hover:text-red-600 text-xs" onClick={() => handleDelete(s.id, s.supervisorName)}>🗑️</button>
+                          <button className="text-red-400 hover:text-red-600 text-xs" onClick={() => handleDelete(s.id, s.supervisorName || 'הרשומה')}>🗑️</button>
                         </td>
                       </tr>
                     ))}
