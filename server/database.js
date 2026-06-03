@@ -206,9 +206,9 @@ const SEED_SUPERVISIONS = [
   { id: 5,  type: 'educational', supervisorName: 'ניצן',       superviseeNames: ['אופק','עמית'],                                    hoursPerSession: 1, isExternal: false, notes: '' },
   { id: 6,  type: 'educational', supervisorName: 'סיגל',       superviseeNames: ['אורית נ.','עבדאללה','פדות','לירון'],             hoursPerSession: 1, isExternal: false, notes: '' },
   { id: 7,  type: 'educational', supervisorName: 'אן',         superviseeNames: ['עמיחי','דרור'],                                   hoursPerSession: 1, isExternal: false, notes: '' },
-  { id: 8,  type: 'educational', supervisorName: 'דניאל',      superviseeNames: [],                                                 hoursPerSession: 1, isExternal: true,  notes: 'מדריך חיצוני' },
-  { id: 9,  type: 'educational', supervisorName: 'מיכל מפ"ת', superviseeNames: [],                                                 hoursPerSession: 1, isExternal: true,  notes: 'מדריך חיצוני' },
-  { id: 10, type: 'educational', supervisorName: 'שרון פ"ת',  superviseeNames: [],                                                 hoursPerSession: 1, isExternal: true,  notes: 'מדריך חיצוני' },
+  { id: 8,  type: 'educational', supervisorName: 'דניאל',      superviseeNames: ['נועה'],                                           hoursPerSession: 1, isExternal: true,  notes: 'מדריך חיצוני' },
+  { id: 9,  type: 'educational', supervisorName: 'מיכל מפ"ת', superviseeNames: ['גילי','אוראל כ.'],                                hoursPerSession: 1, isExternal: true,  notes: 'מדריך חיצוני' },
+  { id: 10, type: 'educational', supervisorName: 'שרון פ"ת',  superviseeNames: ['עומר','רוני'],                                    hoursPerSession: 1, isExternal: true,  notes: 'מדריך חיצוני' },
 
   // הדרכה קלינית פרטנית - 1 שעה לכל מודרך
   { id: 11, type: 'clinical', supervisorName: 'בועז',   superviseeNames: ['נועה'],                    hoursPerSession: 1, isExternal: false, notes: 'פעם בשבועיים' },
@@ -437,7 +437,7 @@ async function initDB() {
     _nextId: { employees: 100, frameworks: 300, assignments: 500, kinderAssignments: 600, supervisions: 100 }
   }).write();
 
-  const CURRENT_SEED_VERSION = 4;
+  const CURRENT_SEED_VERSION = 5;
   if (db.get('_seedVersion').value() < CURRENT_SEED_VERSION) {
     console.log('Reseeding database (version ' + CURRENT_SEED_VERSION + ')...');
     db.set('employees', SEED_EMPLOYEES).write();
