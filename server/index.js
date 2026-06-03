@@ -18,6 +18,9 @@ async function main() {
   app.use('/api/teams',            require('./routes/teams'));
   app.use('/api/supervisions',     require('./routes/supervisions'));
   app.use('/api/spec-ed',          require('./routes/specEd'));
+  app.use('/api/alerts',           require('./routes/alerts'));
+  app.use('/api/draft',            require('./routes/draft'));
+  app.use('/api/import',           require('./routes/import'));
 
   const clientDist = path.join(__dirname, '..', 'client', 'dist');
   if (fs.existsSync(clientDist)) {

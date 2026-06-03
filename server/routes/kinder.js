@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const { db } = require('../database');
+const { db, activeCol } = require('../database');
 
 router.get('/', (req, res) => {
-  const assignments = db.get('kinderAssignments').value();
+  const col = activeCol('kinderAssignments');
+  const assignments = db.get(col).value();
   const employees = db.get('employees').value();
   const enriched = assignments.map(a => {
     const emp = employees.find(e => e.id === a.employeeId);
@@ -13,6 +14,7 @@ router.get('/', (req, res) => {
 });
 
 router.post('/', (req, res) => {
+  const col = activeCol('kinderAssignments');
   const nextId = db.get('_nextId.kinderAssignments').value();
   const a = {
     id: nextId,
@@ -25,27 +27,29 @@ router.post('/', (req, res) => {
     teacherPhone: req.body.teacherPhone || '',
     email: req.body.email || ''
   };
-  db.get('kinderAssignments').push(a).write();
+  db.get(col).push(a).write();
   db.set('_nextId.kinderAssignments', nextId + 1).write();
   const emp = db.get('employees').find({ id: a.employeeId }).value();
   res.json({ ...a, employeeName: emp?.displayName || '?' });
 });
 
 router.put('/:id', (req, res) => {
+  const col = activeCol('kinderAssignments');
   const id = +req.params.id;
-  const a = db.get('kinderAssignments').find({ id }).value();
+  const a = db.get(col).find({ id }).value();
   if (!a) return res.status(404).json({ error: 'לא נמצא' });
   const allowed = ['employeeId','gardenName','ageGroup','address','phone','teacher','teacherPhone','email'];
   const update = {};
   allowed.forEach(k => { if (req.body[k] !== undefined) update[k] = req.body[k]; });
-  db.get('kinderAssignments').find({ id }).assign(update).write();
-  const updated = db.get('kinderAssignments').find({ id }).value();
+  db.get(col).find({ id }).assign(update).write();
+  const updated = db.get(col).find({ id }).value();
   const emp = db.get('employees').find({ id: updated.employeeId }).value();
   res.json({ ...updated, employeeName: emp?.displayName || '?' });
 });
 
 router.delete('/:id', (req, res) => {
-  db.get('kinderAssignments').remove({ id: +req.params.id }).write();
+  const col = activeCol('kinderAssignments');
+  db.get(col).remove({ id: +req.params.id }).write();
   res.json({ ok: true });
 });
 

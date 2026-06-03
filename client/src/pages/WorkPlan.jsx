@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { getEmployees, updateEmployee, getAssignments, updateAssignment, getFrameworks, createEmployee, deleteEmployee } from '../api';
+import AlertsBanner from '../components/AlertsBanner';
 
 const HOURS_FIELDS = [
   { key: 'meetingHours',       label: 'ישיבות' },
@@ -113,6 +114,7 @@ export default function WorkPlan() {
 
   return (
     <div>
+      <AlertsBanner />
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-xl font-bold text-gray-800">תוכנית עבודה</h1>
         <div className="flex gap-2 items-center">

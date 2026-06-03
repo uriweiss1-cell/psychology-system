@@ -25,6 +25,16 @@ export const getTeams       = () => api.get('/teams').then(r => r.data);
 export const updateTeam     = (id, data) => api.put(`/teams/${id}`, data).then(r => r.data);
 export const getUnassigned  = () => api.get('/teams/unassigned').then(r => r.data);
 
+export const getAlerts           = () => api.get('/alerts').then(r => r.data);
+
+export const getDraftStatus      = () => api.get('/draft/status').then(r => r.data);
+export const activateDraft       = () => api.post('/draft/activate').then(r => r.data);
+export const approveDraft        = () => api.post('/draft/approve').then(r => r.data);
+export const discardDraft        = () => api.post('/draft/discard').then(r => r.data);
+
+export const previewImport       = (type, file) => { const fd = new FormData(); fd.append('file', file); return api.post(`/import/${type}/preview`, fd).then(r => r.data); };
+export const applyImport         = (type, rows) => api.post(`/import/${type}/apply`, { rows }).then(r => r.data);
+
 export const getSpecEdClasses    = () => api.get('/spec-ed').then(r => r.data);
 export const createSpecEdClass   = (data) => api.post('/spec-ed', data).then(r => r.data);
 export const updateSpecEdClass   = (id, data) => api.put(`/spec-ed/${id}`, data).then(r => r.data);

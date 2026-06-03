@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getEmployees, updateEmployee, createEmployee, deleteEmployee } from '../api';
+import AlertsBanner from '../components/AlertsBanner';
+import ImportModal from '../components/ImportModal';
 
 const STATUS_LABELS = { active: 'פעיל', inactive: 'לא פעיל', maternity: 'חל"ד' };
 const STATUS_COLORS = { active: 'bg-green-100 text-green-800', inactive: 'bg-red-100 text-red-700', maternity: 'bg-blue-100 text-blue-700' };
@@ -10,6 +12,7 @@ export default function Standards() {
   const [filter, setFilter] = useState('');
   const [editing, setEditing] = useState({});
   const [showAdd, setShowAdd] = useState(false);
+  const [showImport, setShowImport] = useState(false);
   const [newEmp, setNewEmp] = useState({ displayName: '', firstName: '', lastName: '', ftePercent: 1.0, type: 'expert' });
 
   const load = async () => {
@@ -69,6 +72,16 @@ export default function Standards() {
 
   return (
     <div>
+      {showImport && (
+        <ImportModal
+          type="employees"
+          label="עובדים"
+          columns={['שם תצוגה', 'שם פרטי', 'שם משפחה', 'אחוז משרה', 'סוג']}
+          onDone={load}
+          onClose={() => setShowImport(false)}
+        />
+      )}
+      <AlertsBanner />
       <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-xl font-bold text-gray-800">תקנים</h1>
@@ -78,6 +91,7 @@ export default function Standards() {
         </div>
         <div className="flex gap-2">
           <input className="input" placeholder="חיפוש..." value={filter} onChange={e => setFilter(e.target.value)} />
+          <button className="btn-secondary" onClick={() => setShowImport(true)}>📥 ייבוא מקובץ</button>
           <button className="btn-primary" onClick={() => setShowAdd(true)}>+ עובד חדש</button>
         </div>
       </div>

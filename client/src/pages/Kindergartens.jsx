@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
-import { getKinder, getEmployees, createKinder, updateKinder, deleteKinder } from '../api';
+import { getKinder, getEmployees, createKinder, updateKinder, deleteKinder, previewImport, applyImport } from '../api';
+import AlertsBanner from '../components/AlertsBanner';
+import ImportModal from '../components/ImportModal';
 
 const COLS = [
   { key: 'gardenName',   label: 'שם הגן',    width: 'min-w-[120px]' },
@@ -18,6 +20,7 @@ export default function Kindergartens() {
   const [filter, setFilter] = useState('');
   const [editRow, setEditRow] = useState(null);
   const [showAdd, setShowAdd] = useState(false);
+  const [showImport, setShowImport] = useState(false);
   const [newRow, setNewRow] = useState({ employeeId: '', gardenName: '', ageGroup: 'חובה', address: '', phone: '', teacher: '', teacherPhone: '', email: '' });
 
   const load = async () => {
@@ -72,6 +75,16 @@ export default function Kindergartens() {
 
   return (
     <div>
+      {showImport && (
+        <ImportModal
+          type="kinder"
+          label="גנים"
+          columns={['שם גן', 'גיל', 'כתובת', 'טלפון', 'גננת', 'נייד גננת', 'מייל', 'פסיכולוג']}
+          onDone={load}
+          onClose={() => setShowImport(false)}
+        />
+      )}
+      <AlertsBanner />
       <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-xl font-bold text-gray-800">שיבוצי גנים</h1>
@@ -80,6 +93,7 @@ export default function Kindergartens() {
         <div className="flex gap-2 items-center">
           <input className="input" placeholder="חיפוש גן או פסיכולוג..." value={filter} onChange={e => setFilter(e.target.value)} />
           <button className="btn-secondary" onClick={() => window.print()}>🖨️ הדפסה</button>
+          <button className="btn-secondary" onClick={() => setShowImport(true)}>📥 ייבוא מקובץ</button>
           <button className="btn-primary" onClick={() => setShowAdd(true)}>+ גן חדש</button>
         </div>
       </div>

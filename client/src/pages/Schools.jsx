@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getAssignmentSummary, getEmployees, getAssignments, updateAssignment, getFrameworks, getSpecEdClasses, createSpecEdClass, updateSpecEdClass, deleteSpecEdClass } from '../api';
 import axios from 'axios';
+import AlertsBanner from '../components/AlertsBanner';
 
 const SECTOR_COLORS = {
   'ממלכתי':       'bg-blue-100 text-blue-800',
@@ -99,6 +100,7 @@ export default function Schools() {
 
   return (
     <div>
+      <AlertsBanner />
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-xl font-bold text-gray-800">שיבוצי בתי ספר</h1>
         <div className="flex gap-2 items-center">

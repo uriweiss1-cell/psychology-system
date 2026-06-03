@@ -464,7 +464,9 @@ async function initDB() {
 
   db.defaults({
     employees: [], frameworks: [], assignments: [],
-    kinderAssignments: [], teams: [], supervisions: [], specEdClasses: [], _seedVersion: 0,
+    kinderAssignments: [], teams: [], supervisions: [], specEdClasses: [],
+    draft_assignments: [], draft_kinderAssignments: [], draft_specEdClasses: [],
+    draftActive: false, _seedVersion: 0,
     _nextId: { employees: 100, frameworks: 300, assignments: 500, kinderAssignments: 600, supervisions: 100, specEdClasses: 100 }
   }).write();
 
@@ -483,4 +485,9 @@ async function initDB() {
   }
 }
 
-module.exports = { db, initDB };
+// Returns the active collection name (draft or current) for assignment-like data
+function activeCol(name) {
+  return db.get('draftActive').value() ? `draft_${name}` : name;
+}
+
+module.exports = { db, initDB, activeCol };
