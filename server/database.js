@@ -410,6 +410,37 @@ const SEED_KINDER_ASSIGNMENTS = [
 ];
 
 
+// כתות קטנות (חינוך מיוחד בבתי ספר) - מתוך מסגרות החינוך המיוחד בראש העין תשפו
+const SEED_SPEC_ED_CLASSES = [
+  { id: 1,  frameworkId: 101, grades: 'א, ד',                                          classType: 'ל.ל',         psychologistName: 'עבדאללה' },  // אפק
+  { id: 2,  frameworkId: 102, grades: 'ב, ג, ד, ה',                                   classType: 'ל.ל',         psychologistName: 'עמיחי'   },  // אוהל שלום
+  { id: 3,  frameworkId: 103, grades: 'ב1, ב2, ג1, ג2, ה',                            classType: 'תקשורתית',    psychologistName: 'צוף'     },  // אסף
+  { id: 4,  frameworkId: 104, grades: 'א',                                             classType: 'ל.ל',         psychologistName: 'אוראל כ.' }, // אוהל שרה
+  { id: 5,  frameworkId: 105, grades: 'ה, ו',                                          classType: 'ל.ל',         psychologistName: 'סיון ב.' },  // אשכול
+  { id: 6,  frameworkId: 106, grades: 'א*, ב*, ג*, ד, ג+ד',                           classType: 'ל.ל',         psychologistName: 'שחר'     },  // עוז
+  { id: 7,  frameworkId: 107, grades: 'א*, ב, ג, ה',                                  classType: 'ל.ל',         psychologistName: 'מאיה'    },  // חיים גורי
+  { id: 8,  frameworkId: 108, grades: 'א1, א2, ב, ו',                                 classType: 'ל.ל',         psychologistName: 'רועי'    },  // צורים
+  { id: 9,  frameworkId: 109, grades: 'א*, ב, ה',                                     classType: 'ל.ל',         psychologistName: 'אורית ס.' }, // טל
+  { id: 10, frameworkId: 110, grades: 'א*, ב, ב*, ד*, ה',                             classType: 'ל.ל',         psychologistName: 'עומר'    },  // רמב"ם
+  { id: 11, frameworkId: 111, grades: 'ג, ד',                                         classType: 'ל.ל',         psychologistName: 'גילי'    },  // יצחק נבון
+  { id: 12, frameworkId: 112, grades: 'ג, ו',                                         classType: 'ל.ל',         psychologistName: 'מאי'     },  // רעות
+  { id: 13, frameworkId: 113, grades: 'א, ד, ה',                                      classType: 'ל.ל',         psychologistName: 'אריאל'   },  // נווה דליה
+  { id: 14, frameworkId: 114, grades: 'א1, א2, ב, ג, ד, ה, ו1, ו2',                  classType: 'תקשורתית',    psychologistName: 'טל'      },  // נופים
+  { id: 15, frameworkId: 115, grades: 'א, ו',                                         classType: 'ל.ל',         psychologistName: 'צוף'     },  // נופרים
+  { id: 16, frameworkId: 117, grades: 'א*, ב',                                        classType: 'ל.ל',         psychologistName: 'אור ה.'  },  // פרס
+  { id: 17, frameworkId: 119, grades: 'א, ג',                                         classType: 'ל.ל',         psychologistName: 'דרור'    },  // רונא רמון
+  { id: 18, frameworkId: 121, grades: 'ו',                                            classType: 'ל.ל',         psychologistName: 'מיכל'    },  // שיא
+  { id: 19, frameworkId: 123, grades: 'ב, ג, ד, ה, ו',                               classType: 'תקשורתית',    psychologistName: 'מריה'    },  // תגלית
+  { id: 20, frameworkId: 124, grades: 'ח',                                            classType: 'ל.ל',         psychologistName: 'דנה'     },  // בארי
+  { id: 21, frameworkId: 125, grades: 'ז, ח, ט, י, יא, יב',                          classType: 'ל.ל',         psychologistName: 'מאי'     },  // אולפנת זבולון
+  { id: 22, frameworkId: 126, grades: 'ז',                                            classType: 'ל.ל',         psychologistName: 'רוני'    },  // בראשית
+  { id: 23, frameworkId: 128, grades: 'ז1*, ז2*, ח1, ח2*, ט',                        classType: 'ל.ל',         psychologistName: 'בועז'    },  // גוונים
+  { id: 24, frameworkId: 129, grades: 'ז1, ז2, ח1, ח2, ט1, ט2, י1, י2, י3, יא, יב1, יב2', classType: 'ל.ל', psychologistName: 'מריה'    },  // עתיד
+  { id: 25, frameworkId: 130, grades: 'ז1, ז2, ח, ט1, ט2',                           classType: 'ל.ל',         psychologistName: 'אור ה.'  },  // היובל
+  { id: 26, frameworkId: 132, grades: 'י, י*',                                        classType: 'ל.ל',         psychologistName: 'תהילה'   },  // בגין
+  { id: 27, frameworkId: 133, grades: 'י, יב',                                        classType: 'ל.ל + תקשורתית', psychologistName: 'נועם / יובל' }, // שחקים
+];
+
 async function initDB() {
   const MONGODB_URI = process.env.MONGODB_URI;
   if (MONGODB_URI) {
@@ -433,11 +464,11 @@ async function initDB() {
 
   db.defaults({
     employees: [], frameworks: [], assignments: [],
-    kinderAssignments: [], teams: [], supervisions: [], _seedVersion: 0,
-    _nextId: { employees: 100, frameworks: 300, assignments: 500, kinderAssignments: 600, supervisions: 100 }
+    kinderAssignments: [], teams: [], supervisions: [], specEdClasses: [], _seedVersion: 0,
+    _nextId: { employees: 100, frameworks: 300, assignments: 500, kinderAssignments: 600, supervisions: 100, specEdClasses: 100 }
   }).write();
 
-  const CURRENT_SEED_VERSION = 5;
+  const CURRENT_SEED_VERSION = 6;
   if (db.get('_seedVersion').value() < CURRENT_SEED_VERSION) {
     console.log('Reseeding database (version ' + CURRENT_SEED_VERSION + ')...');
     db.set('employees', SEED_EMPLOYEES).write();
@@ -446,6 +477,7 @@ async function initDB() {
     db.set('kinderAssignments', SEED_KINDER_ASSIGNMENTS).write();
     db.set('teams', SEED_TEAMS).write();
     db.set('supervisions', SEED_SUPERVISIONS).write();
+    db.set('specEdClasses', SEED_SPEC_ED_CLASSES).write();
     db.set('_seedVersion', CURRENT_SEED_VERSION).write();
     console.log('Done: ' + SEED_EMPLOYEES.length + ' employees, ' + SEED_FRAMEWORKS.length + ' frameworks');
   }
