@@ -4,13 +4,15 @@ import Schools from './pages/Schools';
 import Kindergartens from './pages/Kindergartens';
 import Teams from './pages/Teams';
 import Standards from './pages/Standards';
+import Supervisions from './pages/Supervisions';
 
 const NAV = [
+  { to: '/standards',     label: 'תקנים' },
   { to: '/work-plan',     label: 'תוכנית עבודה' },
   { to: '/schools',       label: 'שיבוצי בתי ספר' },
   { to: '/kindergartens', label: 'שיבוצי גנים' },
   { to: '/teams',         label: 'צוותים' },
-  { to: '/standards',     label: 'תקנים' },
+  { to: '/supervisions',  label: 'הדרכות' },
 ];
 
 export default function App() {
@@ -38,13 +40,14 @@ export default function App() {
       </nav>
       <main className="flex-1 p-4">
         <Routes>
-          <Route index element={<Navigate to="/work-plan" replace />} />
+          <Route index element={<Navigate to="/standards" replace />} />
+          <Route path="/standards"     element={<Standards />} />
           <Route path="/work-plan"     element={<WorkPlan />} />
           <Route path="/schools"       element={<Schools />} />
           <Route path="/kindergartens" element={<Kindergartens />} />
           <Route path="/teams"         element={<Teams />} />
-          <Route path="/standards"     element={<Standards />} />
-          <Route path="*"              element={<Navigate to="/work-plan" replace />} />
+          <Route path="/supervisions"  element={<Supervisions />} />
+          <Route path="*"              element={<Navigate to="/standards" replace />} />
         </Routes>
       </main>
     </div>

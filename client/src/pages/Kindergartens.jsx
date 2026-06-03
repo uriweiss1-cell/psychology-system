@@ -21,7 +21,7 @@ export default function Kindergartens() {
   const [newRow, setNewRow] = useState({ employeeId: '', gardenName: '', ageGroup: 'חובה', address: '', phone: '', teacher: '', teacherPhone: '', email: '' });
 
   const load = async () => {
-    const [asgns, emps] = await Promise.all([getKinder(), getEmployees()]);
+    const [asgns, emps] = await Promise.all([getKinder(), getEmployees(true)]);
     setAssignments(asgns);
     setEmployees(emps);
     setLoading(false);

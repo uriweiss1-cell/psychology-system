@@ -20,8 +20,9 @@ function withComputed(emp) {
 }
 
 router.get('/', (req, res) => {
-  const emps = db.get('employees').value().map(withComputed);
-  res.json(emps);
+  let emps = db.get('employees').value();
+  if (req.query.activeOnly) emps = emps.filter(e => e.status !== 'inactive' && e.status !== 'maternity');
+  res.json(emps.map(withComputed));
 });
 
 router.get('/:id', (req, res) => {
@@ -35,7 +36,7 @@ router.put('/:id', (req, res) => {
   const emp = db.get('employees').find({ id }).value();
   if (!emp) return res.status(404).json({ error: 'לא נמצא' });
 
-  const allowed = ['displayName','firstName','lastName','ftePercent','type',
+  const allowed = ['displayName','firstName','lastName','ftePercent','type','status',
     'meetingHours','supReceivedHours','supGivenHours','therapyHours',
     'roleHours','roleName','officeHours','notes'];
   const update = {};
@@ -55,6 +56,7 @@ router.post('/', (req, res) => {
     lastName: req.body.lastName || '',
     ftePercent: req.body.ftePercent || 1.0,
     type: req.body.type || 'expert',
+    status: 'active',
     meetingHours: 0, supReceivedHours: 0, supGivenHours: 0,
     therapyHours: 0, roleHours: 0, roleName: '',
     officeHours: 0, notes: ''

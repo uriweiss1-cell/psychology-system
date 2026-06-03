@@ -60,7 +60,7 @@ export default function WorkPlan() {
   const [newEmp, setNewEmp] = useState({ displayName: '', ftePercent: 1.0, type: 'expert' });
 
   const load = useCallback(async () => {
-    const [emps, asgns, fws] = await Promise.all([getEmployees(), getAssignments(), getFrameworks()]);
+    const [emps, asgns, fws] = await Promise.all([getEmployees(true), getAssignments(), getFrameworks()]);
     setEmployees(emps);
     setAssignments(asgns);
     setFrameworks(fws);
@@ -79,7 +79,7 @@ export default function WorkPlan() {
     if (!asgn) return;
     const updated = await updateAssignment(asgn.id, { [field]: value });
     setAssignments(prev => prev.map(a => a.id === asgn.id ? updated : a));
-    const emps = await getEmployees();
+    const emps = await getEmployees(true);
     setEmployees(emps);
   };
 

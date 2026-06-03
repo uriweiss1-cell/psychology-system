@@ -23,7 +23,7 @@ export default function Schools() {
 
   const load = async () => {
     const [sum, emps, asgns] = await Promise.all([
-      getAssignmentSummary(), getEmployees(), getAssignments()
+      getAssignmentSummary(), getEmployees(true), getAssignments()
     ]);
     setSummary(sum);
     setEmployees(emps);

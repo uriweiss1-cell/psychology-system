@@ -2,10 +2,10 @@ import axios from 'axios';
 
 const api = axios.create({ baseURL: '/api' });
 
-export const getEmployees    = () => api.get('/employees').then(r => r.data);
-export const updateEmployee  = (id, data) => api.put(`/employees/${id}`, data).then(r => r.data);
-export const createEmployee  = (data) => api.post('/employees', data).then(r => r.data);
-export const deleteEmployee  = (id) => api.delete(`/employees/${id}`).then(r => r.data);
+export const getEmployees       = (activeOnly = false) => api.get(`/employees${activeOnly ? '?activeOnly=1' : ''}`).then(r => r.data);
+export const updateEmployee     = (id, data) => api.put(`/employees/${id}`, data).then(r => r.data);
+export const createEmployee     = (data) => api.post('/employees', data).then(r => r.data);
+export const deleteEmployee     = (id) => api.delete(`/employees/${id}`).then(r => r.data);
 
 export const getFrameworks   = () => api.get('/frameworks').then(r => r.data);
 export const createFramework = (data) => api.post('/frameworks', data).then(r => r.data);
@@ -24,3 +24,8 @@ export const deleteKinder   = (id) => api.delete(`/kinder/${id}`).then(r => r.da
 export const getTeams       = () => api.get('/teams').then(r => r.data);
 export const updateTeam     = (id, data) => api.put(`/teams/${id}`, data).then(r => r.data);
 export const getUnassigned  = () => api.get('/teams/unassigned').then(r => r.data);
+
+export const getSupervisions   = () => api.get('/supervisions').then(r => r.data);
+export const createSupervision = (data) => api.post('/supervisions', data).then(r => r.data);
+export const updateSupervision = (id, data) => api.put(`/supervisions/${id}`, data).then(r => r.data);
+export const deleteSupervision = (id) => api.delete(`/supervisions/${id}`).then(r => r.data);
