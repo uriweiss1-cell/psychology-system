@@ -563,6 +563,64 @@ async function initDB() {
     db.set('_migrationVersion', MIGRATION_VERSION).write();
     console.log('Migration v4 applied');
   }
+
+  // Migration v5: fix systematic column-shift errors in employee hours data (from Excel re-read)
+  const MIGRATION_V5 = 5;
+  if ((db.get('_migrationVersion').value() || 0) < MIGRATION_V5) {
+    const hourFixes = [
+      { displayName: 'אבי',       meetingHours: 7.5, supReceivedHours: 1,   supGivenHours: 0,   therapyHours: 0,   roleHours: 20,  officeHours: 0 },
+      { displayName: 'אופק',      meetingHours: 4,   supReceivedHours: 3.5, supGivenHours: 0,   therapyHours: 1.5, roleHours: 0,   officeHours: 0 },
+      { displayName: 'אור ה.',    meetingHours: 4,   supReceivedHours: 2.5, supGivenHours: 0,   therapyHours: 3,   roleHours: 2,   officeHours: 0 },
+      { displayName: 'אור א.',    meetingHours: 2,   supReceivedHours: 2,   supGivenHours: 0,   therapyHours: 0,   roleHours: 0,   officeHours: 0 },
+      { displayName: 'אוראל כ.',  meetingHours: 4,   supReceivedHours: 2.5, supGivenHours: 0,   therapyHours: 1.5, roleHours: 0,   officeHours: 0 },
+      { displayName: 'אורי',      meetingHours: 5.5, supReceivedHours: 1,   supGivenHours: 5.5, therapyHours: 0,   roleHours: 6,   officeHours: 0 },
+      { displayName: 'אורית נ.',  meetingHours: 5.5, supReceivedHours: 1,   supGivenHours: 4,   therapyHours: 0,   roleHours: 3,   officeHours: 0 },
+      { displayName: 'אורית ס.',  meetingHours: 4,   supReceivedHours: 2,   supGivenHours: 0,   therapyHours: 1.5, roleHours: 0,   officeHours: 0 },
+      { displayName: 'אסף',       meetingHours: 4,   supReceivedHours: 3.5, supGivenHours: 2,   therapyHours: 0,   roleHours: 0,   officeHours: 0 },
+      { displayName: 'אריאל',     meetingHours: 4,   supReceivedHours: 2.5, supGivenHours: 0,   therapyHours: 3,   roleHours: 0,   officeHours: 0 },
+      { displayName: 'בועז',      meetingHours: 5.5, supReceivedHours: 1,   supGivenHours: 1,   therapyHours: 0,   roleHours: 5,   officeHours: 0 },
+      { displayName: 'גילי',      meetingHours: 4,   supReceivedHours: 2.5, supGivenHours: 0,   therapyHours: 4.5, roleHours: 0,   officeHours: 0 },
+      { displayName: 'דנה',       meetingHours: 2,   supReceivedHours: 0,   supGivenHours: 0,   therapyHours: 0,   roleHours: 0,   officeHours: 0 },
+      { displayName: 'דרור',      meetingHours: 4,   supReceivedHours: 2.5, supGivenHours: 0,   therapyHours: 4.5, roleHours: 0,   officeHours: 0 },
+      { displayName: 'טטיאנה',    meetingHours: 4,   supReceivedHours: 3.5, supGivenHours: 0,   therapyHours: 4.5, roleHours: 0,   officeHours: 0 },
+      { displayName: 'טל',        meetingHours: 4,   supReceivedHours: 2.5, supGivenHours: 0,   therapyHours: 1.5, roleHours: 3,   officeHours: 0 },
+      { displayName: 'יהודית',    meetingHours: 4,   supReceivedHours: 2,   supGivenHours: 3.5, therapyHours: 1.5, roleHours: 0,   officeHours: 0 },
+      { displayName: 'יובל',      meetingHours: 4,   supReceivedHours: 5,   supGivenHours: 4,   therapyHours: 0,   roleHours: 0,   officeHours: 0 },
+      { displayName: 'לירון',     meetingHours: 2,   supReceivedHours: 1,   supGivenHours: 0,   therapyHours: 0,   roleHours: 0,   officeHours: 0 },
+      { displayName: 'מאי',       meetingHours: 4,   supReceivedHours: 2.5, supGivenHours: 0,   therapyHours: 1.5, roleHours: 0,   officeHours: 0 },
+      { displayName: 'מאיה',      meetingHours: 4,   supReceivedHours: 2.5, supGivenHours: 0,   therapyHours: 4.5, roleHours: 0,   officeHours: 0 },
+      { displayName: 'מיכל',      meetingHours: 4,   supReceivedHours: 2.5, supGivenHours: 0,   therapyHours: 1.5, roleHours: 0,   officeHours: 0 },
+      { displayName: 'מריה',      meetingHours: 4,   supReceivedHours: 2.5, supGivenHours: 0,   therapyHours: 1.5, roleHours: 2,   officeHours: 0 },
+      { displayName: 'ספיר',      meetingHours: 2,   supReceivedHours: 1,   supGivenHours: 0,   therapyHours: 0,   roleHours: 0,   officeHours: 0 },
+      { displayName: 'נועם',      meetingHours: 2,   supReceivedHours: 1,   supGivenHours: 0,   therapyHours: 0,   roleHours: 0,   officeHours: 0 },
+      { displayName: 'ניצן',      meetingHours: 4,   supReceivedHours: 1.5, supGivenHours: 3,   therapyHours: 0,   roleHours: 4,   officeHours: 0 },
+      { displayName: 'נעמה',      meetingHours: 2,   supReceivedHours: 2,   supGivenHours: 6,   therapyHours: 0,   roleHours: 0,   officeHours: 0 },
+      { displayName: 'סיגל',      meetingHours: 4,   supReceivedHours: 1.5, supGivenHours: 6.5, therapyHours: 0,   roleHours: 0,   officeHours: 0 },
+      { displayName: 'סיון ב.',   meetingHours: 4,   supReceivedHours: 2.5, supGivenHours: 1,   therapyHours: 1.5, roleHours: 0,   officeHours: 0 },
+      { displayName: 'סיון ג.',   meetingHours: 4,   supReceivedHours: 1.5, supGivenHours: 4,   therapyHours: 1.5, roleHours: 0,   officeHours: 0 },
+      { displayName: 'עבדאללה',   meetingHours: 4,   supReceivedHours: 2.5, supGivenHours: 0,   therapyHours: 3,   roleHours: 5,   officeHours: 0 },
+      { displayName: 'עדי',       meetingHours: 5.5, supReceivedHours: 1,   supGivenHours: 4,   therapyHours: 0,   roleHours: 5,   officeHours: 0 },
+      { displayName: 'עומר',      meetingHours: 4,   supReceivedHours: 2.5, supGivenHours: 0,   therapyHours: 4.5, roleHours: 0,   officeHours: 0 },
+      { displayName: 'עמיחי',     meetingHours: 4,   supReceivedHours: 2.5, supGivenHours: 0,   therapyHours: 3,   roleHours: 0,   officeHours: 0 },
+      { displayName: 'פדות',      meetingHours: 2,   supReceivedHours: 1,   supGivenHours: 0,   therapyHours: 0,   roleHours: 0,   officeHours: 0 },
+      { displayName: 'צוף',       meetingHours: 4,   supReceivedHours: 3,   supGivenHours: 0,   therapyHours: 3,   roleHours: 0,   officeHours: 0 },
+      { displayName: 'רוני',      meetingHours: 4,   supReceivedHours: 2.5, supGivenHours: 0,   therapyHours: 3,   roleHours: 0,   officeHours: 0 },
+      { displayName: 'רועי',      meetingHours: 4,   supReceivedHours: 2.5, supGivenHours: 0,   therapyHours: 1.5, roleHours: 0,   officeHours: 0 },
+      { displayName: 'שחר',       meetingHours: 4,   supReceivedHours: 3.5, supGivenHours: 0,   therapyHours: 1.5, roleHours: 0,   officeHours: 0 },
+      { displayName: 'שניר',      meetingHours: 2,   supReceivedHours: 1,   supGivenHours: 0,   therapyHours: 0,   roleHours: 0,   officeHours: 0 },
+      { displayName: 'תהילה',     meetingHours: 4,   supReceivedHours: 1.5, supGivenHours: 5,   therapyHours: 1.5, roleHours: 0,   officeHours: 0 },
+      { displayName: 'אודי',      meetingHours: 4,   supReceivedHours: 5,   supGivenHours: 4,   therapyHours: 0,   roleHours: 0,   officeHours: 0 },
+      { displayName: 'עמית',      meetingHours: 2,   supReceivedHours: 2,   supGivenHours: 0,   therapyHours: 0,   roleHours: 0,   officeHours: 0 },
+      { displayName: 'אודל',      meetingHours: 4,   supReceivedHours: 3.5, supGivenHours: 0,   therapyHours: 1.5, roleHours: 0,   officeHours: 0 },
+    ];
+    hourFixes.forEach(({ displayName, ...update }) => {
+      if (db.get('employees').find({ displayName }).value()) {
+        db.get('employees').find({ displayName }).assign(update).write();
+      }
+    });
+    db.set('_migrationVersion', MIGRATION_V5).write();
+    console.log('Migration v5 applied: corrected employee hours from Excel');
+  }
 }
 
 // Returns the active collection name (draft or current) for assignment-like data

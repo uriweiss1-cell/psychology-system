@@ -4,19 +4,21 @@ const { db, activeCol } = require('../database');
 
 // Computed fields helper
 function withComputed(emp) {
-  const fteHours = emp.ftePercent * 40;
+  const fteHours = Math.round(emp.ftePercent * 40 * 100) / 100;
   const totalInternal = (emp.meetingHours || 0) + (emp.supReceivedHours || 0) +
     (emp.supGivenHours || 0) + (emp.therapyHours || 0) + (emp.roleHours || 0);
 
-  const assignment = db.get('assignments').find({ employeeId: emp.id }).value();
-  const totalFrameworks = assignment
-    ? (assignment.hours || 0) + (assignment.specEdHours || 0) + (assignment.kinderHours || 0)
-    : 0;
+  // Sum all assignments for this employee (may have multiple frameworks)
+  const empAssignments = db.get('assignments').filter({ employeeId: emp.id }).value();
+  const totalFrameworks = empAssignments.reduce(
+    (sum, a) => sum + (a.hours || 0) + (a.specEdHours || 0) + (a.kinderHours || 0), 0
+  );
 
-  const totalAllocated = totalInternal + totalFrameworks + (emp.officeHours || 0);
-  const balance = Math.round((fteHours - totalAllocated) * 100) / 100;
+  // freeHours = available hours (positive = under-budget, negative = over-budget)
+  const freeHours = Math.round((fteHours - totalInternal - totalFrameworks) * 100) / 100;
+  const balance = freeHours; // kept for backwards compatibility with alerts
 
-  return { ...emp, fteHours, totalInternal, totalFrameworks, totalAllocated, balance };
+  return { ...emp, fteHours, totalInternal, totalFrameworks, freeHours, balance };
 }
 
 router.get('/', (req, res) => {

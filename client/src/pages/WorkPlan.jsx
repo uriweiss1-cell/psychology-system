@@ -8,13 +8,12 @@ const HOURS_FIELDS = [
   { key: 'supGivenHours',      label: 'הדרכה - נותן' },
   { key: 'therapyHours',       label: 'טיפול' },
   { key: 'roleHours',          label: 'תפקיד' },
-  { key: 'officeHours',        label: 'משרד' },
 ];
 
-function BalanceBadge({ balance }) {
-  if (Math.abs(balance) < 0.1) return <span className="badge bg-green-100 text-green-800">מאוזן</span>;
-  if (balance > 0) return <span className="badge bg-yellow-100 text-yellow-800">+{balance} פנוי</span>;
-  return <span className="badge bg-red-100 text-red-800">{balance} חריגה</span>;
+function FreeHoursBadge({ freeHours }) {
+  if (Math.abs(freeHours) < 0.1) return <span className="badge bg-green-100 text-green-800">0</span>;
+  if (freeHours > 0) return <span className="badge bg-blue-100 text-blue-800">+{freeHours}</span>;
+  return <span className="badge bg-red-100 text-red-800">{freeHours}</span>;
 }
 
 function EditableCell({ value, onSave, type = 'number' }) {
@@ -110,7 +109,7 @@ export default function WorkPlan() {
     return fw?.name || '—';
   };
 
-  const overBudget = employees.filter(e => e.balance < -0.1);
+  const overBudget = employees.filter(e => e.freeHours < -0.1);
 
   return (
     <div>
@@ -159,14 +158,13 @@ export default function WorkPlan() {
               <th className="table-header text-center bg-blue-50">הדרכה<br/>נותן</th>
               <th className="table-header text-center bg-blue-50">טיפול</th>
               <th className="table-header text-center bg-blue-50">תפקיד</th>
-              <th className="table-header text-center bg-blue-50">משרד</th>
               <th className="table-header text-center bg-blue-100">סה"כ פנימי</th>
               <th className="table-header text-center bg-green-50">בי"ס</th>
               <th className="table-header text-center bg-green-50">ח"מ</th>
               <th className="table-header text-center bg-green-50">גנים</th>
               <th className="table-header text-center bg-green-100">סה"כ מסגרות</th>
               <th className="table-header text-center">שם בי"ס/מסגרת</th>
-              <th className="table-header text-center">מאזן</th>
+              <th className="table-header text-center">שעות פנויות</th>
               <th className="table-header"></th>
             </tr>
           </thead>
@@ -197,7 +195,7 @@ export default function WorkPlan() {
                   </td>
                   <td className="table-cell text-center bg-green-50 font-semibold">{emp.totalFrameworks}</td>
                   <td className="table-cell text-center text-xs text-gray-500">{getFwName(asgn)}</td>
-                  <td className="table-cell text-center"><BalanceBadge balance={emp.balance} /></td>
+                  <td className="table-cell text-center"><FreeHoursBadge freeHours={emp.freeHours} /></td>
                   <td className="table-cell">
                     <button className="text-red-400 hover:text-red-600 text-xs" onClick={() => removeEmployee(emp.id, emp.displayName)}>מחק</button>
                   </td>
