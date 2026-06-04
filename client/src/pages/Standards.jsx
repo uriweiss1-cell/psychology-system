@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getEmployees, updateEmployee, createEmployee, deleteEmployee } from '../api';
+import { getEmployees, updateEmployee, createEmployee, deleteEmployee, getSettings, updateSettings } from '../api';
 import AlertsBanner from '../components/AlertsBanner';
 import ImportModal from '../components/ImportModal';
 
@@ -7,15 +7,20 @@ const STATUS_COLORS = { active: 'bg-green-100 text-green-800', inactive: 'bg-red
 
 export default function Standards() {
   const [employees, setEmployees] = useState([]);
+  const [settings, setSettings] = useState({ approvedPositions: 0 });
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('');
   const [editing, setEditing] = useState({});
   const [showAdd, setShowAdd] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [newEmp, setNewEmp] = useState({ displayName: '', firstName: '', lastName: '', ftePercent: 1.0 });
+  const [editingApproved, setEditingApproved] = useState(false);
+  const [approvedInput, setApprovedInput] = useState('');
 
   const load = async () => {
-    setEmployees(await getEmployees());
+    const [emps, sett] = await Promise.all([getEmployees(), getSettings()]);
+    setEmployees(emps);
+    setSettings(sett);
     setLoading(false);
   };
 
@@ -39,6 +44,11 @@ export default function Standards() {
     return editing[key] !== undefined ? editing[key] : emp[field];
   };
 
+  const toggleSubstitute = async (emp) => {
+    const updated = await updateEmployee(emp.id, { isSubstitute: !emp.isSubstitute });
+    setEmployees(prev => prev.map(e => e.id === emp.id ? { ...e, ...updated } : e));
+  };
+
   const handleAdd = async () => {
     if (!newEmp.displayName.trim()) return;
     const created = await createEmployee(newEmp);
@@ -58,12 +68,31 @@ export default function Standards() {
     setEmployees(prev => prev.map(e => e.id === emp.id ? { ...e, ...updated } : e));
   };
 
+  const saveApproved = async () => {
+    const val = parseFloat(approvedInput);
+    if (isNaN(val)) return;
+    const updated = await updateSettings({ approvedPositions: val });
+    setSettings(updated);
+    setEditingApproved(false);
+  };
+
   const filtered = employees.filter(e =>
     !filter || e.displayName?.includes(filter) || e.firstName?.includes(filter) || e.lastName?.includes(filter)
   );
 
-  const activeEmps = employees.filter(e => e.status === 'active' || !e.status);
-  const totalFTE = activeEmps.reduce((s, e) => s + e.ftePercent, 0);
+  // חישובי לוח סיכום
+  const active       = employees.filter(e => (e.status === 'active' || !e.status) && !e.isSubstitute);
+  const maternity    = employees.filter(e => e.status === 'maternity');
+  const substitutes  = employees.filter(e => e.isSubstitute && e.status !== 'inactive');
+  const approved     = settings.approvedPositions || 0;
+
+  const activeSum    = active.reduce((s, e) => s + e.ftePercent, 0);
+  const maternitySum = maternity.reduce((s, e) => s + e.ftePercent, 0);
+  const subsSum      = substitutes.reduce((s, e) => s + e.ftePercent, 0);
+  const vacantPos    = approved - activeSum - maternitySum;
+  const vacantSubs   = maternitySum - subsSum;
+
+  const fmt = (n) => Math.round(n * 100) / 100;
 
   if (loading) return <div className="p-6 text-gray-500">טוען...</div>;
 
@@ -79,13 +108,41 @@ export default function Standards() {
         />
       )}
       <AlertsBanner />
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h1 className="text-xl font-bold text-gray-800">תקנים</h1>
-          <p className="text-sm text-gray-500">
-            {activeEmps.length} פעילים | {totalFTE.toFixed(2)} משרות | {Math.ceil(totalFTE * 40)} שעות שבועיות
-          </p>
+
+      {/* לוח סיכום תקנים */}
+      <div className="bg-white rounded shadow p-4 mb-4">
+        <h2 className="text-base font-bold text-gray-700 mb-3">סיכום תקנים</h2>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+          <SummaryCard
+            label="תקנים מאושרים"
+            value={approved}
+            color="bg-blue-50 border-blue-200"
+            textColor="text-blue-800"
+            editable
+            onEdit={() => { setApprovedInput(String(approved)); setEditingApproved(true); }}
+            editing={editingApproved}
+            editValue={approvedInput}
+            onEditChange={setApprovedInput}
+            onEditSave={saveApproved}
+            onEditCancel={() => setEditingApproved(false)}
+          />
+          <SummaryCard label="תקנים בפועל" value={fmt(activeSum)} color="bg-green-50 border-green-200" textColor="text-green-800"
+            sub={`${active.length} עובדים`} />
+          <SummaryCard label='משרות בחל"ד' value={fmt(maternitySum)} color="bg-indigo-50 border-indigo-200" textColor="text-indigo-800"
+            sub={`${maternity.length} עובדים`} />
+          <SummaryCard label="מילוי מקום" value={fmt(subsSum)} color="bg-amber-50 border-amber-200" textColor="text-amber-800"
+            sub={`${substitutes.length} עובדים`} />
+          <SummaryCard label="תקנים פנויים" value={fmt(vacantPos)} color={vacantPos < 0 ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-200'}
+            textColor={vacantPos < 0 ? 'text-red-700' : 'text-gray-700'}
+            sub="מאושרים − בפועל − חל״ד" />
+          <SummaryCard label='פנוי למ"מ' value={fmt(vacantSubs)} color={vacantSubs < 0 ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-200'}
+            textColor={vacantSubs < 0 ? 'text-red-700' : 'text-gray-700'}
+            sub='חל"ד − מ"מ' />
         </div>
+      </div>
+
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-xl font-bold text-gray-800">תקנים</h1>
         <div className="flex gap-2">
           <input className="input" placeholder="חיפוש..." value={filter} onChange={e => setFilter(e.target.value)} />
           <button className="btn-secondary" onClick={() => setShowImport(true)}>📥 ייבוא מקובץ</button>
@@ -129,6 +186,7 @@ export default function Standards() {
               <th className="table-header">שם משפחה</th>
               <th className="table-header text-center">אחוז משרה</th>
               <th className="table-header text-center">סטטוס</th>
+              <th className="table-header text-center">מ"מ</th>
               <th className="table-header">הערות</th>
               <th className="table-header text-center">פעולות</th>
             </tr>
@@ -137,21 +195,18 @@ export default function Standards() {
             {filtered.map(emp => {
               const isInactive = emp.status === 'inactive' || emp.status === 'maternity';
               return (
-                <tr key={emp.id} className={`hover:bg-gray-50 ${isInactive ? 'opacity-50' : ''}`}>
+                <tr key={emp.id} className={`hover:bg-gray-50 ${isInactive ? 'opacity-60' : ''}`}>
                   <td className="table-cell">
                     <EditField id={emp.id} field="firstName" value={getEditVal(emp, 'firstName')} type="text"
-                      onChange={v => setFieldEdit(emp.id, 'firstName', v)}
-                      onSave={() => saveField(emp.id, 'firstName')} />
+                      onChange={v => setFieldEdit(emp.id, 'firstName', v)} onSave={() => saveField(emp.id, 'firstName')} />
                   </td>
                   <td className="table-cell">
                     <EditField id={emp.id} field="lastName" value={getEditVal(emp, 'lastName')} type="text"
-                      onChange={v => setFieldEdit(emp.id, 'lastName', v)}
-                      onSave={() => saveField(emp.id, 'lastName')} />
+                      onChange={v => setFieldEdit(emp.id, 'lastName', v)} onSave={() => saveField(emp.id, 'lastName')} />
                   </td>
                   <td className="table-cell text-center">
                     <EditField id={emp.id} field="ftePercent" value={getEditVal(emp, 'ftePercent')} type="number"
-                      onChange={v => setFieldEdit(emp.id, 'ftePercent', v)}
-                      onSave={() => saveField(emp.id, 'ftePercent')} />
+                      onChange={v => setFieldEdit(emp.id, 'ftePercent', v)} onSave={() => saveField(emp.id, 'ftePercent')} />
                   </td>
                   <td className="table-cell text-center">
                     <select
@@ -164,10 +219,18 @@ export default function Standards() {
                       <option value="inactive">לא פעיל</option>
                     </select>
                   </td>
+                  <td className="table-cell text-center">
+                    <input
+                      type="checkbox"
+                      checked={!!emp.isSubstitute}
+                      onChange={() => toggleSubstitute(emp)}
+                      title="מילוי מקום"
+                      className="w-4 h-4 cursor-pointer"
+                    />
+                  </td>
                   <td className="table-cell">
                     <EditField id={emp.id} field="notes" value={getEditVal(emp, 'notes')} type="text"
-                      onChange={v => setFieldEdit(emp.id, 'notes', v)}
-                      onSave={() => saveField(emp.id, 'notes')} />
+                      onChange={v => setFieldEdit(emp.id, 'notes', v)} onSave={() => saveField(emp.id, 'notes')} />
                   </td>
                   <td className="table-cell text-center">
                     <button className="text-red-400 hover:text-red-600 text-xs" onClick={() => handleDelete(emp)} title="מחק עובד">🗑️</button>
@@ -182,16 +245,33 @@ export default function Standards() {
   );
 }
 
+function SummaryCard({ label, value, color, textColor, sub, editable, onEdit, editing, editValue, onEditChange, onEditSave, onEditCancel }) {
+  return (
+    <div className={`border rounded-lg p-3 ${color}`}>
+      <p className="text-xs text-gray-500 mb-1">{label}</p>
+      {editing ? (
+        <div className="flex gap-1 items-center">
+          <input type="number" step="0.01" className="input py-0.5 text-sm w-16" value={editValue} onChange={e => onEditChange(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') onEditSave(); if (e.key === 'Escape') onEditCancel(); }} autoFocus />
+          <button className="text-green-600 text-xs" onClick={onEditSave}>✓</button>
+          <button className="text-gray-400 text-xs" onClick={onEditCancel}>✕</button>
+        </div>
+      ) : (
+        <div className="flex items-end gap-1">
+          <span className={`text-2xl font-bold ${textColor}`}>{value}</span>
+          {editable && <button className="text-gray-400 hover:text-gray-600 text-xs mb-1" onClick={onEdit}>✏️</button>}
+        </div>
+      )}
+      {sub && <p className="text-xs text-gray-400 mt-0.5">{sub}</p>}
+    </div>
+  );
+}
+
 function EditField({ id, field, value, type, onChange, onSave }) {
   return (
-    <input
-      type={type}
-      step={type === 'number' ? '0.01' : undefined}
-      className="input w-full text-sm py-0.5"
-      value={value ?? ''}
-      onChange={e => onChange(e.target.value)}
-      onBlur={onSave}
-      onKeyDown={e => e.key === 'Enter' && onSave()}
-    />
+    <input type={type} step={type === 'number' ? '0.01' : undefined}
+      className="input w-full text-sm py-0.5" value={value ?? ''}
+      onChange={e => onChange(e.target.value)} onBlur={onSave}
+      onKeyDown={e => e.key === 'Enter' && onSave()} />
   );
 }

@@ -19,6 +19,7 @@ async function main() {
   app.use('/api/supervisions',     require('./routes/supervisions'));
   app.use('/api/spec-ed',          require('./routes/specEd'));
   app.use('/api/alerts',           require('./routes/alerts'));
+  app.use('/api/settings',         require('./routes/settings'));
   app.use('/api/draft',            require('./routes/draft'));
   app.use('/api/import',           require('./routes/import'));
 

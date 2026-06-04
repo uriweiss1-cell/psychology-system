@@ -51,7 +51,7 @@ const SEED_EMPLOYEES = [
   { id: 21, displayName: 'מאיה',     firstName: 'מאיה',    lastName: '',          ftePercent: 1.0,  type: 'expert',  status: 'active', meetingHours: 4,   supReceivedHours: 2.5, supGivenHours: 4.5, therapyHours: 0,   roleHours: 11,  roleName: '', officeHours: 8,    notes: '' },
   { id: 22, displayName: 'מיכל',     firstName: 'מיכל',    lastName: '',          ftePercent: 0.51, type: 'expert',  status: 'active', meetingHours: 4,   supReceivedHours: 2.5, supGivenHours: 1.5, therapyHours: 0,   roleHours: 8,   roleName: '', officeHours: 4,    notes: '' },
   { id: 23, displayName: 'מריה',     firstName: 'מריה',    lastName: '',          ftePercent: 0.9,  type: 'expert',  status: 'active', meetingHours: 4,   supReceivedHours: 2.5, supGivenHours: 1.5, therapyHours: 0,   roleHours: 2,   roleName: '', officeHours: 6,    notes: '' },
-  { id: 24, displayName: 'ספיר',     firstName: 'ספיר',    lastName: '',          ftePercent: 0.82, type: 'trainee', status: 'active', meetingHours: 2,   supReceivedHours: 1,   supGivenHours: 3,   therapyHours: 0,   roleHours: 0,   roleName: '', officeHours: 3,    notes: 'מילוי מקום' },
+  { id: 24, displayName: 'ספיר',     firstName: 'ספיר',    lastName: '',          ftePercent: 0.82, type: 'trainee', status: 'active', isSubstitute: true, meetingHours: 2,   supReceivedHours: 1,   supGivenHours: 3,   therapyHours: 0,   roleHours: 0,   roleName: '', officeHours: 3,    notes: '' },
   { id: 25, displayName: 'נועם',     firstName: 'נועם',    lastName: '',          ftePercent: 0.82, type: 'trainee', status: 'active', meetingHours: 2,   supReceivedHours: 1,   supGivenHours: 3,   therapyHours: 0,   roleHours: 0,   roleName: '', officeHours: 3,    notes: '' },
   { id: 26, displayName: 'ניצן',     firstName: 'ניצן',    lastName: 'גנץ',       ftePercent: 0.8,  type: 'expert',  status: 'active', meetingHours: 4,   supReceivedHours: 1.5, supGivenHours: 3,   therapyHours: 4,   roleHours: 0,   roleName: '', officeHours: 16.5, notes: '' },
   { id: 27, displayName: 'נעמה',     firstName: 'נעמה',    lastName: '',          ftePercent: 0.33, type: 'expert',  status: 'active', meetingHours: 2,   supReceivedHours: 2,   supGivenHours: 6,   therapyHours: 10,  roleHours: 0,   roleName: '', officeHours: 3,    notes: '' },
@@ -72,7 +72,7 @@ const SEED_EMPLOYEES = [
   { id: 42, displayName: 'אודי',     firstName: 'אודי',    lastName: '',          ftePercent: 0.5,  type: 'expert',  status: 'active', meetingHours: 4,   supReceivedHours: 5,   supGivenHours: 4,   therapyHours: 13,  roleHours: 0,   roleName: '', officeHours: 3,    notes: '' },
   { id: 43, displayName: 'עמית',     firstName: 'עמית',    lastName: '',          ftePercent: 0.8,  type: 'expert',  status: 'active', meetingHours: 2,   supReceivedHours: 2,   supGivenHours: 4,   therapyHours: 0,   roleHours: 0,   roleName: '', officeHours: 2,    notes: '' },
   { id: 44, displayName: 'אודל',     firstName: 'אודל',    lastName: '',          ftePercent: 0.8,  type: 'expert',  status: 'active', meetingHours: 4,   supReceivedHours: 3.5, supGivenHours: 1.5, therapyHours: 0,   roleHours: 9,   roleName: '', officeHours: 6,    notes: '' },
-  { id: 45, displayName: 'נועה',     firstName: 'נועה',    lastName: '',          ftePercent: 0.82, type: 'trainee', status: 'active', meetingHours: 0,   supReceivedHours: 0,   supGivenHours: 0,   therapyHours: 0,   roleHours: 0,   roleName: '', officeHours: 0,    notes: 'מילוי מקום' },
+  { id: 45, displayName: 'נועה',     firstName: 'נועה',    lastName: '',          ftePercent: 0.82, type: 'trainee', status: 'active', isSubstitute: true, meetingHours: 0,   supReceivedHours: 0,   supGivenHours: 0,   therapyHours: 0,   roleHours: 0,   roleName: '', officeHours: 0,    notes: '' },
 ];
 
 const SEED_FRAMEWORKS = [
@@ -466,7 +466,8 @@ async function initDB() {
     employees: [], frameworks: [], assignments: [],
     kinderAssignments: [], teams: [], supervisions: [], specEdClasses: [],
     draft_assignments: [], draft_kinderAssignments: [], draft_specEdClasses: [],
-    draftActive: false, _seedVersion: 0,
+    draftActive: false,
+    settings: { approvedPositions: 0 },
     _nextId: { employees: 100, frameworks: 300, assignments: 500, kinderAssignments: 600, supervisions: 100, specEdClasses: 100 }
   }).write();
 

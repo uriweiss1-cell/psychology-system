@@ -26,6 +26,8 @@ export const updateTeam     = (id, data) => api.put(`/teams/${id}`, data).then(r
 export const getUnassigned  = () => api.get('/teams/unassigned').then(r => r.data);
 
 export const getAlerts           = () => api.get('/alerts').then(r => r.data);
+export const getSettings         = () => api.get('/settings').then(r => r.data);
+export const updateSettings      = (data) => api.put('/settings', data).then(r => r.data);
 
 export const getDraftStatus      = () => api.get('/draft/status').then(r => r.data);
 export const activateDraft       = () => api.post('/draft/activate').then(r => r.data);

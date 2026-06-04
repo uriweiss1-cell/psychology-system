@@ -36,7 +36,7 @@ router.put('/:id', (req, res) => {
   const emp = db.get('employees').find({ id }).value();
   if (!emp) return res.status(404).json({ error: 'לא נמצא' });
 
-  const allowed = ['displayName','firstName','lastName','ftePercent','type','status',
+  const allowed = ['displayName','firstName','lastName','ftePercent','type','status','isSubstitute',
     'meetingHours','supReceivedHours','supGivenHours','therapyHours',
     'roleHours','roleName','officeHours','notes'];
   const update = {};
@@ -57,6 +57,7 @@ router.post('/', (req, res) => {
     ftePercent: req.body.ftePercent || 1.0,
     type: req.body.type || 'expert',
     status: 'active',
+    isSubstitute: false,
     meetingHours: 0, supReceivedHours: 0, supGivenHours: 0,
     therapyHours: 0, roleHours: 0, roleName: '',
     officeHours: 0, notes: ''
