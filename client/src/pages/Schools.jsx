@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getAssignmentSummary, getEmployees, getAssignments, updateAssignment, getFrameworks, getSpecEdClasses, createSpecEdClass, updateSpecEdClass, deleteSpecEdClass } from '../api';
+import { getAssignmentSummary, getEmployees, getAssignments, updateAssignment, getFrameworks, getSpecEdClasses, createSpecEdClass, updateSpecEdClass, deleteSpecEdClass, advanceSpecEdYear } from '../api';
 import axios from 'axios';
 import AlertsBanner from '../components/AlertsBanner';
 
@@ -124,6 +124,16 @@ export default function Schools() {
             <option value="special_ed">חינוך מיוחד</option>
           </select>
           <input className="input" placeholder="חיפוש..." value={filter} onChange={e => setFilter(e.target.value)} />
+          <button
+            className="btn-secondary text-xs py-1 border-amber-400 text-amber-700 hover:bg-amber-50"
+            onClick={async () => {
+              if (!confirm('לקדם את כל כיתות הח״מ שנה אחת קדימה?\nכיתות שסיימו (ו׳ ביסודי, ט׳ בחטיבה, יב׳ בתיכון) יימחקו.')) return;
+              await advanceSpecEdYear();
+              load();
+            }}
+          >
+            📅 קידום שנה
+          </button>
         </div>
       </div>
 

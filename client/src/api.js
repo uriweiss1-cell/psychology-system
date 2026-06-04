@@ -41,6 +41,7 @@ export const getSpecEdClasses    = () => api.get('/spec-ed').then(r => r.data);
 export const createSpecEdClass   = (data) => api.post('/spec-ed', data).then(r => r.data);
 export const updateSpecEdClass   = (id, data) => api.put(`/spec-ed/${id}`, data).then(r => r.data);
 export const deleteSpecEdClass   = (id) => api.delete(`/spec-ed/${id}`).then(r => r.data);
+export const advanceSpecEdYear   = () => api.post('/spec-ed/advance-year').then(r => r.data);
 
 export const getSupervisions   = () => api.get('/supervisions').then(r => r.data);
 export const createSupervision = (data) => api.post('/supervisions', data).then(r => r.data);
