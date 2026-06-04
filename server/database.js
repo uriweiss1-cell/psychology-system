@@ -31,7 +31,7 @@ const SEED_EMPLOYEES = [
   { id: 1,  displayName: 'אבי',      firstName: 'אבי',     lastName: 'עזר',       ftePercent: 1.0,  type: 'expert',  status: 'active', meetingHours: 7.5, supReceivedHours: 1,   supGivenHours: 20,  therapyHours: 0,   roleHours: 0,   roleName: '', officeHours: 11.5, notes: '' },
   { id: 2,  displayName: 'אופק',     firstName: 'אופק',    lastName: '',          ftePercent: 1.0,  type: 'expert',  status: 'active', meetingHours: 4,   supReceivedHours: 3.5, supGivenHours: 1.5, therapyHours: 0,   roleHours: 9,   roleName: '', officeHours: 12,   notes: '' },
   { id: 3,  displayName: 'אור ה.',   firstName: 'אור',     lastName: 'הדר',       ftePercent: 0.82, type: 'expert',  status: 'active', meetingHours: 4,   supReceivedHours: 2.5, supGivenHours: 3,   therapyHours: 0,   roleHours: 2,   roleName: '', officeHours: 4.5,  notes: '' },
-  { id: 4,  displayName: 'אור א.',   firstName: 'אור',     lastName: 'אדיר',      ftePercent: 0.8,  type: 'trainee', status: 'active', meetingHours: 2,   supReceivedHours: 2,   supGivenHours: 4,   therapyHours: 0,   roleHours: 0,   roleName: '', officeHours: 2,    notes: '' },
+  { id: 4,  displayName: 'אור א.',   firstName: 'אור',     lastName: 'אדיר',      ftePercent: 0.8,  type: 'trainee', status: 'active', isSubstitute: true, meetingHours: 2,   supReceivedHours: 2,   supGivenHours: 4,   therapyHours: 0,   roleHours: 0,   roleName: '', officeHours: 2,    notes: '' },
   { id: 5,  displayName: 'אוראל כ.',  firstName: 'אוראל', lastName: 'כהן',       ftePercent: 0.51, type: 'trainee', status: 'active', meetingHours: 4,   supReceivedHours: 2.5, supGivenHours: 1.5, therapyHours: 0,   roleHours: 8,   roleName: '', officeHours: 3,    notes: '' },
   { id: 6,  displayName: 'אורי',     firstName: 'אורי',    lastName: 'וייס',      ftePercent: 0.82, type: 'expert',  status: 'active', meetingHours: 5.5, supReceivedHours: 1,   supGivenHours: 5.5, therapyHours: 6,   roleHours: 0,   roleName: '', officeHours: 11,   notes: '' },
   { id: 7,  displayName: 'אורית נ.', firstName: 'אורית',   lastName: 'נעמד',      ftePercent: 0.51, type: 'trainee', status: 'active', meetingHours: 5.5, supReceivedHours: 1,   supGivenHours: 4,   therapyHours: 3,   roleHours: 0,   roleName: '', officeHours: 5.5,  notes: '' },
@@ -51,8 +51,8 @@ const SEED_EMPLOYEES = [
   { id: 21, displayName: 'מאיה',     firstName: 'מאיה',    lastName: '',          ftePercent: 1.0,  type: 'expert',  status: 'active', meetingHours: 4,   supReceivedHours: 2.5, supGivenHours: 4.5, therapyHours: 0,   roleHours: 11,  roleName: '', officeHours: 8,    notes: '' },
   { id: 22, displayName: 'מיכל',     firstName: 'מיכל',    lastName: '',          ftePercent: 0.51, type: 'expert',  status: 'active', meetingHours: 4,   supReceivedHours: 2.5, supGivenHours: 1.5, therapyHours: 0,   roleHours: 8,   roleName: '', officeHours: 4,    notes: '' },
   { id: 23, displayName: 'מריה',     firstName: 'מריה',    lastName: '',          ftePercent: 0.9,  type: 'expert',  status: 'active', meetingHours: 4,   supReceivedHours: 2.5, supGivenHours: 1.5, therapyHours: 0,   roleHours: 2,   roleName: '', officeHours: 6,    notes: '' },
-  { id: 24, displayName: 'ספיר',     firstName: 'ספיר',    lastName: '',          ftePercent: 0.82, type: 'trainee', status: 'active', isSubstitute: true, meetingHours: 2,   supReceivedHours: 1,   supGivenHours: 3,   therapyHours: 0,   roleHours: 0,   roleName: '', officeHours: 3,    notes: '' },
-  { id: 25, displayName: 'נועם',     firstName: 'נועם',    lastName: '',          ftePercent: 0.82, type: 'trainee', status: 'active', meetingHours: 2,   supReceivedHours: 1,   supGivenHours: 3,   therapyHours: 0,   roleHours: 0,   roleName: '', officeHours: 3,    notes: '' },
+  { id: 24, displayName: 'ספיר',     firstName: 'ספיר',    lastName: 'עטיה',      ftePercent: 0.82, type: 'trainee', status: 'active', isSubstitute: false, meetingHours: 2,   supReceivedHours: 1,   supGivenHours: 3,   therapyHours: 0,   roleHours: 0,   roleName: '', officeHours: 3,    notes: '' },
+  { id: 25, displayName: 'נועם',     firstName: 'נועם',    lastName: 'שלין',      ftePercent: 0.82, type: 'trainee', status: 'active', meetingHours: 2,   supReceivedHours: 1,   supGivenHours: 3,   therapyHours: 0,   roleHours: 0,   roleName: '', officeHours: 3,    notes: 'אמור לעזוב באפריל' },
   { id: 26, displayName: 'ניצן',     firstName: 'ניצן',    lastName: 'גנץ',       ftePercent: 0.8,  type: 'expert',  status: 'active', meetingHours: 4,   supReceivedHours: 1.5, supGivenHours: 3,   therapyHours: 4,   roleHours: 0,   roleName: '', officeHours: 16.5, notes: '' },
   { id: 27, displayName: 'נעמה',     firstName: 'נעמה',    lastName: '',          ftePercent: 0.33, type: 'expert',  status: 'active', meetingHours: 2,   supReceivedHours: 2,   supGivenHours: 6,   therapyHours: 10,  roleHours: 0,   roleName: '', officeHours: 3,    notes: '' },
   { id: 28, displayName: 'סיגל',     firstName: 'סיגל',    lastName: '',          ftePercent: 0.35, type: 'trainee', status: 'active', meetingHours: 4,   supReceivedHours: 1.5, supGivenHours: 6.5, therapyHours: 12,  roleHours: 0,   roleName: '', officeHours: 2,    notes: '' },
@@ -62,17 +62,19 @@ const SEED_EMPLOYEES = [
   { id: 32, displayName: 'עדי',      firstName: 'עדי',     lastName: '',          ftePercent: 0.62, type: 'expert',  status: 'active', meetingHours: 5.5, supReceivedHours: 1,   supGivenHours: 4,   therapyHours: 5,   roleHours: 0,   roleName: '', officeHours: 5.5,  notes: '' },
   { id: 33, displayName: 'עומר',     firstName: 'עומר',    lastName: '',          ftePercent: 1.0,  type: 'expert',  status: 'active', meetingHours: 4,   supReceivedHours: 2.5, supGivenHours: 4.5, therapyHours: 0,   roleHours: 11,  roleName: '', officeHours: 8,    notes: '' },
   { id: 34, displayName: 'עמיחי',    firstName: 'עמיחי',   lastName: '',          ftePercent: 0.82, type: 'expert',  status: 'active', meetingHours: 4,   supReceivedHours: 2.5, supGivenHours: 3,   therapyHours: 0,   roleHours: 9.5, roleName: '', officeHours: 5.5,  notes: '' },
-  { id: 35, displayName: 'פדות',     firstName: 'פדות',    lastName: '',          ftePercent: 0.82, type: 'trainee', status: 'active', meetingHours: 2,   supReceivedHours: 1,   supGivenHours: 3,   therapyHours: 0,   roleHours: 0,   roleName: '', officeHours: 3,    notes: 'חלד' },
+  { id: 35, displayName: 'פדות',     firstName: 'פדות',    lastName: 'לבבי',      ftePercent: 0.82, type: 'trainee', status: 'maternity', meetingHours: 2,   supReceivedHours: 1,   supGivenHours: 3,   therapyHours: 0,   roleHours: 0,   roleName: '', officeHours: 3,    notes: '' },
   { id: 36, displayName: 'צוף',      firstName: 'צוף',     lastName: '',          ftePercent: 1.0,  type: 'expert',  status: 'active', meetingHours: 4,   supReceivedHours: 3,   supGivenHours: 3,   therapyHours: 0,   roleHours: 10,  roleName: '', officeHours: 7,    notes: '' },
   { id: 37, displayName: 'רוני',     firstName: 'רוני',    lastName: '',          ftePercent: 0.5,  type: 'expert',  status: 'active', meetingHours: 4,   supReceivedHours: 2.5, supGivenHours: 3,   therapyHours: 0,   roleHours: 9.5, roleName: '', officeHours: 3.5,  notes: '' },
   { id: 38, displayName: 'רועי',     firstName: 'רועי',    lastName: '',          ftePercent: 0.5,  type: 'expert',  status: 'active', meetingHours: 4,   supReceivedHours: 2.5, supGivenHours: 1.5, therapyHours: 0,   roleHours: 8,   roleName: '', officeHours: 3,    notes: '' },
-  { id: 39, displayName: 'שחר',      firstName: 'שחר',     lastName: 'וינר',      ftePercent: 0.8,  type: 'expert',  status: 'active', meetingHours: 4,   supReceivedHours: 3.5, supGivenHours: 1.5, therapyHours: 0,   roleHours: 9,   roleName: '', officeHours: 7,    notes: '' },
+  { id: 39, displayName: 'שחר',      firstName: 'שחר',     lastName: 'וינר',      ftePercent: 0.8,  type: 'expert',  status: 'maternity', meetingHours: 4,   supReceivedHours: 3.5, supGivenHours: 1.5, therapyHours: 0,   roleHours: 9,   roleName: '', officeHours: 7,    notes: '' },
   { id: 40, displayName: 'שניר',     firstName: 'שניר',    lastName: '',          ftePercent: 0.8,  type: 'expert',  status: 'active', meetingHours: 2,   supReceivedHours: 1,   supGivenHours: 3,   therapyHours: 0,   roleHours: 0,   roleName: '', officeHours: 5,    notes: '' },
   { id: 41, displayName: 'תהילה',    firstName: 'תהילה',   lastName: '',          ftePercent: 0.6,  type: 'expert',  status: 'active', meetingHours: 4,   supReceivedHours: 1.5, supGivenHours: 5,   therapyHours: 1.5, roleHours: 12,  roleName: '', officeHours: 10,   notes: '' },
   { id: 42, displayName: 'אודי',     firstName: 'אודי',    lastName: '',          ftePercent: 0.5,  type: 'expert',  status: 'active', meetingHours: 4,   supReceivedHours: 5,   supGivenHours: 4,   therapyHours: 13,  roleHours: 0,   roleName: '', officeHours: 3,    notes: '' },
   { id: 43, displayName: 'עמית',     firstName: 'עמית',    lastName: '',          ftePercent: 0.8,  type: 'expert',  status: 'active', meetingHours: 2,   supReceivedHours: 2,   supGivenHours: 4,   therapyHours: 0,   roleHours: 0,   roleName: '', officeHours: 2,    notes: '' },
-  { id: 44, displayName: 'אודל',     firstName: 'אודל',    lastName: '',          ftePercent: 0.8,  type: 'expert',  status: 'active', meetingHours: 4,   supReceivedHours: 3.5, supGivenHours: 1.5, therapyHours: 0,   roleHours: 9,   roleName: '', officeHours: 6,    notes: '' },
-  { id: 45, displayName: 'נועה',     firstName: 'נועה',    lastName: '',          ftePercent: 0.82, type: 'trainee', status: 'active', isSubstitute: true, meetingHours: 0,   supReceivedHours: 0,   supGivenHours: 0,   therapyHours: 0,   roleHours: 0,   roleName: '', officeHours: 0,    notes: '' },
+  { id: 44, displayName: 'אודל',     firstName: 'אודל',    lastName: 'שגיא',      ftePercent: 0.8,  type: 'expert',  status: 'active', isSubstitute: true, meetingHours: 4,   supReceivedHours: 3.5, supGivenHours: 1.5, therapyHours: 0,   roleHours: 9,   roleName: '', officeHours: 6,    notes: '' },
+  { id: 45, displayName: 'נועה',     firstName: 'נועה',    lastName: 'רותם רוטהולץ', ftePercent: 0.82, type: 'expert',  status: 'maternity', isSubstitute: false, meetingHours: 0, supReceivedHours: 0, supGivenHours: 0, therapyHours: 0, roleHours: 0, roleName: '', officeHours: 0, notes: '' },
+  { id: 46, displayName: 'נטע',      firstName: 'נטע',     lastName: 'רייכמן',    ftePercent: 0.62, type: 'expert',  status: 'maternity', isSubstitute: false, meetingHours: 0, supReceivedHours: 0, supGivenHours: 0, therapyHours: 0, roleHours: 0, roleName: '', officeHours: 0, notes: '' },
+  { id: 47, displayName: 'אן',       firstName: 'אן',      lastName: 'הדר',       ftePercent: 0.35, type: 'expert',  status: 'active',   isSubstitute: false, meetingHours: 0, supReceivedHours: 0, supGivenHours: 0, therapyHours: 0, roleHours: 0, roleName: '', officeHours: 0, notes: '' },
 ];
 
 const SEED_FRAMEWORKS = [
@@ -467,9 +469,40 @@ async function initDB() {
     kinderAssignments: [], teams: [], supervisions: [], specEdClasses: [],
     draft_assignments: [], draft_kinderAssignments: [], draft_specEdClasses: [],
     draftActive: false,
-    settings: { approvedPositions: 0 },
+    settings: { approvedPositions: 31.2 },
+    _migrationVersion: 0,
     _nextId: { employees: 100, frameworks: 300, assignments: 500, kinderAssignments: 600, supervisions: 100, specEdClasses: 100 }
   }).write();
+
+  // One-time migration: fix employee statuses and substitutes based on Feb 2026 data
+  const MIGRATION_VERSION = 1;
+  if ((db.get('_migrationVersion').value() || 0) < MIGRATION_VERSION) {
+    const fixes = [
+      { displayName: 'אור א.',  update: { isSubstitute: true } },
+      { displayName: 'אודל',    update: { isSubstitute: true, lastName: 'שגיא' } },
+      { displayName: 'ספיר',    update: { isSubstitute: false, status: 'active' } },
+      { displayName: 'נועה',    update: { isSubstitute: false, status: 'maternity' } },
+      { displayName: 'שחר',     update: { status: 'maternity' } },
+      { displayName: 'פדות',    update: { status: 'maternity', notes: '', lastName: 'לבבי' } },
+      { displayName: 'נועם',    update: { notes: 'אמור לעזוב באפריל', lastName: 'שלין' } },
+    ];
+    fixes.forEach(({ displayName, update }) => {
+      const emp = db.get('employees').find({ displayName }).value();
+      if (emp) db.get('employees').find({ displayName }).assign(update).write();
+    });
+    // Add missing employees if not exist
+    const addIfMissing = (emp) => {
+      if (!db.get('employees').find({ displayName: emp.displayName }).value()) {
+        db.get('employees').push(emp).write();
+      }
+    };
+    addIfMissing({ id: 46, displayName: 'נטע', firstName: 'נטע', lastName: 'רייכמן', ftePercent: 0.62, type: 'expert', status: 'maternity', isSubstitute: false, meetingHours: 0, supReceivedHours: 0, supGivenHours: 0, therapyHours: 0, roleHours: 0, roleName: '', officeHours: 0, notes: '' });
+    addIfMissing({ id: 47, displayName: 'אן', firstName: 'אן', lastName: 'הדר', ftePercent: 0.35, type: 'expert', status: 'active', isSubstitute: false, meetingHours: 0, supReceivedHours: 0, supGivenHours: 0, therapyHours: 0, roleHours: 0, roleName: '', officeHours: 0, notes: '' });
+    // Set approved positions
+    db.get('settings').assign({ approvedPositions: 31.2 }).write();
+    db.set('_migrationVersion', MIGRATION_VERSION).write();
+    console.log('Migration v1 applied: employee statuses and substitutes updated');
+  }
 
   // Seed only empty collections — never overwrite existing user data
   const seedIfEmpty = (key, data) => {
