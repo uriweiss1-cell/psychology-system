@@ -20,8 +20,8 @@ export default function AlertsBanner() {
   }, [refresh]);
 
   if (!alerts) return null;
-  const { unassignedEmployees, unassignedFrameworks, overBudget } = alerts;
-  const total = unassignedEmployees.length + unassignedFrameworks.length + overBudget.length;
+  const { unassignedEmployees, unassignedFrameworks, frameworksWithVacancy = [], overBudget } = alerts;
+  const total = unassignedEmployees.length + unassignedFrameworks.length + frameworksWithVacancy.length + overBudget.length;
   if (total === 0) return null;
 
   return (
@@ -51,6 +51,16 @@ export default function AlertsBanner() {
               <div className="flex flex-wrap gap-1">
                 {unassignedFrameworks.map(f => (
                   <span key={f.id} className="badge bg-orange-100 text-orange-700">{f.name}</span>
+                ))}
+              </div>
+            </div>
+          )}
+          {frameworksWithVacancy.length > 0 && (
+            <div>
+              <p className="font-semibold text-yellow-700 mb-1">מסגרות עם חלון פנוי — חסר פסיכולוג מחליף ({frameworksWithVacancy.length}):</p>
+              <div className="flex flex-wrap gap-1">
+                {frameworksWithVacancy.map(f => (
+                  <span key={f.id} className="badge bg-yellow-100 text-yellow-700">{f.name}</span>
                 ))}
               </div>
             </div>

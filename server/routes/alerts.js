@@ -29,6 +29,14 @@ router.get('/', (req, res) => {
     .filter(f => !assignedActiveFwIds.has(f.id))
     .map(f => ({ id: f.id, name: f.name, type: f.type }));
 
+  // מסגרות עם חלון פנוי — פסיכולוג עזב/נמחק ואין מחליף (גם אם יש פסיכולוג אחר)
+  const vacantSlotFwIds = new Set(
+    assignments.filter(a => a.employeeId === 0).map(a => a.frameworkId)
+  );
+  const frameworksWithVacancy = schoolFrameworks
+    .filter(f => vacantSlotFwIds.has(f.id) && assignedActiveFwIds.has(f.id)) // יש גם מאויש וגם פנוי
+    .map(f => ({ id: f.id, name: f.name, type: f.type }));
+
   // פסיכולוגים עם חריגת שעות
   const overBudget = employees
     .map(emp => {
@@ -43,7 +51,7 @@ router.get('/', (req, res) => {
     })
     .filter(e => e.balance < -0.5);
 
-  res.json({ unassignedEmployees, unassignedFrameworks, overBudget });
+  res.json({ unassignedEmployees, unassignedFrameworks, frameworksWithVacancy, overBudget });
 });
 
 module.exports = router;

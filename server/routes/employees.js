@@ -81,7 +81,10 @@ router.post('/', (req, res) => {
 router.delete('/:id', (req, res) => {
   const id = +req.params.id;
   db.get('employees').remove({ id }).write();
-  db.get('assignments').remove({ employeeId: id }).write();
+  // Framework slots stay as unfilled (employeeId=0) so alerts can detect the gap
+  db.get('assignments').filter({ employeeId: id }).value()
+    .forEach(a => db.get('assignments').find({ id: a.id }).assign({ employeeId: 0 }).write());
+  // Kinder assignments are fully removed (one-to-one, no concept of an unfilled slot)
   db.get('kinderAssignments').remove({ employeeId: id }).write();
   res.json({ ok: true });
 });
