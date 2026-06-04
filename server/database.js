@@ -496,7 +496,7 @@ async function initDB() {
   seedIfEmpty('specEdClasses',   SEED_SPEC_ED_CLASSES);
 
   // One-time migration: fix employee statuses, substitutes, and missing assignments (runs AFTER seed)
-  const MIGRATION_VERSION = 3;
+  const MIGRATION_VERSION = 4;
   if ((db.get('_migrationVersion').value() || 0) < MIGRATION_VERSION) {
     const fixes = [
       { displayName: 'אור א.',  update: { isSubstitute: true } },
@@ -546,8 +546,22 @@ async function initDB() {
       });
     });
 
+    // שחזור גנים של נועה ושחר שנמחקו בטעות — employeeId=0 = לא מאויש
+    const deletedGardens = [
+      { employeeId: 0, gardenName: 'חמניה (אנתרופוסופי)', ageGroup: 'ט.חובה', address: 'איילון 40/1', phone: '03-9012532', teacher: 'תום פנחסוב', teacherPhone: '052-6364601', email: 'tomky24@gmail.com' },
+      { employeeId: 0, gardenName: 'לימון (קריאה)',        ageGroup: 'חובה',   address: 'יפה ירקוני 6', phone: '03-6582196', teacher: 'רעות שרעבי',  teacherPhone: '050-4878147', email: 'reuta75@gmail.com' },
+      { employeeId: 0, gardenName: 'פומלה',                ageGroup: 'חובה',   address: 'שייקה אופיר 6', phone: '03-5231466', teacher: 'ריקי בבלי',   teacherPhone: '050-2320123', email: 'rickybavli@gmail.com' },
+    ];
+    deletedGardens.forEach(g => {
+      if (!db.get('kinderAssignments').find({ gardenName: g.gardenName }).value()) {
+        const ids = db.get('kinderAssignments').value().map(x => x.id);
+        const nextId = ids.length ? Math.max(...ids) + 1 : 600;
+        db.get('kinderAssignments').push({ id: nextId, ...g }).write();
+      }
+    });
+
     db.set('_migrationVersion', MIGRATION_VERSION).write();
-    console.log('Migration v3 applied');
+    console.log('Migration v4 applied');
   }
 }
 
