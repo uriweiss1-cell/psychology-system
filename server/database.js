@@ -690,6 +690,16 @@ async function initDB() {
     db.set('_migrationVersion', MIGRATION_V8).write();
     console.log(`Migration v8 applied: synced spec-ed assignments for ${frameworkIds.length} frameworks`);
   }
+
+  // Migration v9: clear all remaining psychologistName fields in specEdClasses
+  const MIGRATION_V9 = 9;
+  if ((db.get('_migrationVersion').value() || 0) < MIGRATION_V9) {
+    db.get('specEdClasses').value()
+      .filter(c => c.psychologistName)
+      .forEach(c => db.get('specEdClasses').find({ id: c.id }).assign({ psychologistName: '' }).write());
+    db.set('_migrationVersion', MIGRATION_V9).write();
+    console.log('Migration v9 applied: cleared all psychologistName fields from specEdClasses');
+  }
 }
 
 // Returns the active collection name (draft or current) for assignment-like data

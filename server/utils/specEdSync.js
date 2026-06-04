@@ -133,6 +133,13 @@ function syncSpecEdAssignments(db, activeCol, frameworkId) {
         db.get(asgnCol).remove({ id: a.id }).write();
       }
     });
+
+  // Clear all psychologistName fields — assignments table now tracks this
+  db.get(specCol).filter({ frameworkId }).value().forEach(c => {
+    if (c.psychologistName) {
+      db.get(specCol).find({ id: c.id }).assign({ psychologistName: '' }).write();
+    }
+  });
 }
 
 /**
