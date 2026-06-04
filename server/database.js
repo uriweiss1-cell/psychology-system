@@ -533,13 +533,17 @@ async function initDB() {
     addAssignmentIfMissing({ employeeId: 15, frameworkId: 131, hours: 0, specEdHours: 0, kinderHours: 0 }); // טטיאנה → חטיבה חדשה
     addAssignmentIfMissing({ employeeId: 20, frameworkId: 125, hours: 0, specEdHours: 0, kinderHours: 0 }); // מאי → אולפנת זבולון
 
-    // מחיקת שיבוצים (בתי ספר + גנים) לעובדים לא פעילים / בחל"ד
+    // ניקוי שיבוצים לעובדים לא פעילים / בחל"ד
     const inactiveIds = db.get('employees').value()
       .filter(e => e.status === 'maternity' || e.status === 'inactive')
       .map(e => e.id);
     inactiveIds.forEach(empId => {
       db.get('assignments').remove({ employeeId: empId }).write();
-      db.get('kinderAssignments').remove({ employeeId: empId }).write();
+      // גנים — ניקוי פסיכולוג בלבד, לא מחיקת הגן
+      const kinderToUpdate = db.get('kinderAssignments').filter({ employeeId: empId }).value();
+      kinderToUpdate.forEach(a => {
+        db.get('kinderAssignments').find({ id: a.id }).assign({ employeeId: 0 }).write();
+      });
     });
 
     db.set('_migrationVersion', MIGRATION_VERSION).write();
