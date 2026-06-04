@@ -22,8 +22,7 @@ class CloudAdapter extends FileSync {
   }
 }
 
-// Initialize db synchronously so routes can use it immediately
-const db = low(new CloudAdapter(dbPath));
+let db; // initialized inside initDB(), after MongoDB restore writes the file
 
 const SEED_EMPLOYEES = [
   // נתונים מתוכנית עבודה תשפו + תקנים פברואר 2026
@@ -458,7 +457,6 @@ async function initDB() {
         const doc = await mongoCollection.findOne({ _id: 'db' });
         if (doc?.data) {
           fs.writeFileSync(dbPath, JSON.stringify(doc.data));
-          db.setState(doc.data); // טעינה מחדש לזיכרון אחרי restore (lowdb v1)
           console.log('✅ Database restored from cloud');
         }
       }
@@ -468,6 +466,10 @@ async function initDB() {
       mongoCollection = null;
     }
   }
+
+  // Create db AFTER MongoDB restore has written the file to disk.
+  // This ensures low() reads the correct data directly — no setState() needed.
+  db = low(new CloudAdapter(dbPath));
 
   db.defaults({
     employees: [], frameworks: [], assignments: [],
