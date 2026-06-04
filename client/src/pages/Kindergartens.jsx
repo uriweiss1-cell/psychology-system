@@ -43,7 +43,8 @@ export default function Kindergartens() {
     return acc;
   }, {});
 
-  const unassigned = filtered.filter(a => !employees.find(e => e.id === a.employeeId));
+  // גנים ללא פסיכולוג = employeeId ריק / 0 / לא קיים בעובדים פעילים
+  const unassigned = filtered.filter(a => !a.employeeId || a.employeeId === 0 || !employees.find(e => e.id === a.employeeId));
 
   const saveEdit = async () => {
     if (!editRow) return;
@@ -123,6 +124,16 @@ export default function Kindergartens() {
         </div>
       )}
 
+      {unassigned.length > 0 && (
+        <div className="mb-5">
+          <h2 className="text-base font-bold text-red-700 bg-red-50 px-3 py-2 rounded-t border border-red-200">
+            ⚠️ לא מאוישים
+            <span className="text-sm font-normal text-red-500 mr-2">({unassigned.length} גנים)</span>
+          </h2>
+          <KinderTable rows={unassigned} employees={employees} editRow={editRow} setEditRow={setEditRow} saveEdit={saveEdit} removeRow={removeRow} />
+        </div>
+      )}
+
       {Object.values(grouped).map(({ emp, rows }) => (
         <div key={emp.id} className="mb-5">
           <h2 className="text-base font-bold text-blue-800 bg-blue-50 px-3 py-2 rounded-t border border-blue-200">
@@ -132,16 +143,6 @@ export default function Kindergartens() {
           <KinderTable rows={rows} employees={employees} editRow={editRow} setEditRow={setEditRow} saveEdit={saveEdit} removeRow={removeRow} />
         </div>
       ))}
-
-      {unassigned.length > 0 && (
-        <div className="mb-5">
-          <h2 className="text-base font-bold text-gray-600 bg-gray-50 px-3 py-2 rounded-t border border-gray-200">
-            לא משובצים
-            <span className="text-sm font-normal text-gray-400 mr-2">({unassigned.length} גנים)</span>
-          </h2>
-          <KinderTable rows={unassigned} employees={employees} editRow={editRow} setEditRow={setEditRow} saveEdit={saveEdit} removeRow={removeRow} />
-        </div>
-      )}
     </div>
   );
 }
