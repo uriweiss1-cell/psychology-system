@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { db } = require('../database');
+const { db, activeCol } = require('../database');
 
 // Computed fields helper
 function withComputed(emp) {
@@ -43,6 +43,13 @@ router.put('/:id', (req, res) => {
   allowed.forEach(k => { if (req.body[k] !== undefined) update[k] = req.body[k]; });
 
   db.get('employees').find({ id }).assign(update).write();
+
+  // כשעובד עובר לחל"ד או לא פעיל — מחק את כל שיבוציו
+  if (update.status === 'maternity' || update.status === 'inactive') {
+    db.get(activeCol('assignments')).remove({ employeeId: id }).write();
+    db.get(activeCol('kinderAssignments')).remove({ employeeId: id }).write();
+  }
+
   const updated = db.get('employees').find({ id }).value();
   res.json(withComputed(updated));
 });
