@@ -103,10 +103,12 @@ export default function WorkPlan() {
   if (loading) return <div className="p-6 text-gray-500">טוען...</div>;
 
   const getAsgn = (empId) => assignments.find(a => a.employeeId === empId) || {};
-  const getFwName = (asgn) => {
-    if (!asgn.frameworkId) return '—';
-    const fw = frameworks.find(f => f.id === asgn.frameworkId);
-    return fw?.name || '—';
+  const getAllFwNames = (empId) => {
+    const names = assignments
+      .filter(a => a.employeeId === empId && a.frameworkId > 0)
+      .map(a => frameworks.find(f => f.id === a.frameworkId)?.name)
+      .filter(Boolean);
+    return names.length ? names.join(' + ') : '—';
   };
 
   const overBudget = employees.filter(e => e.freeHours < -0.1);
@@ -194,7 +196,7 @@ export default function WorkPlan() {
                     <EditableCell value={asgn.kinderHours ?? 0} onSave={v => saveAsgn(emp.id, 'kinderHours', v)} />
                   </td>
                   <td className="table-cell text-center bg-green-50 font-semibold">{emp.totalFrameworks}</td>
-                  <td className="table-cell text-center text-xs text-gray-500">{getFwName(asgn)}</td>
+                  <td className="table-cell text-center text-xs text-gray-500">{getAllFwNames(emp.id)}</td>
                   <td className="table-cell text-center"><FreeHoursBadge freeHours={emp.freeHours} /></td>
                   <td className="table-cell">
                     <button className="text-red-400 hover:text-red-600 text-xs" onClick={() => removeEmployee(emp.id, emp.displayName)}>מחק</button>

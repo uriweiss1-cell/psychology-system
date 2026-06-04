@@ -668,6 +668,17 @@ async function initDB() {
     db.set('_migrationVersion', MIGRATION_V6).write();
     console.log('Migration v6 applied: corrected assignment hours from Excel');
   }
+
+  // Migration v7: fix אופק kinder hours (was manually changed to 5 on server, should be 8)
+  const MIGRATION_V7 = 7;
+  if ((db.get('_migrationVersion').value() || 0) < MIGRATION_V7) {
+    const asgn = db.get('assignments').find({ employeeId: 2 }).value();
+    if (asgn) {
+      db.get('assignments').find({ id: asgn.id }).assign({ hours: 4, specEdHours: 7, kinderHours: 8 }).write();
+    }
+    db.set('_migrationVersion', MIGRATION_V7).write();
+    console.log('Migration v7 applied: fixed אופק kinder hours to 8');
+  }
 }
 
 // Returns the active collection name (draft or current) for assignment-like data
