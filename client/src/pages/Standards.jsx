@@ -3,7 +3,6 @@ import { getEmployees, updateEmployee, createEmployee, deleteEmployee } from '..
 import AlertsBanner from '../components/AlertsBanner';
 import ImportModal from '../components/ImportModal';
 
-const STATUS_LABELS = { active: 'פעיל', inactive: 'לא פעיל', maternity: 'חל"ד' };
 const STATUS_COLORS = { active: 'bg-green-100 text-green-800', inactive: 'bg-red-100 text-red-700', maternity: 'bg-blue-100 text-blue-700' };
 
 export default function Standards() {
@@ -13,19 +12,17 @@ export default function Standards() {
   const [editing, setEditing] = useState({});
   const [showAdd, setShowAdd] = useState(false);
   const [showImport, setShowImport] = useState(false);
-  const [newEmp, setNewEmp] = useState({ displayName: '', firstName: '', lastName: '', ftePercent: 1.0, type: 'expert' });
+  const [newEmp, setNewEmp] = useState({ displayName: '', firstName: '', lastName: '', ftePercent: 1.0 });
 
   const load = async () => {
-    const emps = await getEmployees();
-    setEmployees(emps);
+    setEmployees(await getEmployees());
     setLoading(false);
   };
 
   useEffect(() => { load(); }, []);
 
-  const setFieldEdit = (id, field, value) => {
+  const setFieldEdit = (id, field, value) =>
     setEditing(prev => ({ ...prev, [`${id}_${field}`]: value }));
-  };
 
   const saveField = async (id, field) => {
     const key = `${id}_${field}`;
@@ -46,7 +43,7 @@ export default function Standards() {
     if (!newEmp.displayName.trim()) return;
     const created = await createEmployee(newEmp);
     setEmployees(prev => [...prev, created]);
-    setNewEmp({ displayName: '', firstName: '', lastName: '', ftePercent: 1.0, type: 'expert' });
+    setNewEmp({ displayName: '', firstName: '', lastName: '', ftePercent: 1.0 });
     setShowAdd(false);
   };
 
@@ -62,7 +59,7 @@ export default function Standards() {
   };
 
   const filtered = employees.filter(e =>
-    !filter || e.displayName.includes(filter) || e.firstName?.includes(filter) || e.lastName?.includes(filter)
+    !filter || e.displayName?.includes(filter) || e.firstName?.includes(filter) || e.lastName?.includes(filter)
   );
 
   const activeEmps = employees.filter(e => e.status === 'active' || !e.status);
@@ -76,7 +73,7 @@ export default function Standards() {
         <ImportModal
           type="employees"
           label="עובדים"
-          columns={['שם תצוגה', 'שם פרטי', 'שם משפחה', 'אחוז משרה', 'סוג']}
+          columns={['שם תצוגה', 'שם פרטי', 'שם משפחה', 'אחוז משרה']}
           onDone={load}
           onClose={() => setShowImport(false)}
         />
@@ -117,11 +114,7 @@ export default function Standards() {
               <input className="input w-full" type="number" step="0.01" min="0.1" max="2" value={newEmp.ftePercent} onChange={e => setNewEmp(p => ({...p, ftePercent: parseFloat(e.target.value)}))} />
             </div>
           </div>
-          <div className="flex gap-2 items-center">
-            <select className="input" value={newEmp.type} onChange={e => setNewEmp(p => ({...p, type: e.target.value}))}>
-              <option value="expert">מומחה/ית</option>
-              <option value="trainee">מתמחה</option>
-            </select>
+          <div className="flex gap-2">
             <button className="btn-primary" onClick={handleAdd}>הוסף</button>
             <button className="btn-secondary" onClick={() => setShowAdd(false)}>ביטול</button>
           </div>
@@ -132,15 +125,11 @@ export default function Standards() {
         <table className="w-full text-sm">
           <thead>
             <tr>
-              <th className="table-header">שם תצוגה</th>
               <th className="table-header">שם פרטי</th>
               <th className="table-header">שם משפחה</th>
               <th className="table-header text-center">אחוז משרה</th>
-              <th className="table-header text-center">שעות שבועיות</th>
-              <th className="table-header text-center">סוג</th>
               <th className="table-header text-center">סטטוס</th>
               <th className="table-header">הערות</th>
-              <th className="table-header text-center">מאזן</th>
               <th className="table-header text-center">פעולות</th>
             </tr>
           </thead>
@@ -149,11 +138,6 @@ export default function Standards() {
               const isInactive = emp.status === 'inactive' || emp.status === 'maternity';
               return (
                 <tr key={emp.id} className={`hover:bg-gray-50 ${isInactive ? 'opacity-50' : ''}`}>
-                  <td className="table-cell font-medium">
-                    <EditField id={emp.id} field="displayName" value={getEditVal(emp, 'displayName')} type="text"
-                      onChange={v => setFieldEdit(emp.id, 'displayName', v)}
-                      onSave={() => saveField(emp.id, 'displayName')} />
-                  </td>
                   <td className="table-cell">
                     <EditField id={emp.id} field="firstName" value={getEditVal(emp, 'firstName')} type="text"
                       onChange={v => setFieldEdit(emp.id, 'firstName', v)}
@@ -168,22 +152,6 @@ export default function Standards() {
                     <EditField id={emp.id} field="ftePercent" value={getEditVal(emp, 'ftePercent')} type="number"
                       onChange={v => setFieldEdit(emp.id, 'ftePercent', v)}
                       onSave={() => saveField(emp.id, 'ftePercent')} />
-                  </td>
-                  <td className="table-cell text-center font-semibold">
-                    {Math.ceil(emp.ftePercent * 40)}
-                  </td>
-                  <td className="table-cell text-center">
-                    <select
-                      className="input text-xs py-0.5"
-                      value={emp.type}
-                      onChange={async e => {
-                        const updated = await updateEmployee(emp.id, { type: e.target.value });
-                        setEmployees(prev => prev.map(x => x.id === emp.id ? {...x, ...updated} : x));
-                      }}
-                    >
-                      <option value="expert">מומחה/ית</option>
-                      <option value="trainee">מתמחה</option>
-                    </select>
                   </td>
                   <td className="table-cell text-center">
                     <select
@@ -202,19 +170,7 @@ export default function Standards() {
                       onSave={() => saveField(emp.id, 'notes')} />
                   </td>
                   <td className="table-cell text-center">
-                    {emp.balance < -0.1
-                      ? <span className="badge bg-red-100 text-red-700">{emp.balance} חריגה</span>
-                      : emp.balance > 0.1
-                      ? <span className="badge bg-yellow-100 text-yellow-700">+{emp.balance} פנוי</span>
-                      : <span className="badge bg-green-100 text-green-700">מאוזן</span>
-                    }
-                  </td>
-                  <td className="table-cell text-center">
-                    <button
-                      className="text-red-400 hover:text-red-600 text-xs"
-                      onClick={() => handleDelete(emp)}
-                      title="מחק עובד"
-                    >🗑️</button>
+                    <button className="text-red-400 hover:text-red-600 text-xs" onClick={() => handleDelete(emp)} title="מחק עובד">🗑️</button>
                   </td>
                 </tr>
               );

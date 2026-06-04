@@ -143,13 +143,6 @@ export default function WorkPlan() {
             <label className="block text-xs text-gray-600 mb-1">אחוז משרה</label>
             <input className="input w-20" type="number" step="0.01" min="0" max="2" value={newEmp.ftePercent} onChange={e => setNewEmp(p => ({...p, ftePercent: parseFloat(e.target.value)}))} />
           </div>
-          <div>
-            <label className="block text-xs text-gray-600 mb-1">סוג</label>
-            <select className="input" value={newEmp.type} onChange={e => setNewEmp(p => ({...p, type: e.target.value}))}>
-              <option value="expert">מומחה/ית</option>
-              <option value="trainee">מתמחה</option>
-            </select>
-          </div>
           <button className="btn-primary" onClick={addEmployee}>שמור</button>
           <button className="btn-secondary" onClick={() => setShowAdd(false)}>ביטול</button>
         </div>
@@ -160,7 +153,6 @@ export default function WorkPlan() {
           <thead>
             <tr className="text-right">
               <th className="table-header sticky right-0 bg-gray-50 z-10 min-w-[100px]">פסיכולוג</th>
-              <th className="table-header text-center">סוג</th>
               <th className="table-header text-center">ש׳ משרה</th>
               <th className="table-header text-center bg-blue-50">ישיבות</th>
               <th className="table-header text-center bg-blue-50">הדרכה<br/>מקבל</th>
@@ -186,11 +178,6 @@ export default function WorkPlan() {
                 <tr key={emp.id} className={`hover:bg-gray-50 ${rowBg}`}>
                   <td className="table-cell sticky right-0 bg-white font-medium">
                     <EditableCell value={emp.displayName} onSave={v => saveEmpField(emp.id, 'displayName', v)} type="text" />
-                  </td>
-                  <td className="table-cell text-center">
-                    <span className={`badge ${emp.type === 'expert' ? 'bg-purple-100 text-purple-700' : 'bg-orange-100 text-orange-700'}`}>
-                      {emp.type === 'expert' ? 'מומחה' : 'מתמחה'}
-                    </span>
                   </td>
                   <td className="table-cell text-center font-semibold">{emp.fteHours}</td>
                   {HOURS_FIELDS.map(f => (
