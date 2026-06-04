@@ -159,6 +159,10 @@ const SEED_ASSIGNMENTS = [
   { id: 38, employeeId: 42, frameworkId: 0,   hours: 4,  specEdHours: 4,  kinderHours: 0  }, // אודי → לא מוגדר
   { id: 39, employeeId: 43, frameworkId: 0,   hours: 6,  specEdHours: 0,  kinderHours: 6  }, // עמית → לא מוגדר
   { id: 40, employeeId: 44, frameworkId: 0,   hours: 4,  specEdHours: 13, kinderHours: 0  }, // אודל → לא מוגדר
+  { id: 41, employeeId: 36, frameworkId: 115, hours: 0,  specEdHours: 0,  kinderHours: 0  }, // צוף → נופרים
+  { id: 42, employeeId: 16, frameworkId: 122, hours: 0,  specEdHours: 0,  kinderHours: 0  }, // טל → יסודי התורה
+  { id: 43, employeeId: 15, frameworkId: 131, hours: 0,  specEdHours: 0,  kinderHours: 0  }, // טטיאנה → חטיבה חדשה
+  { id: 44, employeeId: 20, frameworkId: 125, hours: 0,  specEdHours: 0,  kinderHours: 0  }, // מאי → אולפנת זבולון
 ];
 
 // צוותים - מתוך צוותים תשפו.docx (קריאה מלאה)
@@ -490,8 +494,8 @@ async function initDB() {
   seedIfEmpty('supervisions',    SEED_SUPERVISIONS);
   seedIfEmpty('specEdClasses',   SEED_SPEC_ED_CLASSES);
 
-  // One-time migration: fix employee statuses and substitutes (runs AFTER seed)
-  const MIGRATION_VERSION = 1;
+  // One-time migration: fix employee statuses, substitutes, and missing assignments (runs AFTER seed)
+  const MIGRATION_VERSION = 2;
   if ((db.get('_migrationVersion').value() || 0) < MIGRATION_VERSION) {
     const fixes = [
       { displayName: 'אור א.',  update: { isSubstitute: true } },
@@ -514,6 +518,20 @@ async function initDB() {
     addIfMissing({ id: 46, displayName: 'נטע', firstName: 'נטע', lastName: 'רייכמן', ftePercent: 0.62, type: 'expert', status: 'maternity', isSubstitute: false, meetingHours: 0, supReceivedHours: 0, supGivenHours: 0, therapyHours: 0, roleHours: 0, roleName: '', officeHours: 0, notes: '' });
     addIfMissing({ id: 47, displayName: 'אן', firstName: 'אן', lastName: 'הדר', ftePercent: 0.35, type: 'expert', status: 'active', isSubstitute: false, meetingHours: 0, supReceivedHours: 0, supGivenHours: 0, therapyHours: 0, roleHours: 0, roleName: '', officeHours: 0, notes: '' });
     db.get('settings').assign({ approvedPositions: 31.2 }).write();
+
+    // Add missing framework assignments
+    const addAssignmentIfMissing = (a) => {
+      if (!db.get('assignments').find({ frameworkId: a.frameworkId, employeeId: a.employeeId }).value()) {
+        const ids = db.get('assignments').value().map(x => x.id);
+        const nextId = ids.length ? Math.max(...ids) + 1 : 1;
+        db.get('assignments').push({ ...a, id: nextId }).write();
+      }
+    };
+    addAssignmentIfMissing({ employeeId: 36, frameworkId: 115, hours: 0, specEdHours: 0, kinderHours: 0 }); // צוף → נופרים
+    addAssignmentIfMissing({ employeeId: 16, frameworkId: 122, hours: 0, specEdHours: 0, kinderHours: 0 }); // טל → יסודי התורה
+    addAssignmentIfMissing({ employeeId: 15, frameworkId: 131, hours: 0, specEdHours: 0, kinderHours: 0 }); // טטיאנה → חטיבה חדשה
+    addAssignmentIfMissing({ employeeId: 20, frameworkId: 125, hours: 0, specEdHours: 0, kinderHours: 0 }); // מאי → אולפנת זבולון
+
     db.set('_migrationVersion', MIGRATION_VERSION).write();
     console.log('Migration v1 applied');
   }
