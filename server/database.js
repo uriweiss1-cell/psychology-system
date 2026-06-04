@@ -679,6 +679,17 @@ async function initDB() {
     db.set('_migrationVersion', MIGRATION_V7).write();
     console.log('Migration v7 applied: fixed אופק kinder hours to 8');
   }
+
+  // Migration v8: run syncSpecEdAssignments on all existing frameworks with spec-ed classes
+  const MIGRATION_V8 = 8;
+  if ((db.get('_migrationVersion').value() || 0) < MIGRATION_V8) {
+    const { syncSpecEdAssignments } = require('./utils/specEdSync');
+    const frameworkIds = [...new Set(db.get('specEdClasses').value().map(c => c.frameworkId).filter(Boolean))];
+    const nonDraftActiveCol = (name) => name; // migration always uses non-draft collections
+    frameworkIds.forEach(fwId => syncSpecEdAssignments(db, nonDraftActiveCol, fwId));
+    db.set('_migrationVersion', MIGRATION_V8).write();
+    console.log(`Migration v8 applied: synced spec-ed assignments for ${frameworkIds.length} frameworks`);
+  }
 }
 
 // Returns the active collection name (draft or current) for assignment-like data
