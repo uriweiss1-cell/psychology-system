@@ -496,7 +496,7 @@ async function initDB() {
   seedIfEmpty('specEdClasses',   SEED_SPEC_ED_CLASSES);
 
   // One-time migration: fix employee statuses, substitutes, and missing assignments (runs AFTER seed)
-  const MIGRATION_VERSION = 2;
+  const MIGRATION_VERSION = 3;
   if ((db.get('_migrationVersion').value() || 0) < MIGRATION_VERSION) {
     const fixes = [
       { displayName: 'אור א.',  update: { isSubstitute: true } },
@@ -533,8 +533,17 @@ async function initDB() {
     addAssignmentIfMissing({ employeeId: 15, frameworkId: 131, hours: 0, specEdHours: 0, kinderHours: 0 }); // טטיאנה → חטיבה חדשה
     addAssignmentIfMissing({ employeeId: 20, frameworkId: 125, hours: 0, specEdHours: 0, kinderHours: 0 }); // מאי → אולפנת זבולון
 
+    // מחיקת שיבוצים (בתי ספר + גנים) לעובדים לא פעילים / בחל"ד
+    const inactiveIds = db.get('employees').value()
+      .filter(e => e.status === 'maternity' || e.status === 'inactive')
+      .map(e => e.id);
+    inactiveIds.forEach(empId => {
+      db.get('assignments').remove({ employeeId: empId }).write();
+      db.get('kinderAssignments').remove({ employeeId: empId }).write();
+    });
+
     db.set('_migrationVersion', MIGRATION_VERSION).write();
-    console.log('Migration v1 applied');
+    console.log('Migration v3 applied');
   }
 }
 
