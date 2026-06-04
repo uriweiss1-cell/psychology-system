@@ -1,13 +1,23 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { getAlerts } from '../api';
 
 export default function AlertsBanner() {
   const [alerts, setAlerts] = useState(null);
   const [open, setOpen] = useState(true);
 
-  useEffect(() => {
+  const refresh = useCallback(() => {
     getAlerts().then(setAlerts).catch(() => {});
   }, []);
+
+  useEffect(() => {
+    refresh();
+    const interval = setInterval(refresh, 15000);
+    window.addEventListener('focus', refresh);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', refresh);
+    };
+  }, [refresh]);
 
   if (!alerts) return null;
   const { unassignedEmployees, unassignedFrameworks, overBudget } = alerts;

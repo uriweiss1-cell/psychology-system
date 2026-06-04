@@ -470,19 +470,21 @@ async function initDB() {
     _nextId: { employees: 100, frameworks: 300, assignments: 500, kinderAssignments: 600, supervisions: 100, specEdClasses: 100 }
   }).write();
 
-  const CURRENT_SEED_VERSION = 6;
-  if (db.get('_seedVersion').value() < CURRENT_SEED_VERSION) {
-    console.log('Reseeding database (version ' + CURRENT_SEED_VERSION + ')...');
-    db.set('employees', SEED_EMPLOYEES).write();
-    db.set('frameworks', SEED_FRAMEWORKS).write();
-    db.set('assignments', SEED_ASSIGNMENTS).write();
-    db.set('kinderAssignments', SEED_KINDER_ASSIGNMENTS).write();
-    db.set('teams', SEED_TEAMS).write();
-    db.set('supervisions', SEED_SUPERVISIONS).write();
-    db.set('specEdClasses', SEED_SPEC_ED_CLASSES).write();
-    db.set('_seedVersion', CURRENT_SEED_VERSION).write();
-    console.log('Done: ' + SEED_EMPLOYEES.length + ' employees, ' + SEED_FRAMEWORKS.length + ' frameworks');
-  }
+  // Seed only empty collections — never overwrite existing user data
+  const seedIfEmpty = (key, data) => {
+    if (db.get(key).value().length === 0) {
+      db.set(key, data).write();
+      console.log(`Seeded ${key}: ${data.length} records`);
+    }
+  };
+
+  seedIfEmpty('employees',       SEED_EMPLOYEES);
+  seedIfEmpty('frameworks',      SEED_FRAMEWORKS);
+  seedIfEmpty('assignments',     SEED_ASSIGNMENTS);
+  seedIfEmpty('kinderAssignments', SEED_KINDER_ASSIGNMENTS);
+  seedIfEmpty('teams',           SEED_TEAMS);
+  seedIfEmpty('supervisions',    SEED_SUPERVISIONS);
+  seedIfEmpty('specEdClasses',   SEED_SPEC_ED_CLASSES);
 }
 
 // Returns the active collection name (draft or current) for assignment-like data
