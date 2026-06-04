@@ -621,6 +621,53 @@ async function initDB() {
     db.set('_migrationVersion', MIGRATION_V5).write();
     console.log('Migration v5 applied: corrected employee hours from Excel');
   }
+
+  // Migration v6: fix assignment hours (same column-shift error as employee hours)
+  const MIGRATION_V6 = 6;
+  if ((db.get('_migrationVersion').value() || 0) < MIGRATION_V6) {
+    // Fix the first (primary) assignment row per employee
+    const fixAsgn = (empId, hours, specEdHours, kinderHours) => {
+      const asgn = db.get('assignments').find({ employeeId: empId }).value();
+      if (asgn) {
+        db.get('assignments').find({ id: asgn.id }).assign({ hours, specEdHours, kinderHours }).write();
+      }
+    };
+    fixAsgn(4,  0,  0,  6);   // אור א.
+    fixAsgn(6,  0,  0,  4);   // אורי
+    fixAsgn(7,  2,  0,  0);   // אורית נ.
+    fixAsgn(9,  7,  1,  0);   // אסף
+    fixAsgn(11, 0,  6,  0);   // בועז
+    fixAsgn(13, 0,  4,  3);   // דנה
+    fixAsgn(15, 10, 0,  11);  // טטיאנה
+    fixAsgn(17, 0,  4,  2);   // יהודית
+    fixAsgn(18, 4,  0,  0);   // יובל
+    fixAsgn(19, 7,  0,  0);   // לירון
+    fixAsgn(22, 8,  1,  0);   // מיכל
+    fixAsgn(25, 4,  0,  2);   // נועם
+    fixAsgn(26, 0,  0,  3);   // ניצן
+    fixAsgn(30, 6,  0,  0);   // סיון ג.
+    fixAsgn(35, 4,  0,  2);   // פדות
+    fixAsgn(38, 4,  5,  0);   // רועי
+    fixAsgn(40, 6,  0,  2);   // שניר
+    fixAsgn(41, 2,  0,  0);   // תהילה
+    fixAsgn(42, 4,  0,  0);   // אודי
+    fixAsgn(43, 0,  0,  6);   // עמית
+    fixAsgn(44, 4,  0,  13);  // אודל
+
+    // Add missing assignments for ספיר and עדי
+    const addAsgnIfMissing = (empId, hours, specEdHours, kinderHours) => {
+      if (!db.get('assignments').find({ employeeId: empId }).value()) {
+        const ids = db.get('assignments').value().map(a => a.id);
+        const nextId = ids.length ? Math.max(...ids) + 1 : 1;
+        db.get('assignments').push({ id: nextId, employeeId: empId, frameworkId: 0, hours, specEdHours, kinderHours }).write();
+      }
+    };
+    addAsgnIfMissing(24, 0, 6, 0);  // ספיר
+    addAsgnIfMissing(32, 0, 0, 4);  // עדי
+
+    db.set('_migrationVersion', MIGRATION_V6).write();
+    console.log('Migration v6 applied: corrected assignment hours from Excel');
+  }
 }
 
 // Returns the active collection name (draft or current) for assignment-like data
