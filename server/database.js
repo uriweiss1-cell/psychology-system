@@ -458,7 +458,7 @@ async function initDB() {
         const doc = await mongoCollection.findOne({ _id: 'db' });
         if (doc?.data) {
           fs.writeFileSync(dbPath, JSON.stringify(doc.data));
-          db.read(); // חשוב: טעינה מחדש לזיכרון אחרי restore
+          db.setState(doc.data); // טעינה מחדש לזיכרון אחרי restore (lowdb v1)
           console.log('✅ Database restored from cloud');
         }
       }
