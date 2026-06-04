@@ -474,36 +474,6 @@ async function initDB() {
     _nextId: { employees: 100, frameworks: 300, assignments: 500, kinderAssignments: 600, supervisions: 100, specEdClasses: 100 }
   }).write();
 
-  // One-time migration: fix employee statuses and substitutes based on Feb 2026 data
-  const MIGRATION_VERSION = 1;
-  if ((db.get('_migrationVersion').value() || 0) < MIGRATION_VERSION) {
-    const fixes = [
-      { displayName: 'אור א.',  update: { isSubstitute: true } },
-      { displayName: 'אודל',    update: { isSubstitute: true, lastName: 'שגיא' } },
-      { displayName: 'ספיר',    update: { isSubstitute: false, status: 'active' } },
-      { displayName: 'נועה',    update: { isSubstitute: false, status: 'maternity' } },
-      { displayName: 'שחר',     update: { status: 'maternity' } },
-      { displayName: 'פדות',    update: { status: 'maternity', notes: '', lastName: 'לבבי' } },
-      { displayName: 'נועם',    update: { notes: 'אמור לעזוב באפריל', lastName: 'שלין' } },
-    ];
-    fixes.forEach(({ displayName, update }) => {
-      const emp = db.get('employees').find({ displayName }).value();
-      if (emp) db.get('employees').find({ displayName }).assign(update).write();
-    });
-    // Add missing employees if not exist
-    const addIfMissing = (emp) => {
-      if (!db.get('employees').find({ displayName: emp.displayName }).value()) {
-        db.get('employees').push(emp).write();
-      }
-    };
-    addIfMissing({ id: 46, displayName: 'נטע', firstName: 'נטע', lastName: 'רייכמן', ftePercent: 0.62, type: 'expert', status: 'maternity', isSubstitute: false, meetingHours: 0, supReceivedHours: 0, supGivenHours: 0, therapyHours: 0, roleHours: 0, roleName: '', officeHours: 0, notes: '' });
-    addIfMissing({ id: 47, displayName: 'אן', firstName: 'אן', lastName: 'הדר', ftePercent: 0.35, type: 'expert', status: 'active', isSubstitute: false, meetingHours: 0, supReceivedHours: 0, supGivenHours: 0, therapyHours: 0, roleHours: 0, roleName: '', officeHours: 0, notes: '' });
-    // Set approved positions
-    db.get('settings').assign({ approvedPositions: 31.2 }).write();
-    db.set('_migrationVersion', MIGRATION_VERSION).write();
-    console.log('Migration v1 applied: employee statuses and substitutes updated');
-  }
-
   // Seed only empty collections — never overwrite existing user data
   const seedIfEmpty = (key, data) => {
     if (db.get(key).value().length === 0) {
@@ -519,6 +489,34 @@ async function initDB() {
   seedIfEmpty('teams',           SEED_TEAMS);
   seedIfEmpty('supervisions',    SEED_SUPERVISIONS);
   seedIfEmpty('specEdClasses',   SEED_SPEC_ED_CLASSES);
+
+  // One-time migration: fix employee statuses and substitutes (runs AFTER seed)
+  const MIGRATION_VERSION = 1;
+  if ((db.get('_migrationVersion').value() || 0) < MIGRATION_VERSION) {
+    const fixes = [
+      { displayName: 'אור א.',  update: { isSubstitute: true } },
+      { displayName: 'אודל',    update: { isSubstitute: true, lastName: 'שגיא' } },
+      { displayName: 'ספיר',    update: { isSubstitute: false, status: 'active' } },
+      { displayName: 'נועה',    update: { isSubstitute: false, status: 'maternity' } },
+      { displayName: 'שחר',     update: { status: 'maternity' } },
+      { displayName: 'פדות',    update: { status: 'maternity', notes: '', lastName: 'לבבי' } },
+      { displayName: 'נועם',    update: { notes: 'אמור לעזוב באפריל', lastName: 'שלין' } },
+    ];
+    fixes.forEach(({ displayName, update }) => {
+      const emp = db.get('employees').find({ displayName }).value();
+      if (emp) db.get('employees').find({ displayName }).assign(update).write();
+    });
+    const addIfMissing = (emp) => {
+      if (!db.get('employees').find({ displayName: emp.displayName }).value()) {
+        db.get('employees').push(emp).write();
+      }
+    };
+    addIfMissing({ id: 46, displayName: 'נטע', firstName: 'נטע', lastName: 'רייכמן', ftePercent: 0.62, type: 'expert', status: 'maternity', isSubstitute: false, meetingHours: 0, supReceivedHours: 0, supGivenHours: 0, therapyHours: 0, roleHours: 0, roleName: '', officeHours: 0, notes: '' });
+    addIfMissing({ id: 47, displayName: 'אן', firstName: 'אן', lastName: 'הדר', ftePercent: 0.35, type: 'expert', status: 'active', isSubstitute: false, meetingHours: 0, supReceivedHours: 0, supGivenHours: 0, therapyHours: 0, roleHours: 0, roleName: '', officeHours: 0, notes: '' });
+    db.get('settings').assign({ approvedPositions: 31.2 }).write();
+    db.set('_migrationVersion', MIGRATION_VERSION).write();
+    console.log('Migration v1 applied');
+  }
 }
 
 // Returns the active collection name (draft or current) for assignment-like data
