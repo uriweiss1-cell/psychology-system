@@ -570,4 +570,4 @@ function activeCol(name) {
   return db.get('draftActive').value() ? `draft_${name}` : name;
 }
 
-module.exports = { db, initDB, activeCol };
+module.exports = { get db() { return db; }, initDB, activeCol };
