@@ -17,11 +17,16 @@ router.get('/', (req, res) => {
     .filter(e => !assignedEmpIds.has(e.id))
     .map(e => ({ id: e.id, displayName: e.displayName }));
 
-  // מסגרות ללא פסיכולוג משובץ (לא כולל חינוך מיוחד עצמאי)
+  // מסגרות ללא פסיכולוג פעיל משובץ (לא כולל חינוך מיוחד עצמאי)
+  const activeEmpIds = new Set(employees.map(e => e.id)); // employees כבר מסונן לפעילים
   const schoolFrameworks = frameworks.filter(f => f.type === 'school' || f.type === 'special_ed');
-  const assignedFwIds = new Set(assignments.map(a => a.frameworkId));
+  const assignedActiveFwIds = new Set(
+    assignments
+      .filter(a => activeEmpIds.has(a.employeeId) && a.employeeId > 0)
+      .map(a => a.frameworkId)
+  );
   const unassignedFrameworks = schoolFrameworks
-    .filter(f => !assignedFwIds.has(f.id))
+    .filter(f => !assignedActiveFwIds.has(f.id))
     .map(f => ({ id: f.id, name: f.name, type: f.type }));
 
   // פסיכולוגים עם חריגת שעות
