@@ -44,17 +44,14 @@ router.put('/:id', (req, res) => {
 
   db.get('employees').find({ id }).assign(update).write();
 
-  // כשעובד עובר לחל"ד או לא פעיל
+  // כשעובד עובר לחל"ד או לא פעיל — ניקוי פסיכולוג בלבד (שעות ונתונים נשמרים)
   if (update.status === 'maternity' || update.status === 'inactive') {
-    // שיבוצי בתי ספר — מחיקה (המסגרת נשארת, רק השיבוץ נמחק)
-    db.get(activeCol('assignments')).remove({ employeeId: id }).write();
-    // שיבוצי גנים — ניקוי פסיכולוג בלבד (הגן נשאר עם כל פרטיו)
-    db.get(activeCol('kinderAssignments'))
-      .filter({ employeeId: id })
-      .forEach(a => {
-        db.get(activeCol('kinderAssignments')).find({ id: a.id }).assign({ employeeId: 0 }).write();
-      })
-      .value();
+    ['assignments', 'kinderAssignments'].forEach(col => {
+      const items = db.get(activeCol(col)).filter({ employeeId: id }).value();
+      items.forEach(a => {
+        db.get(activeCol(col)).find({ id: a.id }).assign({ employeeId: 0 }).write();
+      });
+    });
   }
 
   const updated = db.get('employees').find({ id }).value();
