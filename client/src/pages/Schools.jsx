@@ -201,7 +201,9 @@ function SchoolTable({ items, assignments, employees, specEdClasses, editingAsgn
             const fwSpec = specEdClasses.filter(s => s.frameworkId === fw.id);
             return (
               <tr key={fw.id} className={`hover:bg-gray-50 align-top ${rowBg}`}>
-                <td className="table-cell font-medium">{fw.name}</td>
+                <td className="table-cell font-medium">
+                  <EditableName fw={fw} setSummary={setSummary} />
+                </td>
                 <td className="table-cell">
                   <select
                     className={`badge border-0 cursor-pointer ${SECTOR_COLORS[fw.sector] || 'bg-gray-100'}`}
@@ -293,5 +295,33 @@ function SchoolTable({ items, assignments, employees, specEdClasses, editingAsgn
         </tbody>
       </table>
     </div>
+  );
+}
+
+function EditableName({ fw, setSummary }) {
+  const [editing, setEditing] = useState(false);
+  const [val, setVal] = useState(fw.name);
+
+  const save = async () => {
+    setEditing(false);
+    if (val.trim() === fw.name) return;
+    await updateFramework(fw.id, { name: val.trim() });
+    setSummary(await getAssignmentSummary());
+  };
+
+  if (!editing) return (
+    <span className="cursor-pointer hover:text-blue-600" onClick={() => setEditing(true)} title="לחץ לעריכה">
+      {fw.name}
+    </span>
+  );
+  return (
+    <input
+      autoFocus
+      className="input py-0.5 text-sm w-full"
+      value={val}
+      onChange={e => setVal(e.target.value)}
+      onBlur={save}
+      onKeyDown={e => { if (e.key === 'Enter') save(); if (e.key === 'Escape') { setEditing(false); setVal(fw.name); } }}
+    />
   );
 }
