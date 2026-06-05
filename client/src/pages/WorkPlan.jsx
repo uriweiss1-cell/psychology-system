@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { getEmployees, updateEmployee, getAssignments, updateAssignment, getFrameworks, createEmployee, deleteEmployee } from '../api';
+import { getEmployees, updateEmployee, getAssignments, updateAssignment, getFrameworks, deleteEmployee } from '../api';
 import AlertsBanner from '../components/AlertsBanner';
 
 const HOURS_FIELDS = [
@@ -56,8 +56,6 @@ export default function WorkPlan() {
   const [frameworks, setFrameworks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('');
-  const [showAdd, setShowAdd] = useState(false);
-  const [newEmp, setNewEmp] = useState({ displayName: '', ftePercent: 1.0, type: 'expert' });
 
   const load = useCallback(async () => {
     const [emps, asgns, fws] = await Promise.all([getEmployees(true), getAssignments(), getFrameworks()]);
@@ -81,13 +79,6 @@ export default function WorkPlan() {
     setAssignments(prev => prev.map(a => a.id === asgn.id ? updated : a));
     const emps = await getEmployees(true);
     setEmployees(emps);
-  };
-
-  const addEmployee = async () => {
-    const emp = await createEmployee(newEmp);
-    setEmployees(prev => [...prev, emp]);
-    setShowAdd(false);
-    setNewEmp({ displayName: '', ftePercent: 1.0, type: 'expert' });
   };
 
   const removeEmployee = async (id, name) => {
@@ -130,24 +121,8 @@ export default function WorkPlan() {
             value={filter}
             onChange={e => setFilter(e.target.value)}
           />
-          <button className="btn-primary" onClick={() => setShowAdd(true)}>+ עובד חדש</button>
         </div>
       </div>
-
-      {showAdd && (
-        <div className="bg-blue-50 border border-blue-200 rounded p-4 mb-4 flex gap-3 items-end">
-          <div>
-            <label className="block text-xs text-gray-600 mb-1">שם תצוגה</label>
-            <input className="input" value={newEmp.displayName} onChange={e => setNewEmp(p => ({...p, displayName: e.target.value}))} />
-          </div>
-          <div>
-            <label className="block text-xs text-gray-600 mb-1">אחוז משרה</label>
-            <input className="input w-20" type="number" step="0.01" min="0" max="2" value={newEmp.ftePercent} onChange={e => setNewEmp(p => ({...p, ftePercent: parseFloat(e.target.value)}))} />
-          </div>
-          <button className="btn-primary" onClick={addEmployee}>שמור</button>
-          <button className="btn-secondary" onClick={() => setShowAdd(false)}>ביטול</button>
-        </div>
-      )}
 
       <div className="overflow-x-auto bg-white rounded shadow">
         <table className="w-full text-sm" style={{ minWidth: '1100px' }}>

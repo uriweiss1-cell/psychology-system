@@ -46,6 +46,14 @@ router.put('/:id', (req, res) => {
 
   db.get(col).find({ id }).assign(update).write();
 
+  // When returning from maternity/inactive → set meetingHours to 4 if currently 0
+  if (update.status === 'active') {
+    const current = db.get(col).find({ id }).value();
+    if (!current.meetingHours) {
+      db.get(col).find({ id }).assign({ meetingHours: 4 }).write();
+    }
+  }
+
   // When going to maternity/inactive — remove from assignments (in active collection)
   if (update.status === 'maternity' || update.status === 'inactive') {
     ['assignments', 'kinderAssignments'].forEach(name => {
@@ -72,7 +80,7 @@ router.post('/', (req, res) => {
     type:        req.body.type || 'expert',
     status:      'active',
     isSubstitute: false,
-    meetingHours: 0, supReceivedHours: 0, supGivenHours: 0,
+    meetingHours: 4, supReceivedHours: 0, supGivenHours: 0,
     therapyHours: 0, roleHours: 0, roleName: '',
     officeHours: 0, notes: ''
   };
