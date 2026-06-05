@@ -3,7 +3,7 @@ const router = express.Router();
 const { db, activeCol } = require('../database');
 
 router.get('/', (req, res) => {
-  const employees = db.get('employees').value().filter(e => e.status === 'active' || !e.status);
+  const employees = db.get(activeCol('employees')).value().filter(e => e.status === 'active' || !e.status);
   const frameworks = db.get('frameworks').value();
   const assignments = db.get(activeCol('assignments')).value();
   const kinderAssignments = db.get(activeCol('kinderAssignments')).value();
