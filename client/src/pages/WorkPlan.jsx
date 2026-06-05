@@ -152,7 +152,7 @@ export default function WorkPlan() {
               return (
                 <tr key={emp.id} className={`hover:bg-gray-50 ${rowBg}`}>
                   <td className="table-cell sticky right-0 bg-white font-medium">
-                    <EditableCell value={emp.displayName} onSave={v => saveEmpField(emp.id, 'displayName', v)} type="text" />
+                    {emp.displayName}
                   </td>
                   <td className="table-cell text-center font-semibold">{emp.fteHours}</td>
                   {HOURS_FIELDS.map(f => (

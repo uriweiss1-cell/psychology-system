@@ -108,7 +108,7 @@ export default function Standards() {
         <ImportModal
           type="employees"
           label="עובדים"
-          columns={['שם תצוגה', 'שם פרטי', 'שם משפחה', 'אחוז משרה']}
+          columns={['שם פרטי', 'שם משפחה', 'אחוז משרה']}
           onDone={load}
           onClose={() => setShowImport(false)}
         />
