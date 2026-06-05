@@ -31,6 +31,8 @@ export const updateSettings      = (data) => api.put('/settings', data).then(r =
 
 export const getDraftStatus      = () => api.get('/draft/status').then(r => r.data);
 export const activateDraft       = () => api.post('/draft/activate').then(r => r.data);
+export const pauseDraft          = () => api.post('/draft/pause').then(r => r.data);
+export const resumeDraft         = () => api.post('/draft/resume').then(r => r.data);
 export const approveDraft        = () => api.post('/draft/approve').then(r => r.data);
 export const discardDraft        = () => api.post('/draft/discard').then(r => r.data);
 

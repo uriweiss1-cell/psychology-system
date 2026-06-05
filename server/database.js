@@ -474,8 +474,8 @@ async function initDB() {
   db.defaults({
     employees: [], frameworks: [], assignments: [],
     kinderAssignments: [], teams: [], supervisions: [], specEdClasses: [],
-    draft_assignments: [], draft_kinderAssignments: [], draft_specEdClasses: [],
-    draftActive: false,
+    draft_employees: [], draft_assignments: [], draft_kinderAssignments: [], draft_specEdClasses: [],
+    draftActive: false, draftSaved: false,
     settings: { approvedPositions: 31.2 },
     _migrationVersion: 0,
     _nextId: { employees: 100, frameworks: 300, assignments: 500, kinderAssignments: 600, supervisions: 100, specEdClasses: 100 }
@@ -699,6 +699,16 @@ async function initDB() {
       .forEach(c => db.get('specEdClasses').find({ id: c.id }).assign({ psychologistName: '' }).write());
     db.set('_migrationVersion', MIGRATION_V9).write();
     console.log('Migration v9 applied: cleared all psychologistName fields from specEdClasses');
+  }
+
+  // Migration v10: add draftSaved flag
+  const MIGRATION_V10 = 10;
+  if ((db.get('_migrationVersion').value() || 0) < MIGRATION_V10) {
+    if (db.get('draftSaved').value() === undefined) {
+      db.set('draftSaved', false).write();
+    }
+    db.set('_migrationVersion', MIGRATION_V10).write();
+    console.log('Migration v10 applied: added draftSaved flag');
   }
 }
 
