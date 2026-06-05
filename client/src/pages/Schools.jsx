@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getAssignmentSummary, getEmployees, getAssignments, updateAssignment, getFrameworks, getSpecEdClasses, createSpecEdClass, updateSpecEdClass, deleteSpecEdClass, advanceSpecEdYear } from '../api';
+import { getAssignmentSummary, getEmployees, getAssignments, updateAssignment, getFrameworks, updateFramework, getSpecEdClasses, createSpecEdClass, updateSpecEdClass, deleteSpecEdClass, advanceSpecEdYear } from '../api';
 import axios from 'axios';
 import AlertsBanner from '../components/AlertsBanner';
 
@@ -11,7 +11,18 @@ const SECTOR_COLORS = {
   'חרדי':         'bg-gray-100 text-gray-700',
 };
 
-const SUBTYPE_ORDER = ['יסודי', 'חטיבה', 'תיכון', 'special_ed', ''];
+const SUBTYPE_ORDER  = ['יסודי', 'חטיבה', 'תיכון', 'special_ed', ''];
+const SECTOR_ORDER   = ['ממלכתי', 'ממ"ד', 'חמ"ד', 'חרדי'];
+const SECTORS        = ['ממלכתי', 'ממ"ד', 'חמ"ד', 'חרדי', 'חינוך מיוחד'];
+
+function sectorSort(a, b) {
+  const ai = SECTOR_ORDER.indexOf(a.sector);
+  const bi = SECTOR_ORDER.indexOf(b.sector);
+  const aIdx = ai === -1 ? 99 : ai;
+  const bIdx = bi === -1 ? 99 : bi;
+  if (aIdx !== bIdx) return aIdx - bIdx;
+  return a.name.localeCompare(b.name, 'he');
+}
 
 export default function Schools() {
   const [summary, setSummary]         = useState([]);
@@ -102,7 +113,7 @@ export default function Schools() {
       const matchFilter = !filter || fw.name.includes(filter);
       const matchType = filterType === 'all' || fw.sector === filterType || (filterType === 'special_ed' && fw.type === 'special_ed');
       return matchSub && matchFilter && matchType && assignedActiveFwIds.has(fw.id);
-    }).sort((a, b) => a.name.localeCompare(b.name, 'he'));
+    }).sort(sectorSort);
     const label = sub === 'יסודי' ? 'יסודי' : sub === 'חטיבה' ? 'חטיבות' : sub === 'תיכון' ? 'תיכונים' : sub === 'special_ed' ? 'חינוך מיוחד' : sub;
     if (items.length) acc[label] = items;
     return acc;
@@ -146,7 +157,8 @@ export default function Schools() {
             specEdClasses={specEdClasses} editingAsgn={editingAsgn} setEditingAsgn={setEditingAsgn}
             editingSpec={editingSpec} setEditingSpec={setEditingSpec}
             saveAssignment={saveAssignment} deleteAssignment={deleteAssignment} addAssignment={addAssignment}
-            saveSpec={saveSpec} addSpec={addSpec} deleteSpec={deleteSpec} rowBg="bg-red-50/40" />
+            saveSpec={saveSpec} addSpec={addSpec} deleteSpec={deleteSpec}
+            setSummary={setSummary} rowBg="bg-red-50/40" />
         </div>
       )}
 
@@ -159,7 +171,8 @@ export default function Schools() {
             specEdClasses={specEdClasses} editingAsgn={editingAsgn} setEditingAsgn={setEditingAsgn}
             editingSpec={editingSpec} setEditingSpec={setEditingSpec}
             saveAssignment={saveAssignment} deleteAssignment={deleteAssignment} addAssignment={addAssignment}
-            saveSpec={saveSpec} addSpec={addSpec} deleteSpec={deleteSpec} />
+            saveSpec={saveSpec} addSpec={addSpec} deleteSpec={deleteSpec}
+            setSummary={setSummary} />
         </div>
       ))}
     </div>
@@ -167,7 +180,7 @@ export default function Schools() {
 }
 
 function SchoolTable({ items, assignments, employees, specEdClasses, editingAsgn, setEditingAsgn,
-  editingSpec, setEditingSpec, saveAssignment, deleteAssignment, addAssignment,
+  editingSpec, setEditingSpec, saveAssignment, deleteAssignment, addAssignment, setSummary,
   saveSpec, addSpec, deleteSpec, rowBg = '' }) {
   return (
     <div className="bg-white rounded shadow overflow-hidden">
@@ -190,7 +203,16 @@ function SchoolTable({ items, assignments, employees, specEdClasses, editingAsgn
               <tr key={fw.id} className={`hover:bg-gray-50 align-top ${rowBg}`}>
                 <td className="table-cell font-medium">{fw.name}</td>
                 <td className="table-cell">
-                  <span className={`badge ${SECTOR_COLORS[fw.sector] || 'bg-gray-100'}`}>{fw.sector}</span>
+                  <select
+                    className={`badge border-0 cursor-pointer ${SECTOR_COLORS[fw.sector] || 'bg-gray-100'}`}
+                    value={fw.sector || ''}
+                    onChange={async e => {
+                      await updateFramework(fw.id, { sector: e.target.value });
+                      setSummary(await getAssignmentSummary());
+                    }}
+                  >
+                    {SECTORS.map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
                 </td>
                 <td className="table-cell text-center text-gray-500">{fw.allocatedHours ?? '—'}</td>
                 <td className="table-cell">
