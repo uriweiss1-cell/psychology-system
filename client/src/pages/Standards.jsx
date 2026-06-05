@@ -13,7 +13,7 @@ export default function Standards() {
   const [editing, setEditing] = useState({});
   const [showAdd, setShowAdd] = useState(false);
   const [showImport, setShowImport] = useState(false);
-  const [newEmp, setNewEmp] = useState({ displayName: '', firstName: '', lastName: '', ftePercent: 1.0 });
+  const [newEmp, setNewEmp] = useState({ firstName: '', lastName: '', ftePercent: 1.0 });
   const [editingApproved, setEditingApproved] = useState(false);
   const [approvedInput, setApprovedInput] = useState('');
 
@@ -34,9 +34,14 @@ export default function Standards() {
     const value = editing[key];
     if (value === undefined) return;
     const val = field === 'ftePercent' ? parseFloat(value) : value;
-    const updated = await updateEmployee(id, { [field]: val });
-    setEmployees(prev => prev.map(e => e.id === id ? { ...e, ...updated } : e));
+    await updateEmployee(id, { [field]: val });
     setEditing(prev => { const n = {...prev}; delete n[key]; return n; });
+    // Reload all when name changes — other employees' displayNames may have changed too
+    if (field === 'firstName' || field === 'lastName') load();
+    else {
+      const emps = await getEmployees();
+      setEmployees(emps);
+    }
   };
 
   const getEditVal = (emp, field) => {
@@ -50,10 +55,11 @@ export default function Standards() {
   };
 
   const handleAdd = async () => {
-    if (!newEmp.displayName.trim()) return;
+    if (!newEmp.firstName.trim()) return;
     const created = await createEmployee(newEmp);
-    setEmployees(prev => [...prev, created]);
-    setNewEmp({ displayName: '', firstName: '', lastName: '', ftePercent: 1.0 });
+    setEmployees(prev => prev.map(e => created.find ? created : e)); // update whole list (displayNames may have changed)
+    load(); // reload all to reflect recalculated displayNames
+    setNewEmp({ firstName: '', lastName: '', ftePercent: 1.0 });
     setShowAdd(false);
   };
 
@@ -153,14 +159,10 @@ export default function Standards() {
       {showAdd && (
         <div className="bg-blue-50 border border-blue-200 rounded p-4 mb-4">
           <h3 className="font-semibold text-blue-800 mb-3">הוספת עובד חדש</h3>
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-4 mb-3">
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 mb-3">
             <div>
-              <label className="block text-xs text-gray-600 mb-1">שם תצוגה *</label>
-              <input className="input w-full" value={newEmp.displayName} onChange={e => setNewEmp(p => ({...p, displayName: e.target.value}))} placeholder="אורי" />
-            </div>
-            <div>
-              <label className="block text-xs text-gray-600 mb-1">שם פרטי</label>
-              <input className="input w-full" value={newEmp.firstName} onChange={e => setNewEmp(p => ({...p, firstName: e.target.value}))} />
+              <label className="block text-xs text-gray-600 mb-1">שם פרטי *</label>
+              <input className="input w-full" value={newEmp.firstName} onChange={e => setNewEmp(p => ({...p, firstName: e.target.value}))} placeholder="אורי" autoFocus />
             </div>
             <div>
               <label className="block text-xs text-gray-600 mb-1">שם משפחה</label>

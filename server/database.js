@@ -710,6 +710,26 @@ async function initDB() {
     db.set('_migrationVersion', MIGRATION_V10).write();
     console.log('Migration v10 applied: added draftSaved flag');
   }
+
+  // Migration v11: recalc displayNames for all employees based on firstName uniqueness
+  const MIGRATION_V11 = 11;
+  if ((db.get('_migrationVersion').value() || 0) < MIGRATION_V11) {
+    const emps = db.get('employees').value();
+    const firstNames = [...new Set(emps.map(e => e.firstName).filter(Boolean))];
+    firstNames.forEach(firstName => {
+      const group = emps.filter(e => e.firstName === firstName);
+      if (group.length <= 1) {
+        group.forEach(e => db.get('employees').find({ id: e.id }).assign({ displayName: e.firstName }).write());
+      } else {
+        group.forEach(e => {
+          const suffix = e.lastName ? ' ' + e.lastName[0] + '.' : ' .';
+          db.get('employees').find({ id: e.id }).assign({ displayName: e.firstName + suffix }).write();
+        });
+      }
+    });
+    db.set('_migrationVersion', MIGRATION_V11).write();
+    console.log('Migration v11 applied: recalculated displayNames from firstName/lastName');
+  }
 }
 
 // Returns the active collection name (draft or current) for assignment-like data

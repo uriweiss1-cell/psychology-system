@@ -2,6 +2,20 @@ const express = require('express');
 const router = express.Router();
 const { db, activeCol } = require('../database');
 
+// Auto-compute displayName: firstName if unique, else firstName + " " + lastName[0] + "."
+function recalcDisplayNames(db, col, firstName) {
+  if (!firstName) return;
+  const group = db.get(col).filter({ firstName }).value();
+  if (group.length <= 1) {
+    group.forEach(e => db.get(col).find({ id: e.id }).assign({ displayName: e.firstName }).write());
+  } else {
+    group.forEach(e => {
+      const suffix = e.lastName ? ' ' + e.lastName[0] + '.' : ' .';
+      db.get(col).find({ id: e.id }).assign({ displayName: e.firstName + suffix }).write();
+    });
+  }
+}
+
 // Computed fields helper — uses active collection for both employees and assignments
 function withComputed(emp) {
   const fteHours = Math.ceil(emp.ftePercent * 40);
@@ -44,7 +58,17 @@ router.put('/:id', (req, res) => {
   const update = {};
   allowed.forEach(k => { if (req.body[k] !== undefined) update[k] = req.body[k]; });
 
+  const oldFirstName = emp.firstName;
   db.get(col).find({ id }).assign(update).write();
+
+  // Recalc displayNames when name changes
+  if (update.firstName !== undefined || update.lastName !== undefined) {
+    const nowFirst = db.get(col).find({ id }).value().firstName;
+    recalcDisplayNames(db, col, nowFirst);
+    if (update.firstName !== undefined && update.firstName !== oldFirstName) {
+      recalcDisplayNames(db, col, oldFirstName); // fix former group too
+    }
+  }
 
   // When returning from maternity/inactive → set meetingHours to 4 if currently 0
   if (update.status === 'active') {
@@ -86,7 +110,9 @@ router.post('/', (req, res) => {
   };
   db.get(col).push(emp).write();
   db.set('_nextId.employees', nextId + 1).write();
-  res.json(withComputed(emp));
+  recalcDisplayNames(db, col, emp.firstName);
+  const created = db.get(col).find({ id: nextId }).value();
+  res.json(withComputed(created));
 });
 
 router.delete('/:id', (req, res) => {
