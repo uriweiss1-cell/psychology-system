@@ -4,7 +4,7 @@ const { db, activeCol } = require('../database');
 
 // Computed fields helper
 function withComputed(emp) {
-  const fteHours = Math.round(emp.ftePercent * 40 * 100) / 100;
+  const fteHours = Math.ceil(emp.ftePercent * 40);
   const totalInternal = (emp.meetingHours || 0) + (emp.supReceivedHours || 0) +
     (emp.supGivenHours || 0) + (emp.therapyHours || 0) + (emp.roleHours || 0);
 
