@@ -70,7 +70,7 @@ function advanceGradesStr(gradesStr, maxGrade) {
 function syncSpecEdAssignments(db, activeCol, frameworkId) {
   const asgnCol   = activeCol('assignments');
   const specCol   = activeCol('specEdClasses');
-  const employees = db.get('employees').value();
+  const employees = db.get(activeCol('employees')).value();
 
   // All spec-ed classes for this framework
   const classes = db.get(specCol).filter({ frameworkId }).value();

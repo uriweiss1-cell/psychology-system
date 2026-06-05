@@ -5,7 +5,7 @@ const { db, activeCol } = require('../database');
 router.get('/', (req, res) => {
   const col = activeCol('assignments');
   const assignments = db.get(col).value();
-  const employees = db.get('employees').value();
+  const employees = db.get(activeCol('employees')).value();
   const frameworks = db.get('frameworks').value();
   const enriched = assignments.map(a => {
     const emp = employees.find(e => e.id === a.employeeId);
@@ -28,7 +28,7 @@ router.post('/', (req, res) => {
     kinderHours: +req.body.kinderHours || 0,
   };
   db.get(col).push(a).write();
-  const emp = db.get('employees').find({ id: a.employeeId }).value();
+  const emp = db.get(activeCol('employees')).find({ id: a.employeeId }).value();
   const fw = db.get('frameworks').find({ id: a.frameworkId }).value();
   res.json({ ...a, employeeName: emp?.displayName || '?', frameworkName: fw?.name || '(לא מוגדר)' });
 });
@@ -43,7 +43,7 @@ router.put('/:id', (req, res) => {
   allowed.forEach(k => { if (req.body[k] !== undefined) update[k] = +req.body[k] || 0; });
   db.get(col).find({ id }).assign(update).write();
   const updated = db.get(col).find({ id }).value();
-  const emp = db.get('employees').find({ id: updated.employeeId }).value();
+  const emp = db.get(activeCol('employees')).find({ id: updated.employeeId }).value();
   const fw = db.get('frameworks').find({ id: updated.frameworkId }).value();
   res.json({ ...updated, employeeName: emp?.displayName || '?', frameworkName: fw?.name || '(לא מוגדר)' });
 });
@@ -58,7 +58,7 @@ router.get('/summary', (req, res) => {
   const col = activeCol('assignments');
   const frameworks = db.get('frameworks').value();
   const assignments = db.get(col).value();
-  const employees = db.get('employees').value();
+  const employees = db.get(activeCol('employees')).value();
   const summary = frameworks.filter(f => f.type !== 'kindergarten').map(fw => {
     const fwAssignments = assignments.filter(a => a.frameworkId === fw.id);
     const assignedSchoolHours = fwAssignments.reduce((s, a) => s + (a.hours || 0), 0);

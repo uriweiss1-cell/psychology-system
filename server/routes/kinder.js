@@ -5,7 +5,7 @@ const { db, activeCol } = require('../database');
 router.get('/', (req, res) => {
   const col = activeCol('kinderAssignments');
   const assignments = db.get(col).value();
-  const employees = db.get('employees').value();
+  const employees = db.get(activeCol('employees')).value();
   const enriched = assignments.map(a => {
     const emp = employees.find(e => e.id === a.employeeId);
     return { ...a, employeeName: emp?.displayName || '?' };
@@ -29,7 +29,7 @@ router.post('/', (req, res) => {
   };
   db.get(col).push(a).write();
   db.set('_nextId.kinderAssignments', nextId + 1).write();
-  const emp = db.get('employees').find({ id: a.employeeId }).value();
+  const emp = db.get(activeCol('employees')).find({ id: a.employeeId }).value();
   res.json({ ...a, employeeName: emp?.displayName || '?' });
 });
 
@@ -43,7 +43,7 @@ router.put('/:id', (req, res) => {
   allowed.forEach(k => { if (req.body[k] !== undefined) update[k] = req.body[k]; });
   db.get(col).find({ id }).assign(update).write();
   const updated = db.get(col).find({ id }).value();
-  const emp = db.get('employees').find({ id: updated.employeeId }).value();
+  const emp = db.get(activeCol('employees')).find({ id: updated.employeeId }).value();
   res.json({ ...updated, employeeName: emp?.displayName || '?' });
 });
 

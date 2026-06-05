@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { db } = require('../database');
+const { db, activeCol } = require('../database');
 
 router.get('/', (req, res) => {
   res.json(db.get('teams').value());
@@ -19,7 +19,7 @@ router.put('/:id', (req, res) => {
 
 // Which employees are not assigned to any educational team
 router.get('/unassigned', (req, res) => {
-  const employees = db.get('employees').value();
+  const employees = db.get(activeCol('employees')).value();
   const teams = db.get('teams').value();
 
   const allEdMembers = new Set();
