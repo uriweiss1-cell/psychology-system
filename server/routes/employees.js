@@ -2,6 +2,37 @@ const express = require('express');
 const router = express.Router();
 const { db, activeCol } = require('../database');
 
+// Remove employee (by displayName) from teams and supervisions
+function removeFromTeamsAndSupervisions(db, displayName) {
+  // Teams — always live (no draft for teams)
+  db.get('teams').value().forEach(team => {
+    const updates = {};
+    if (team.headDisplayName === displayName) updates.headDisplayName = '';
+    const filtered = (team.memberDisplayNames || []).filter(n => n !== displayName);
+    if (filtered.length !== (team.memberDisplayNames || []).length) updates.memberDisplayNames = filtered;
+    if (Object.keys(updates).length) db.get('teams').find({ id: team.id }).assign(updates).write();
+  });
+
+  // Supervisions — always live
+  const supervisions = db.get('supervisions').value();
+  supervisions.forEach(sup => {
+    // If this person is the supervisor → delete the entire entry
+    if (sup.supervisorName === displayName) {
+      db.get('supervisions').remove({ id: sup.id }).write();
+      return;
+    }
+    // If this person is a supervisee → remove from list
+    const filtered = (sup.superviseeNames || []).filter(n => n !== displayName);
+    if (filtered.length !== (sup.superviseeNames || []).length) {
+      if (filtered.length === 0) {
+        db.get('supervisions').remove({ id: sup.id }).write();
+      } else {
+        db.get('supervisions').find({ id: sup.id }).assign({ superviseeNames: filtered }).write();
+      }
+    }
+  });
+}
+
 // Auto-compute displayName: firstName if unique, else firstName + " " + lastName[0] + "."
 function recalcDisplayNames(db, col, firstName) {
   if (!firstName) return;
@@ -78,7 +109,7 @@ router.put('/:id', (req, res) => {
     }
   }
 
-  // When going to maternity/inactive — remove from assignments (in active collection)
+  // When going to maternity/inactive — remove from assignments, teams and supervisions
   if (update.status === 'maternity' || update.status === 'inactive') {
     ['assignments', 'kinderAssignments'].forEach(name => {
       const items = db.get(activeCol(name)).filter({ employeeId: id }).value();
@@ -86,6 +117,8 @@ router.put('/:id', (req, res) => {
         db.get(activeCol(name)).find({ id: a.id }).assign({ employeeId: 0 }).write();
       });
     });
+    const currentEmp = db.get(col).find({ id }).value();
+    removeFromTeamsAndSupervisions(db, currentEmp.displayName);
   }
 
   const updated = db.get(col).find({ id }).value();
@@ -118,10 +151,12 @@ router.post('/', (req, res) => {
 router.delete('/:id', (req, res) => {
   const col = activeCol('employees');
   const id  = +req.params.id;
+  const emp = db.get(col).find({ id }).value();
   db.get(col).remove({ id }).write();
   db.get(activeCol('assignments')).filter({ employeeId: id }).value()
     .forEach(a => db.get(activeCol('assignments')).find({ id: a.id }).assign({ employeeId: 0 }).write());
   db.get(activeCol('kinderAssignments')).remove({ employeeId: id }).write();
+  if (emp) removeFromTeamsAndSupervisions(db, emp.displayName);
   res.json({ ok: true });
 });
 
