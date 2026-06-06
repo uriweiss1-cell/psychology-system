@@ -82,7 +82,9 @@ export default function Supervisions() {
   if (loading) return <div className="p-6 text-gray-500">טוען...</div>;
 
   const grouped = Object.keys(TYPE_LABELS).reduce((acc, t) => {
-    acc[t] = supervisions.filter(s => s.type === t);
+    acc[t] = supervisions
+      .filter(s => s.type === t)
+      .sort((a, b) => (a.isExternal ? 1 : 0) - (b.isExternal ? 1 : 0));
     return acc;
   }, {});
 
