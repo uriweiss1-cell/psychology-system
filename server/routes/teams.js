@@ -20,7 +20,8 @@ router.put('/:id', (req, res) => {
 
 // Which employees are not assigned to any educational team
 router.get('/unassigned', (req, res) => {
-  const employees = db.get(activeCol('employees')).value();
+  const employees = db.get(activeCol('employees')).value()
+    .filter(e => e.status === 'active' || !e.status);
   const teams     = db.get(activeCol('teams')).value();
 
   const allEdMembers = new Set();

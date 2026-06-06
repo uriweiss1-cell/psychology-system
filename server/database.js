@@ -780,6 +780,47 @@ async function initDB() {
     db.set('_migrationVersion', MIGRATION_V14).write();
     console.log('Migration v14 applied: restored missing teams and supervisions');
   }
+
+  // Migration v15: remove inactive/maternity/deleted employees from teams and supervisions
+  const MIGRATION_V15 = 15;
+  if ((db.get('_migrationVersion').value() || 0) < MIGRATION_V15) {
+    const activeNames = new Set(
+      db.get('employees').value()
+        .filter(e => e.status === 'active' || !e.status)
+        .map(e => e.displayName)
+    );
+
+    // Clean teams
+    db.get('teams').value().forEach(team => {
+      if (team.headDisplayName && !activeNames.has(team.headDisplayName)) {
+        db.get('teams').remove({ id: team.id }).write();
+        return;
+      }
+      const filtered = (team.memberDisplayNames || []).filter(n => activeNames.has(n));
+      if (filtered.length !== (team.memberDisplayNames || []).length) {
+        db.get('teams').find({ id: team.id }).assign({ memberDisplayNames: filtered }).write();
+      }
+    });
+
+    // Clean supervisions (keep external supervisors even if not in employees)
+    db.get('supervisions').value().forEach(sup => {
+      if (!sup.isExternal && !activeNames.has(sup.supervisorName)) {
+        db.get('supervisions').remove({ id: sup.id }).write();
+        return;
+      }
+      const filtered = (sup.superviseeNames || []).filter(n => activeNames.has(n));
+      if (filtered.length !== (sup.superviseeNames || []).length) {
+        if (filtered.length === 0) {
+          db.get('supervisions').remove({ id: sup.id }).write();
+        } else {
+          db.get('supervisions').find({ id: sup.id }).assign({ superviseeNames: filtered }).write();
+        }
+      }
+    });
+
+    db.set('_migrationVersion', MIGRATION_V15).write();
+    console.log('Migration v15 applied: removed inactive/deleted employees from teams and supervisions');
+  }
 }
 
 // Returns the active collection name (draft or current) for assignment-like data
