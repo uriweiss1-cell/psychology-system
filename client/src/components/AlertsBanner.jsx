@@ -20,8 +20,8 @@ export default function AlertsBanner() {
   }, [refresh]);
 
   if (!alerts) return null;
-  const { unassignedEmployees, unassignedFrameworks, frameworksWithVacancy = [], overBudget, freeHoursAlerts = [] } = alerts;
-  const total = unassignedEmployees.length + unassignedFrameworks.length + frameworksWithVacancy.length + overBudget.length + freeHoursAlerts.length;
+  const { unassignedFrameworks, frameworksWithVacancy = [], overBudget, freeHoursAlerts = [] } = alerts;
+  const total = unassignedFrameworks.length + frameworksWithVacancy.length + overBudget.length + freeHoursAlerts.length;
   if (total === 0) return null;
 
   return (
@@ -43,16 +43,6 @@ export default function AlertsBanner() {
                   <span key={e.id} className={`badge ${e.type === 'over' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-700'}`}>
                     {e.displayName} ({e.gap > 0 ? `+${e.gap}` : e.gap} ש׳)
                   </span>
-                ))}
-              </div>
-            </div>
-          )}
-          {unassignedEmployees.length > 0 && (
-            <div>
-              <p className="font-semibold text-red-700 mb-1">פסיכולוגים ללא שיבוץ ({unassignedEmployees.length}):</p>
-              <div className="flex flex-wrap gap-1">
-                {unassignedEmployees.map(e => (
-                  <span key={e.id} className="badge bg-red-100 text-red-700">{e.displayName}</span>
                 ))}
               </div>
             </div>
