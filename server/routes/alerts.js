@@ -69,6 +69,31 @@ router.get('/', (req, res) => {
     .filter(f => vacantSlotFwIds.has(f.id) && assignedActiveFwIds.has(f.id)) // יש גם מאויש וגם פנוי
     .map(f => ({ id: f.id, name: f.name, type: f.type }));
 
+  // הדרכות — פער בין מתוכנן לבפועל (סף: 0.5 שעות)
+  const supervisions = db.get('supervisions').value();
+  const supAlerts = employees.map(emp => {
+    const name = emp.displayName;
+    // שעות שמקבל בפועל
+    const actualReceived = supervisions.reduce((sum, s) => {
+      if ((s.superviseeNames || []).includes(name)) return sum + (s.hoursPerSession || 1);
+      return sum;
+    }, 0);
+    // שעות שנותן בפועל
+    const actualGiven = supervisions.reduce((sum, s) => {
+      if (s.supervisorName === name) return sum + (s.superviseeNames || []).length * (s.hoursPerSession || 1);
+      return sum;
+    }, 0);
+    const plannedReceived = emp.supReceivedHours || 0;
+    const plannedGiven    = emp.supGivenHours    || 0;
+    const gapReceived = Math.round((actualReceived - plannedReceived) * 100) / 100;
+    const gapGiven    = Math.round((actualGiven    - plannedGiven)    * 100) / 100;
+    const alerts = [];
+    if (Math.abs(gapReceived) > 0.5) alerts.push({ field: 'מקבל', gap: gapReceived, actual: actualReceived, planned: plannedReceived });
+    if (Math.abs(gapGiven)    > 0.5) alerts.push({ field: 'נותן',  gap: gapGiven,    actual: actualGiven,    planned: plannedGiven });
+    if (!alerts.length) return null;
+    return { id: emp.id, displayName: emp.displayName, alerts };
+  }).filter(Boolean);
+
   // פסיכולוגים עם חריגת שעות
   const overBudget = employees
     .map(emp => {
@@ -83,7 +108,7 @@ router.get('/', (req, res) => {
     })
     .filter(e => e.balance < -0.5);
 
-  res.json({ unassignedEmployees, unassignedFrameworks, frameworksWithVacancy, overBudget, freeHoursAlerts });
+  res.json({ unassignedEmployees, unassignedFrameworks, frameworksWithVacancy, overBudget, freeHoursAlerts, supAlerts });
 });
 
 module.exports = router;

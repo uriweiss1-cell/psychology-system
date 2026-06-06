@@ -20,8 +20,8 @@ export default function AlertsBanner() {
   }, [refresh]);
 
   if (!alerts) return null;
-  const { unassignedFrameworks, frameworksWithVacancy = [], overBudget, freeHoursAlerts = [] } = alerts;
-  const total = unassignedFrameworks.length + frameworksWithVacancy.length + overBudget.length + freeHoursAlerts.length;
+  const { unassignedFrameworks, frameworksWithVacancy = [], overBudget, freeHoursAlerts = [], supAlerts = [] } = alerts;
+  const total = unassignedFrameworks.length + frameworksWithVacancy.length + overBudget.length + freeHoursAlerts.length + supAlerts.length;
   if (total === 0) return null;
 
   return (
@@ -35,6 +35,23 @@ export default function AlertsBanner() {
       </button>
       {open && (
         <div className="bg-white p-3 space-y-2 text-sm">
+          {supAlerts.length > 0 && (
+            <div>
+              <p className="font-semibold text-purple-700 mb-1">פערים בהדרכות ({supAlerts.length}):</p>
+              <div className="flex flex-wrap gap-1">
+                {supAlerts.map(e => (
+                  <span key={e.id} className="badge bg-purple-100 text-purple-800">
+                    {e.displayName} —{' '}
+                    {e.alerts.map((a, i) => (
+                      <span key={i}>
+                        {a.field}: {a.gap > 0 ? `+${a.gap}` : a.gap} ש׳{i < e.alerts.length - 1 ? ', ' : ''}
+                      </span>
+                    ))}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
           {freeHoursAlerts.length > 0 && (
             <div>
               <p className="font-semibold text-orange-700 mb-1">חריגה בשעות פנויות ({freeHoursAlerts.length}):</p>
