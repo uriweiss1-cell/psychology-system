@@ -91,7 +91,8 @@ export default function Standards() {
   };
 
   const filtered = employees.filter(e =>
-    !filter || e.displayName?.includes(filter) || e.firstName?.includes(filter) || e.lastName?.includes(filter)
+    !filter || e.displayName?.includes(filter) || e.firstName?.includes(filter) || e.lastName?.includes(filter))
+    .sort((a, b) => (a.displayName || '').localeCompare(b.displayName || '', 'he')
   );
 
   // חישובי לוח סיכום
