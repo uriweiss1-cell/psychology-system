@@ -730,6 +730,23 @@ async function initDB() {
     db.set('_migrationVersion', MIGRATION_V11).write();
     console.log('Migration v11 applied: recalculated displayNames from firstName/lastName');
   }
+
+  // Migration v12: add freeHoursTargets to settings
+  const MIGRATION_V12 = 12;
+  if ((db.get('_migrationVersion').value() || 0) < MIGRATION_V12) {
+    if (!db.get('settings.freeHoursTargets').value()) {
+      db.get('settings').assign({
+        freeHoursTargets: [
+          { fte: 1.0,  hours: 9 },
+          { fte: 0.8,  hours: 7 },
+          { fte: 0.5,  hours: 5 },
+          { fte: 0.33, hours: 3 },
+        ]
+      }).write();
+    }
+    db.set('_migrationVersion', MIGRATION_V12).write();
+    console.log('Migration v12 applied: added freeHoursTargets to settings');
+  }
 }
 
 // Returns the active collection name (draft or current) for assignment-like data

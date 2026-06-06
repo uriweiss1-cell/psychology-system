@@ -2,11 +2,43 @@ const express = require('express');
 const router = express.Router();
 const { db, activeCol } = require('../database');
 
+// Find closest freeHoursTarget for a given ftePercent
+// Special rule: 0.9 rounds to 1.0
+function getTargetHours(ftePercent, targets) {
+  if (!targets || !targets.length) return null;
+  const fte = ftePercent >= 0.87 ? 1.0 : ftePercent; // 0.9 → 1.0
+  let closest = targets[0];
+  let minDist = Math.abs(fte - targets[0].fte);
+  targets.forEach(t => {
+    const d = Math.abs(fte - t.fte);
+    if (d < minDist) { minDist = d; closest = t; }
+  });
+  return closest.hours;
+}
+
 router.get('/', (req, res) => {
   const employees = db.get(activeCol('employees')).value().filter(e => e.status === 'active' || !e.status);
   const frameworks = db.get('frameworks').value();
   const assignments = db.get(activeCol('assignments')).value();
   const kinderAssignments = db.get(activeCol('kinderAssignments')).value();
+  const settings = db.get('settings').value();
+  const freeHoursTargets = settings.freeHoursTargets || [];
+
+  // שעות פנויות — חריגה מהיעד
+  const freeHoursAlerts = employees.map(emp => {
+    const fteHours   = Math.ceil(emp.ftePercent * 40);
+    const internal   = (emp.meetingHours||0) + (emp.supReceivedHours||0) +
+                       (emp.supGivenHours||0) + (emp.therapyHours||0) + (emp.roleHours||0);
+    const asgn       = assignments.find(a => a.employeeId === emp.id);
+    const frameworks = asgn ? (asgn.hours||0) + (asgn.specEdHours||0) + (asgn.kinderHours||0) : 0;
+    const freeHours  = Math.round((fteHours - internal - frameworks) * 100) / 100;
+    const target     = getTargetHours(emp.ftePercent, freeHoursTargets);
+    if (target === null) return null;
+    const gap = Math.round((freeHours - target) * 100) / 100;
+    if (gap > 2)           return { id: emp.id, displayName: emp.displayName, gap, type: 'over' };
+    if (freeHours < 2 || gap < -2) return { id: emp.id, displayName: emp.displayName, gap, type: 'under' };
+    return null;
+  }).filter(Boolean);
 
   // פסיכולוגים ללא שיבוץ לאף מסגרת
   const assignedEmpIds = new Set([
@@ -51,7 +83,7 @@ router.get('/', (req, res) => {
     })
     .filter(e => e.balance < -0.5);
 
-  res.json({ unassignedEmployees, unassignedFrameworks, frameworksWithVacancy, overBudget });
+  res.json({ unassignedEmployees, unassignedFrameworks, frameworksWithVacancy, overBudget, freeHoursAlerts });
 });
 
 module.exports = router;

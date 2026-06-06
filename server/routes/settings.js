@@ -7,7 +7,7 @@ router.get('/', (req, res) => {
 });
 
 router.put('/', (req, res) => {
-  const allowed = ['approvedPositions'];
+  const allowed = ['approvedPositions', 'freeHoursTargets'];
   const update = {};
   allowed.forEach(k => { if (req.body[k] !== undefined) update[k] = req.body[k]; });
   db.get('settings').assign(update).write();

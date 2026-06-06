@@ -82,6 +82,14 @@ export default function Standards() {
     setEditingApproved(false);
   };
 
+  const saveFreeHoursTarget = async (fte, hours) => {
+    const targets = (settings.freeHoursTargets || []).map(t =>
+      t.fte === fte ? { ...t, hours: parseFloat(hours) || t.hours } : t
+    );
+    const updated = await updateSettings({ freeHoursTargets: targets });
+    setSettings(updated);
+  };
+
   const filtered = employees.filter(e =>
     !filter || e.displayName?.includes(filter) || e.firstName?.includes(filter) || e.lastName?.includes(filter)
   );
@@ -146,6 +154,30 @@ export default function Standards() {
             sub='חל"ד − מ"מ' />
         </div>
       </div>
+
+      {/* טבלת שעות פנויות יעד */}
+      {settings.freeHoursTargets && (
+        <div className="bg-white rounded shadow p-4 mb-4">
+          <h2 className="text-base font-bold text-gray-700 mb-3">שעות פנויות יעד לפי אחוז משרה</h2>
+          <div className="flex gap-4 flex-wrap">
+            {settings.freeHoursTargets.map(t => (
+              <div key={t.fte} className="flex items-center gap-2 bg-gray-50 border rounded px-3 py-2">
+                <span className="text-sm text-gray-600 w-12">{Math.round(t.fte * 100)}%</span>
+                <input
+                  type="number"
+                  step="0.5"
+                  min="0"
+                  className="input w-16 text-center text-sm py-0.5"
+                  defaultValue={t.hours}
+                  onBlur={e => saveFreeHoursTarget(t.fte, e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && e.target.blur()}
+                />
+                <span className="text-xs text-gray-400">ש׳</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-xl font-bold text-gray-800">תקנים</h1>
