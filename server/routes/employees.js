@@ -2,36 +2,34 @@ const express = require('express');
 const router = express.Router();
 const { db, activeCol } = require('../database');
 
-// Remove employee (by displayName) from teams and supervisions
-function removeFromTeamsAndSupervisions(db, displayName) {
-  // Teams — always live (no draft for teams)
-  db.get('teams').value().forEach(team => {
+// Remove employee (by displayName) from teams and supervisions (draft-aware)
+function removeFromTeamsAndSupervisions(db, activeCol, displayName) {
+  const teamsCol = activeCol('teams');
+  const supCol   = activeCol('supervisions');
+
+  db.get(teamsCol).value().forEach(team => {
     if (team.headDisplayName === displayName) {
-      // Head leaves → disband the entire team
-      db.get('teams').remove({ id: team.id }).write();
+      db.get(teamsCol).remove({ id: team.id }).write();
     } else {
       const filtered = (team.memberDisplayNames || []).filter(n => n !== displayName);
       if (filtered.length !== (team.memberDisplayNames || []).length) {
-        db.get('teams').find({ id: team.id }).assign({ memberDisplayNames: filtered }).write();
+        db.get(teamsCol).find({ id: team.id }).assign({ memberDisplayNames: filtered }).write();
       }
     }
   });
 
-  // Supervisions — always live
-  const supervisions = db.get('supervisions').value();
+  const supervisions = db.get(supCol).value();
   supervisions.forEach(sup => {
-    // If this person is the supervisor → delete the entire entry
     if (sup.supervisorName === displayName) {
-      db.get('supervisions').remove({ id: sup.id }).write();
+      db.get(supCol).remove({ id: sup.id }).write();
       return;
     }
-    // If this person is a supervisee → remove from list
     const filtered = (sup.superviseeNames || []).filter(n => n !== displayName);
     if (filtered.length !== (sup.superviseeNames || []).length) {
       if (filtered.length === 0) {
-        db.get('supervisions').remove({ id: sup.id }).write();
+        db.get(supCol).remove({ id: sup.id }).write();
       } else {
-        db.get('supervisions').find({ id: sup.id }).assign({ superviseeNames: filtered }).write();
+        db.get(supCol).find({ id: sup.id }).assign({ superviseeNames: filtered }).write();
       }
     }
   });
@@ -122,7 +120,7 @@ router.put('/:id', (req, res) => {
       });
     });
     const currentEmp = db.get(col).find({ id }).value();
-    removeFromTeamsAndSupervisions(db, currentEmp.displayName);
+    removeFromTeamsAndSupervisions(db, activeCol, currentEmp.displayName);
   }
 
   const updated = db.get(col).find({ id }).value();
@@ -160,7 +158,7 @@ router.delete('/:id', (req, res) => {
   db.get(activeCol('assignments')).filter({ employeeId: id }).value()
     .forEach(a => db.get(activeCol('assignments')).find({ id: a.id }).assign({ employeeId: 0 }).write());
   db.get(activeCol('kinderAssignments')).remove({ employeeId: id }).write();
-  if (emp) removeFromTeamsAndSupervisions(db, emp.displayName);
+  if (emp) removeFromTeamsAndSupervisions(db, activeCol, emp.displayName);
   res.json({ ok: true });
 });
 

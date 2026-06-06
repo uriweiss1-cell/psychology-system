@@ -70,7 +70,7 @@ router.get('/', (req, res) => {
     .map(f => ({ id: f.id, name: f.name, type: f.type }));
 
   // הדרכות — פער בין מתוכנן לבפועל (סף: 0.5 שעות)
-  const supervisions = db.get('supervisions').value();
+  const supervisions = db.get(activeCol('supervisions')).value();
   const supAlerts = employees.map(emp => {
     const name = emp.displayName;
     // שעות שמקבל בפועל

@@ -475,6 +475,7 @@ async function initDB() {
     employees: [], frameworks: [], assignments: [],
     kinderAssignments: [], teams: [], supervisions: [], specEdClasses: [],
     draft_employees: [], draft_assignments: [], draft_kinderAssignments: [], draft_specEdClasses: [],
+    draft_teams: [], draft_supervisions: [],
     draftActive: false, draftSaved: false,
     settings: { approvedPositions: 31.2 },
     _migrationVersion: 0,
@@ -757,6 +758,27 @@ async function initDB() {
     }
     db.set('_migrationVersion', MIGRATION_V13).write();
     console.log('Migration v13 applied: fixed team 1 head to אורית נ.');
+  }
+
+  // Migration v14: restore teams and supervisions deleted by draft bug; add to draft system
+  const MIGRATION_V14 = 14;
+  if ((db.get('_migrationVersion').value() || 0) < MIGRATION_V14) {
+    // Restore any missing teams from seed
+    SEED_TEAMS.forEach(team => {
+      if (!db.get('teams').find({ id: team.id }).value()) {
+        db.get('teams').push(team).write();
+        console.log(`Restored team id=${team.id}`);
+      }
+    });
+    // Restore any missing supervisions from seed
+    SEED_SUPERVISIONS.forEach(sup => {
+      if (!db.get('supervisions').find({ id: sup.id }).value()) {
+        db.get('supervisions').push(sup).write();
+        console.log(`Restored supervision id=${sup.id}`);
+      }
+    });
+    db.set('_migrationVersion', MIGRATION_V14).write();
+    console.log('Migration v14 applied: restored missing teams and supervisions');
   }
 }
 
