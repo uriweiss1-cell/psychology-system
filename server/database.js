@@ -168,7 +168,7 @@ const SEED_ASSIGNMENTS = [
 const SEED_TEAMS = [
   // צוותים חינוכיים - 3 עמודות: כל עמודה = צוות אחד
   {
-    id: 1, type: 'educational', headDisplayName: 'אורית ס.',
+    id: 1, type: 'educational', headDisplayName: 'אורית נ.',
     memberDisplayNames: ['ניצן', 'מריה', 'עבדאללה', 'בועז', 'טל', 'דרור', 'רועי', 'עומר', 'תהילה', 'נועה', 'טטיאנה', 'עמית', 'אודי'],
     externalMembers: []
   },
@@ -746,6 +746,17 @@ async function initDB() {
     }
     db.set('_migrationVersion', MIGRATION_V12).write();
     console.log('Migration v12 applied: added freeHoursTargets to settings');
+  }
+
+  // Migration v13: fix team head אורית ס. → אורית נ.
+  const MIGRATION_V13 = 13;
+  if ((db.get('_migrationVersion').value() || 0) < MIGRATION_V13) {
+    const team1 = db.get('teams').find({ id: 1 }).value();
+    if (team1 && team1.headDisplayName === 'אורית ס.') {
+      db.get('teams').find({ id: 1 }).assign({ headDisplayName: 'אורית נ.' }).write();
+    }
+    db.set('_migrationVersion', MIGRATION_V13).write();
+    console.log('Migration v13 applied: fixed team 1 head to אורית נ.');
   }
 }
 
