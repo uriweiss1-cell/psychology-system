@@ -11,6 +11,23 @@ router.put('/:id', (req, res) => {
   const id  = +req.params.id;
   const team = db.get(col).find({ id }).value();
   if (!team) return res.status(404).json({ error: 'לא נמצא' });
+
+  // Validate: no member in more than one team of the same type
+  if (req.body.memberDisplayNames !== undefined) {
+    const teamType   = team.type;
+    const typeLabel  = teamType === 'educational' ? 'חינוכי' : 'קליני';
+    const otherTeams = db.get(col).value().filter(t => t.type === teamType && t.id !== id);
+    const takenNames = new Set(
+      otherTeams.flatMap(t => [t.headDisplayName, ...(t.memberDisplayNames || [])])
+    );
+    const duplicates = req.body.memberDisplayNames.filter(n => takenNames.has(n));
+    if (duplicates.length > 0) {
+      return res.status(400).json({
+        error: `האנשים הבאים כבר משובצים לצוות ${typeLabel} אחר: ${duplicates.join(', ')}`
+      });
+    }
+  }
+
   const allowed = ['headDisplayName','memberDisplayNames','externalMembers'];
   const update = {};
   allowed.forEach(k => { if (req.body[k] !== undefined) update[k] = req.body[k]; });

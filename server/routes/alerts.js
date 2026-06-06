@@ -108,7 +108,15 @@ router.get('/', (req, res) => {
     })
     .filter(e => e.balance < -0.5);
 
-  res.json({ unassignedEmployees, unassignedFrameworks, frameworksWithVacancy, overBudget, freeHoursAlerts, supAlerts });
+  // עובדים שאינם מדריכי הדרכה חינוכית פרטנית ואינם מודרכים בה
+  const educationalSups      = supervisions.filter(s => s.type === 'educational');
+  const edSupervisors        = new Set(educationalSups.map(s => s.supervisorName).filter(Boolean));
+  const edSupervisees        = new Set(educationalSups.flatMap(s => s.superviseeNames || []));
+  const noEdSupervision      = employees
+    .filter(e => !edSupervisors.has(e.displayName) && !edSupervisees.has(e.displayName))
+    .map(e => ({ id: e.id, displayName: e.displayName }));
+
+  res.json({ unassignedEmployees, unassignedFrameworks, frameworksWithVacancy, overBudget, freeHoursAlerts, supAlerts, noEdSupervision });
 });
 
 module.exports = router;

@@ -20,8 +20,8 @@ export default function AlertsBanner() {
   }, [refresh]);
 
   if (!alerts) return null;
-  const { unassignedFrameworks, frameworksWithVacancy = [], overBudget, freeHoursAlerts = [], supAlerts = [] } = alerts;
-  const total = unassignedFrameworks.length + frameworksWithVacancy.length + overBudget.length + freeHoursAlerts.length + supAlerts.length;
+  const { unassignedFrameworks, frameworksWithVacancy = [], overBudget, freeHoursAlerts = [], supAlerts = [], noEdSupervision = [] } = alerts;
+  const total = unassignedFrameworks.length + frameworksWithVacancy.length + overBudget.length + freeHoursAlerts.length + supAlerts.length + noEdSupervision.length;
   if (total === 0) return null;
 
   return (
@@ -35,6 +35,16 @@ export default function AlertsBanner() {
       </button>
       {open && (
         <div className="bg-white p-3 space-y-2 text-sm">
+          {noEdSupervision.length > 0 && (
+            <div>
+              <p className="font-semibold text-teal-700 mb-1">ללא הדרכה חינוכית פרטנית ({noEdSupervision.length}):</p>
+              <div className="flex flex-wrap gap-1">
+                {noEdSupervision.map(e => (
+                  <span key={e.id} className="badge bg-teal-100 text-teal-800">{e.displayName}</span>
+                ))}
+              </div>
+            </div>
+          )}
           {supAlerts.length > 0 && (
             <div>
               <p className="font-semibold text-purple-700 mb-1">פערים בהדרכות ({supAlerts.length}):</p>
