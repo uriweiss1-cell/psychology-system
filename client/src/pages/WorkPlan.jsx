@@ -89,7 +89,7 @@ export default function WorkPlan() {
 
   const filtered = employees.filter(e =>
     !filter || e.displayName.includes(filter) || e.firstName?.includes(filter) || e.lastName?.includes(filter)
-  );
+  ).sort((a, b) => (a.displayName || '').localeCompare(b.displayName || '', 'he'));
 
   if (loading) return <div className="p-6 text-gray-500">טוען...</div>;
 
