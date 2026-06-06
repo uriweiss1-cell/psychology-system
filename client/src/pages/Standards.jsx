@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { getEmployees, updateEmployee, createEmployee, deleteEmployee, getSettings, updateSettings } from '../api';
-import AlertsBanner from '../components/AlertsBanner';
 import ImportModal from '../components/ImportModal';
 
 const STATUS_COLORS = { active: 'bg-green-100 text-green-800', inactive: 'bg-red-100 text-red-700', maternity: 'bg-blue-100 text-blue-700' };
@@ -122,8 +121,6 @@ export default function Standards() {
           onClose={() => setShowImport(false)}
         />
       )}
-      <AlertsBanner />
-
       {/* לוח סיכום תקנים */}
       <div className="bg-white rounded shadow p-4 mb-4">
         <h2 className="text-base font-bold text-gray-700 mb-3">סיכום תקנים</h2>

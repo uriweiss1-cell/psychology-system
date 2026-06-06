@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
-import { getAssignmentSummary, getEmployees, getAssignments, updateAssignment, getFrameworks, updateFramework, getSpecEdClasses, createSpecEdClass, updateSpecEdClass, deleteSpecEdClass, advanceSpecEdYear } from '../api';
+import { getAssignmentSummary, getEmployees, getAssignments, updateAssignment, getFrameworks, updateFramework, getSpecEdClasses, createSpecEdClass, updateSpecEdClass, deleteSpecEdClass, advanceSpecEdYear, getAlerts } from '../api';
 import axios from 'axios';
-import AlertsBanner from '../components/AlertsBanner';
 
 const SECTOR_COLORS = {
   'ממלכתי':       'bg-blue-100 text-blue-800',
@@ -35,15 +34,18 @@ export default function Schools() {
   const [editingAsgn, setEditingAsgn] = useState(null);
   const [editingSpec, setEditingSpec] = useState(null); // { id, frameworkId, grades, classType, psychologistName }
   const [addingSpecFor, setAddingSpecFor] = useState(null); // frameworkId
+  const [freeHoursAlerts, setFreeHoursAlerts] = useState([]);
+  const [alertsOpen, setAlertsOpen] = useState(true);
 
   const load = async () => {
-    const [sum, emps, asgns, spec] = await Promise.all([
-      getAssignmentSummary(), getEmployees(true), getAssignments(), getSpecEdClasses()
+    const [sum, emps, asgns, spec, alertsData] = await Promise.all([
+      getAssignmentSummary(), getEmployees(true), getAssignments(), getSpecEdClasses(), getAlerts()
     ]);
     setSummary(sum);
     setEmployees(emps);
     setAssignments(asgns);
     setSpecEdClasses(spec);
+    setFreeHoursAlerts(alertsData.freeHoursAlerts || []);
     setLoading(false);
   };
 
@@ -123,7 +125,28 @@ export default function Schools() {
 
   return (
     <div>
-      <AlertsBanner />
+      {freeHoursAlerts.length > 0 && (
+        <div className="mb-4 border border-orange-200 rounded overflow-hidden">
+          <button
+            className="w-full flex items-center justify-between bg-orange-50 px-3 py-2 text-sm font-semibold text-orange-800 hover:bg-orange-100"
+            onClick={() => setAlertsOpen(o => !o)}
+          >
+            <span>⚠️ חריגה בשעות פנויות ({freeHoursAlerts.length})</span>
+            <span>{alertsOpen ? '▲' : '▼'}</span>
+          </button>
+          {alertsOpen && (
+            <div className="bg-white p-3 text-sm">
+              <div className="flex flex-wrap gap-1">
+                {freeHoursAlerts.map(e => (
+                  <span key={e.id} className={`badge ${e.type === 'over' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-700'}`}>
+                    {e.displayName} ({e.gap > 0 ? `+${e.gap}` : e.gap} ש׳)
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-xl font-bold text-gray-800">שיבוצי בתי ספר</h1>
         <div className="flex gap-2 items-center">

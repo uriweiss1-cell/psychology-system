@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getSupervisions, createSupervision, updateSupervision, deleteSupervision } from '../api';
+import { getSupervisions, createSupervision, updateSupervision, deleteSupervision, getAlerts } from '../api';
 
 const TYPE_LABELS = {
   educational:    'הדרכה חינוכית פרטנית',
@@ -53,9 +53,15 @@ export default function Supervisions() {
   const [newSup, setNewSup] = useState({ type: 'educational', customLabel: '', supervisorName: '', superviseeNames: '', hoursPerSession: 1, isExternal: false, notes: '' });
   const [addError, setAddError] = useState('');
   const [editError, setEditError] = useState('');
+  const [noEdSupervision, setNoEdSupervision] = useState([]);
+  const [supAlerts, setSupAlerts] = useState([]);
+  const [alertsOpen, setAlertsOpen] = useState(true);
 
   const load = async () => {
-    setSupervisions(await getSupervisions());
+    const [sups, alertsData] = await Promise.all([getSupervisions(), getAlerts()]);
+    setSupervisions(sups);
+    setNoEdSupervision(alertsData.noEdSupervision || []);
+    setSupAlerts(alertsData.supAlerts || []);
     setLoading(false);
   };
 
@@ -199,12 +205,58 @@ export default function Supervisions() {
     </div>
   );
 
+  const totalAlerts = noEdSupervision.length + supAlerts.length;
+
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-xl font-bold text-gray-800">הדרכות</h1>
         <button className="btn-primary" onClick={() => { setShowAdd(true); setAddError(''); }}>+ הדרכה חדשה</button>
       </div>
+
+      {totalAlerts > 0 && (
+        <div className="mb-4 border border-red-200 rounded overflow-hidden">
+          <button
+            className="w-full flex items-center justify-between bg-red-50 px-3 py-2 text-sm font-semibold text-red-800 hover:bg-red-100"
+            onClick={() => setAlertsOpen(o => !o)}
+          >
+            <span>⚠️ {totalAlerts} התרעות הדרכה</span>
+            <span>{alertsOpen ? '▲' : '▼'}</span>
+          </button>
+          {alertsOpen && (
+            <div className="bg-white p-3 space-y-2 text-sm">
+              {noEdSupervision.length > 0 && (
+                <div>
+                  <p className="font-semibold text-teal-700 mb-1">ללא הדרכה חינוכית פרטנית ({noEdSupervision.length}):</p>
+                  <div className="flex flex-wrap gap-1">
+                    {noEdSupervision.map(e => (
+                      <span key={e.id} className="badge bg-teal-100 text-teal-800">{e.displayName}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {supAlerts.length > 0 && (
+                <div>
+                  <p className="font-semibold text-purple-700 mb-1">פערים בהדרכות ({supAlerts.length}):</p>
+                  <div className="flex flex-wrap gap-1">
+                    {supAlerts.map(e => (
+                      <span key={e.id} className="badge bg-purple-100 text-purple-800">
+                        {e.displayName} —{' '}
+                        {e.alerts.map((a, i) => (
+                          <span key={i}>
+                            {a.field}: {a.gap > 0 ? `+${a.gap}` : a.gap} ש׳{i < e.alerts.length - 1 ? ', ' : ''}
+                          </span>
+                        ))}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
 
       {showAdd && (
         <div className="bg-blue-50 border border-blue-200 rounded p-4 mb-4">

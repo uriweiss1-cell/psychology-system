@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getKinder, getEmployees, createKinder, updateKinder, deleteKinder, previewImport, applyImport } from '../api';
-import AlertsBanner from '../components/AlertsBanner';
+import { getKinder, getEmployees, createKinder, updateKinder, deleteKinder, previewImport, applyImport, getAlerts } from '../api';
 import ImportModal from '../components/ImportModal';
 
 const COLS = [
@@ -22,11 +21,14 @@ export default function Kindergartens() {
   const [showAdd, setShowAdd] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [newRow, setNewRow] = useState({ employeeId: '', gardenName: '', ageGroup: 'חובה', address: '', phone: '', teacher: '', teacherPhone: '', email: '' });
+  const [freeHoursAlerts, setFreeHoursAlerts] = useState([]);
+  const [alertsOpen, setAlertsOpen] = useState(true);
 
   const load = async () => {
-    const [asgns, emps] = await Promise.all([getKinder(), getEmployees(true)]);
+    const [asgns, emps, alertsData] = await Promise.all([getKinder(), getEmployees(true), getAlerts()]);
     setAssignments(asgns);
     setEmployees(emps);
+    setFreeHoursAlerts(alertsData.freeHoursAlerts || []);
     setLoading(false);
   };
 
@@ -85,7 +87,28 @@ export default function Kindergartens() {
           onClose={() => setShowImport(false)}
         />
       )}
-      <AlertsBanner />
+      {freeHoursAlerts.length > 0 && (
+        <div className="mb-4 border border-orange-200 rounded overflow-hidden">
+          <button
+            className="w-full flex items-center justify-between bg-orange-50 px-3 py-2 text-sm font-semibold text-orange-800 hover:bg-orange-100"
+            onClick={() => setAlertsOpen(o => !o)}
+          >
+            <span>⚠️ חריגה בשעות פנויות ({freeHoursAlerts.length})</span>
+            <span>{alertsOpen ? '▲' : '▼'}</span>
+          </button>
+          {alertsOpen && (
+            <div className="bg-white p-3 text-sm">
+              <div className="flex flex-wrap gap-1">
+                {freeHoursAlerts.map(e => (
+                  <span key={e.id} className={`badge ${e.type === 'over' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-700'}`}>
+                    {e.displayName} ({e.gap > 0 ? `+${e.gap}` : e.gap} ש׳)
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
       <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-xl font-bold text-gray-800">שיבוצי גנים</h1>
