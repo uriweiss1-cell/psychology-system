@@ -20,8 +20,8 @@ export default function AlertsBanner() {
   }, [refresh]);
 
   if (!alerts) return null;
-  const { unassignedFrameworks, frameworksWithVacancy = [], overBudget } = alerts;
-  const total = unassignedFrameworks.length + frameworksWithVacancy.length + overBudget.length;
+  const { unassignedFrameworks, frameworksWithVacancy = [], overBudget, freeHoursAlerts = [], supAlerts = [], noEdSupervision = [] } = alerts;
+  const total = unassignedFrameworks.length + frameworksWithVacancy.length + overBudget.length + freeHoursAlerts.length + supAlerts.length + noEdSupervision.length;
   if (total === 0) return null;
 
   return (
@@ -35,6 +35,45 @@ export default function AlertsBanner() {
       </button>
       {open && (
         <div className="bg-white p-3 space-y-2 text-sm">
+          {noEdSupervision.length > 0 && (
+            <div>
+              <p className="font-semibold text-teal-700 mb-1">ללא הדרכה חינוכית פרטנית ({noEdSupervision.length}):</p>
+              <div className="flex flex-wrap gap-1">
+                {noEdSupervision.map(e => (
+                  <span key={e.id} className="badge bg-teal-100 text-teal-800">{e.displayName}</span>
+                ))}
+              </div>
+            </div>
+          )}
+          {supAlerts.length > 0 && (
+            <div>
+              <p className="font-semibold text-purple-700 mb-1">פערים בהדרכות ({supAlerts.length}):</p>
+              <div className="flex flex-wrap gap-1">
+                {supAlerts.map(e => (
+                  <span key={e.id} className="badge bg-purple-100 text-purple-800">
+                    {e.displayName} —{' '}
+                    {e.alerts.map((a, i) => (
+                      <span key={i}>
+                        {a.field}: {a.gap > 0 ? `+${a.gap}` : a.gap} ש׳{i < e.alerts.length - 1 ? ', ' : ''}
+                      </span>
+                    ))}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+          {freeHoursAlerts.length > 0 && (
+            <div>
+              <p className="font-semibold text-orange-700 mb-1">חריגה בשעות פנויות ({freeHoursAlerts.length}):</p>
+              <div className="flex flex-wrap gap-1">
+                {freeHoursAlerts.map(e => (
+                  <span key={e.id} className={`badge ${e.type === 'over' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-700'}`}>
+                    {e.displayName} ({e.gap > 0 ? `+${e.gap}` : e.gap} ש׳)
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
           {unassignedFrameworks.length > 0 && (
             <div>
               <p className="font-semibold text-orange-700 mb-1">מסגרות ללא פסיכולוג ({unassignedFrameworks.length}):</p>
