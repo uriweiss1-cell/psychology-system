@@ -6,11 +6,15 @@ const { db, activeCol } = require('../database');
 function removeFromTeamsAndSupervisions(db, displayName) {
   // Teams — always live (no draft for teams)
   db.get('teams').value().forEach(team => {
-    const updates = {};
-    if (team.headDisplayName === displayName) updates.headDisplayName = '';
-    const filtered = (team.memberDisplayNames || []).filter(n => n !== displayName);
-    if (filtered.length !== (team.memberDisplayNames || []).length) updates.memberDisplayNames = filtered;
-    if (Object.keys(updates).length) db.get('teams').find({ id: team.id }).assign(updates).write();
+    if (team.headDisplayName === displayName) {
+      // Head leaves → disband the entire team
+      db.get('teams').remove({ id: team.id }).write();
+    } else {
+      const filtered = (team.memberDisplayNames || []).filter(n => n !== displayName);
+      if (filtered.length !== (team.memberDisplayNames || []).length) {
+        db.get('teams').find({ id: team.id }).assign({ memberDisplayNames: filtered }).write();
+      }
+    }
   });
 
   // Supervisions — always live
