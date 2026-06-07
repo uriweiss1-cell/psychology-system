@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { getAssignmentSummary, getEmployees, getAssignments, updateAssignment, getFrameworks, updateFramework, getSpecEdClasses, createSpecEdClass, updateSpecEdClass, deleteSpecEdClass, advanceSpecEdYear, getAlerts } from '../api';
 import axios from 'axios';
 
-// חישוב שעות יעד: אם הוגדר ידנית → שימוש בערך; אחרת → נוסחה
+// חישוב שעות יעד: אם הוגדר ידנית → שימוש בערך; אחרת → נוסחה (v2)
 function calcTargetHours(fw, fwSpec) {
   if (fw.targetHours != null) return fw.targetHours;
   if (!fw.allocatedHours) return null;
