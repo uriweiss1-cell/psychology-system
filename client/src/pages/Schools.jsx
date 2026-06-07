@@ -2,14 +2,26 @@ import { useEffect, useState } from 'react';
 import { getAssignmentSummary, getEmployees, getAssignments, updateAssignment, getFrameworks, updateFramework, getSpecEdClasses, createSpecEdClass, updateSpecEdClass, deleteSpecEdClass, advanceSpecEdYear, getAlerts } from '../api';
 import axios from 'axios';
 
-// חישוב שעות יעד: אם הוגדר ידנית → שימוש בערך; אחרת → נוסחה (v2)
+// כיתות שמחושבות כ-2 שעות שבועיות: א (כיתה א'), ז (מעבר לחטב"ע), י (מעבר לתיכון)
+// הערה: 'י' לבד, לא יא/יב — בדיקה שהתו אחרי האות אינו אות עברית
+function gradeHours(grade) {
+  for (const letter of ['א', 'ז', 'י']) {
+    if (grade.startsWith(letter)) {
+      const next = grade[letter.length];
+      if (!next || !/[א-ת]/.test(next)) return 2;
+    }
+  }
+  return 1;
+}
+
+// חישוב שעות יעד: אם הוגדר ידנית → שימוש בערך; אחרת → נוסחה (v3)
 function calcTargetHours(fw, fwSpec) {
   if (fw.targetHours != null) return fw.targetHours;
   if (!fw.allocatedHours) return null;
   const base = Math.ceil(fw.allocatedHours / 100);
   const specEdExtra = fwSpec.reduce((sum, s) => {
     const grades = (s.grades || '').split(',').map(g => g.trim()).filter(Boolean);
-    return sum + grades.reduce((gs, grade) => gs + (grade.startsWith('א') ? 2 : 1), 0);
+    return sum + grades.reduce((gs, grade) => gs + gradeHours(grade), 0);
   }, 0);
   return base + specEdExtra;
 }
