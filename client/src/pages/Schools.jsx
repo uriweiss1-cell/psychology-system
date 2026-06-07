@@ -227,8 +227,8 @@ function SchoolTable({ items, assignments, employees, specEdClasses, editingAsgn
   editingSpec, setEditingSpec, saveAssignment, deleteAssignment, addAssignment, setSummary,
   saveSpec, addSpec, deleteSpec, editingTarget, setEditingTarget, saveTargetHours, rowBg = '' }) {
   return (
-    <div className="bg-white rounded shadow overflow-hidden">
-      <table className="w-full text-sm">
+    <div className="bg-white rounded shadow overflow-x-auto">
+      <table className="w-full text-sm min-w-[900px]">
         <thead>
           <tr>
             <th className="table-header">שם מסגרת</th>
