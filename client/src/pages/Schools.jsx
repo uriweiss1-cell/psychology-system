@@ -2,6 +2,17 @@ import { useEffect, useState } from 'react';
 import { getAssignmentSummary, getEmployees, getAssignments, updateAssignment, getFrameworks, updateFramework, getSpecEdClasses, createSpecEdClass, updateSpecEdClass, deleteSpecEdClass, advanceSpecEdYear, getAlerts } from '../api';
 import axios from 'axios';
 
+// חישוב שעות יעד: אם הוגדר ידנית → שימוש בערך; אחרת → נוסחה
+function calcTargetHours(fw, fwSpec) {
+  if (fw.targetHours != null) return fw.targetHours;
+  if (!fw.allocatedHours) return null;
+  const base = Math.ceil(fw.allocatedHours / 100);
+  const specEdExtra = fwSpec.reduce((sum, s) => {
+    return sum + ((s.grades || '').includes('א') ? 2 : 1);
+  }, 0);
+  return base + specEdExtra;
+}
+
 const SECTOR_COLORS = {
   'ממלכתי':       'bg-blue-100 text-blue-800',
   'ממ"ד':         'bg-green-100 text-green-800',
@@ -36,6 +47,7 @@ export default function Schools() {
   const [addingSpecFor, setAddingSpecFor] = useState(null); // frameworkId
   const [freeHoursAlerts, setFreeHoursAlerts] = useState([]);
   const [alertsOpen, setAlertsOpen] = useState(true);
+  const [editingTarget, setEditingTarget] = useState(null); // { id, value }
 
   const load = async () => {
     const [sum, emps, asgns, spec, alertsData] = await Promise.all([
@@ -75,6 +87,13 @@ export default function Schools() {
     const res = await axios.post('/api/assignments', { frameworkId, employeeId: 0, hours: 0, specEdHours: 0, kinderHours: 0 });
     setAssignments(prev => [...prev, res.data]);
     setEditingAsgn({ ...res.data });
+  };
+
+  const saveTargetHours = async (fwId, value) => {
+    const parsed = value === '' ? null : parseFloat(value);
+    await updateFramework(fwId, { targetHours: isNaN(parsed) ? null : parsed });
+    setSummary(await getAssignmentSummary());
+    setEditingTarget(null);
   };
 
   const saveSpec = async () => {
@@ -181,7 +200,8 @@ export default function Schools() {
             editingSpec={editingSpec} setEditingSpec={setEditingSpec}
             saveAssignment={saveAssignment} deleteAssignment={deleteAssignment} addAssignment={addAssignment}
             saveSpec={saveSpec} addSpec={addSpec} deleteSpec={deleteSpec}
-            setSummary={setSummary} rowBg="bg-red-50/40" />
+            setSummary={setSummary} editingTarget={editingTarget} setEditingTarget={setEditingTarget}
+            saveTargetHours={saveTargetHours} rowBg="bg-red-50/40" />
         </div>
       )}
 
@@ -195,7 +215,8 @@ export default function Schools() {
             editingSpec={editingSpec} setEditingSpec={setEditingSpec}
             saveAssignment={saveAssignment} deleteAssignment={deleteAssignment} addAssignment={addAssignment}
             saveSpec={saveSpec} addSpec={addSpec} deleteSpec={deleteSpec}
-            setSummary={setSummary} />
+            setSummary={setSummary} editingTarget={editingTarget} setEditingTarget={setEditingTarget}
+            saveTargetHours={saveTargetHours} />
         </div>
       ))}
     </div>
@@ -204,7 +225,7 @@ export default function Schools() {
 
 function SchoolTable({ items, assignments, employees, specEdClasses, editingAsgn, setEditingAsgn,
   editingSpec, setEditingSpec, saveAssignment, deleteAssignment, addAssignment, setSummary,
-  saveSpec, addSpec, deleteSpec, rowBg = '' }) {
+  saveSpec, addSpec, deleteSpec, editingTarget, setEditingTarget, saveTargetHours, rowBg = '' }) {
   return (
     <div className="bg-white rounded shadow overflow-hidden">
       <table className="w-full text-sm">
@@ -212,7 +233,10 @@ function SchoolTable({ items, assignments, employees, specEdClasses, editingAsgn
           <tr>
             <th className="table-header">שם מסגרת</th>
             <th className="table-header">מגזר</th>
-            <th className="table-header text-center">מספר תלמידים</th>
+            <th className="table-header text-center">תלמידים</th>
+            <th className="table-header text-center">שעות יעד</th>
+            <th className="table-header text-center">שעות בפועל</th>
+            <th className="table-header text-center">פער</th>
             <th className="table-header">כתות ח"מ</th>
             <th className="table-header">פסיכולוגים משובצים</th>
             <th className="table-header w-8"></th>
@@ -222,6 +246,10 @@ function SchoolTable({ items, assignments, employees, specEdClasses, editingAsgn
           {items.map(fw => {
             const fwAsgns = assignments.filter(a => a.frameworkId === fw.id);
             const fwSpec = specEdClasses.filter(s => s.frameworkId === fw.id);
+            const target = calcTargetHours(fw, fwSpec);
+            const actual = fwAsgns.reduce((sum, a) => sum + (a.hours || 0) + (a.specEdHours || 0), 0);
+            const gap = target != null ? Math.round((actual - target) * 100) / 100 : null;
+            const gapColor = gap == null ? '' : gap === 0 ? 'text-green-600' : gap > 0 ? 'text-orange-500' : 'text-red-600';
             return (
               <tr key={fw.id} className={`hover:bg-gray-50 align-top ${rowBg}`}>
                 <td className="table-cell font-medium">
@@ -240,6 +268,36 @@ function SchoolTable({ items, assignments, employees, specEdClasses, editingAsgn
                   </select>
                 </td>
                 <td className="table-cell text-center text-gray-500">{fw.allocatedHours ?? '—'}</td>
+                <td className="table-cell text-center">
+                  {editingTarget?.id === fw.id ? (
+                    <input
+                      autoFocus
+                      type="number"
+                      className="input text-xs py-0.5 w-16 text-center"
+                      value={editingTarget.value}
+                      onChange={e => setEditingTarget(p => ({ ...p, value: e.target.value }))}
+                      onBlur={() => saveTargetHours(fw.id, editingTarget.value)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') saveTargetHours(fw.id, editingTarget.value);
+                        if (e.key === 'Escape') setEditingTarget(null);
+                      }}
+                    />
+                  ) : (
+                    <span
+                      className="cursor-pointer hover:text-blue-600"
+                      title={fw.targetHours != null ? 'ערך ידני — לחץ לעריכה' : 'לחץ לעריכה'}
+                      onClick={() => setEditingTarget({ id: fw.id, value: target ?? '' })}
+                    >
+                      {target != null
+                        ? <>{target}{fw.targetHours != null && <span className="text-gray-400 text-xs mr-0.5">*</span>}</>
+                        : <span className="text-gray-300">—</span>}
+                    </span>
+                  )}
+                </td>
+                <td className="table-cell text-center text-gray-600">{actual > 0 ? actual : '—'}</td>
+                <td className={`table-cell text-center font-medium ${gapColor}`}>
+                  {gap == null ? '—' : gap === 0 ? '✓' : gap > 0 ? `+${gap}` : gap}
+                </td>
                 <td className="table-cell">
                   {fwSpec.length === 0 ? (
                     <span className="text-gray-300 text-xs">—</span>

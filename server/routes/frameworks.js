@@ -27,7 +27,7 @@ router.put('/:id', (req, res) => {
   const id = +req.params.id;
   const fw = db.get('frameworks').find({ id }).value();
   if (!fw) return res.status(404).json({ error: 'לא נמצא' });
-  const allowed = ['name','type','sector','subType','allocatedHours','studentCount','notes'];
+  const allowed = ['name','type','sector','subType','allocatedHours','studentCount','notes','targetHours'];
   const update = {};
   allowed.forEach(k => { if (req.body[k] !== undefined) update[k] = req.body[k]; });
   db.get('frameworks').find({ id }).assign(update).write();
