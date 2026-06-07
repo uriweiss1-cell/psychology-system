@@ -80,7 +80,12 @@ router.get('/', (req, res) => {
     }, 0);
     // שעות שנותן בפועל
     const actualGiven = supervisions.reduce((sum, s) => {
-      if (s.supervisorName === name) return sum + (s.superviseeNames || []).length * (s.hoursPerSession || 1);
+      if (s.supervisorName === name) {
+        const isIndividual = s.type === 'educational' || s.type === 'clinical';
+        return sum + (isIndividual
+          ? (s.superviseeNames || []).length * (s.hoursPerSession || 1)
+          : (s.hoursPerSession || 1.5));
+      }
       return sum;
     }, 0);
     const plannedReceived = emp.supReceivedHours || 0;
