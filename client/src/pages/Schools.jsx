@@ -8,7 +8,8 @@ function calcTargetHours(fw, fwSpec) {
   if (!fw.allocatedHours) return null;
   const base = Math.ceil(fw.allocatedHours / 100);
   const specEdExtra = fwSpec.reduce((sum, s) => {
-    return sum + ((s.grades || '').includes('א') ? 2 : 1);
+    const grades = (s.grades || '').split(',').map(g => g.trim()).filter(Boolean);
+    return sum + grades.reduce((gs, grade) => gs + (grade.startsWith('א') ? 2 : 1), 0);
   }, 0);
   return base + specEdExtra;
 }
