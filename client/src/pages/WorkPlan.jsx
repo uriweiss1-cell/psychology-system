@@ -93,15 +93,7 @@ export default function WorkPlan() {
 
   if (loading) return <div className="p-6 text-gray-500">טוען...</div>;
 
-  // סכום שעות מסגרות מכל השיבוצים של העובד (לא רק הראשון)
-  const getAsgnTotals = (empId) => {
-    const empAsgns = assignments.filter(a => a.employeeId === empId);
-    return {
-      hours:       empAsgns.reduce((s, a) => s + (a.hours       || 0), 0),
-      specEdHours: empAsgns.reduce((s, a) => s + (a.specEdHours || 0), 0),
-      kinderHours: empAsgns.reduce((s, a) => s + (a.kinderHours || 0), 0),
-    };
-  };
+  const getAsgn = (empId) => assignments.find(a => a.employeeId === empId) || {};
   const getAllFwNames = (empId) => {
     const names = assignments
       .filter(a => a.employeeId === empId && a.frameworkId > 0)
@@ -155,7 +147,7 @@ export default function WorkPlan() {
           </thead>
           <tbody>
             {filtered.map(emp => {
-              const asgnTotals = getAsgnTotals(emp.id);
+              const asgn = getAsgn(emp.id);
               const rowBg = emp.balance < -0.1 ? 'bg-red-50' : '';
               return (
                 <tr key={emp.id} className={`hover:bg-gray-50 ${rowBg}`}>
@@ -169,9 +161,15 @@ export default function WorkPlan() {
                     </td>
                   ))}
                   <td className="table-cell text-center bg-blue-50 font-semibold">{emp.totalInternal}</td>
-                  <td className="table-cell text-center bg-green-50/40 text-gray-700">{asgnTotals.hours}</td>
-                  <td className="table-cell text-center bg-green-50/40 text-gray-700">{asgnTotals.specEdHours}</td>
-                  <td className="table-cell text-center bg-green-50/40 text-gray-700">{asgnTotals.kinderHours}</td>
+                  <td className="table-cell text-center bg-green-50/40">
+                    <EditableCell value={asgn.hours ?? 0} onSave={v => saveAsgn(emp.id, 'hours', v)} />
+                  </td>
+                  <td className="table-cell text-center bg-green-50/40">
+                    <EditableCell value={asgn.specEdHours ?? 0} onSave={v => saveAsgn(emp.id, 'specEdHours', v)} />
+                  </td>
+                  <td className="table-cell text-center bg-green-50/40">
+                    <EditableCell value={asgn.kinderHours ?? 0} onSave={v => saveAsgn(emp.id, 'kinderHours', v)} />
+                  </td>
                   <td className="table-cell text-center bg-green-50 font-semibold">{emp.totalFrameworks}</td>
                   <td className="table-cell text-center text-xs text-gray-500">{getAllFwNames(emp.id)}</td>
                   <td className="table-cell text-center"><FreeHoursBadge freeHours={emp.freeHours} /></td>
