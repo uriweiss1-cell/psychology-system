@@ -169,15 +169,9 @@ export default function WorkPlan() {
                     </td>
                   ))}
                   <td className="table-cell text-center bg-blue-50 font-semibold">{emp.totalInternal}</td>
-                  <td className="table-cell text-center bg-green-50/40">
-                    <EditableCell value={asgnTotals.hours} onSave={v => saveAsgn(emp.id, 'hours', v)} />
-                  </td>
-                  <td className="table-cell text-center bg-green-50/40">
-                    <EditableCell value={asgnTotals.specEdHours} onSave={v => saveAsgn(emp.id, 'specEdHours', v)} />
-                  </td>
-                  <td className="table-cell text-center bg-green-50/40">
-                    <EditableCell value={asgnTotals.kinderHours} onSave={v => saveAsgn(emp.id, 'kinderHours', v)} />
-                  </td>
+                  <td className="table-cell text-center bg-green-50/40 text-gray-700">{asgnTotals.hours}</td>
+                  <td className="table-cell text-center bg-green-50/40 text-gray-700">{asgnTotals.specEdHours}</td>
+                  <td className="table-cell text-center bg-green-50/40 text-gray-700">{asgnTotals.kinderHours}</td>
                   <td className="table-cell text-center bg-green-50 font-semibold">{emp.totalFrameworks}</td>
                   <td className="table-cell text-center text-xs text-gray-500">{getAllFwNames(emp.id)}</td>
                   <td className="table-cell text-center"><FreeHoursBadge freeHours={emp.freeHours} /></td>
