@@ -55,9 +55,16 @@ function withComputed(emp) {
   const totalInternal = (emp.meetingHours || 0) + (emp.supReceivedHours || 0) +
     (emp.supGivenHours || 0) + (emp.therapyHours || 0) + (emp.roleHours || 0);
 
-  // שעות מסגרות = מתוכנית העבודה בלבד (frameworkId=0)
-  const planAsgn = db.get(activeCol('assignments')).find({ employeeId: emp.id, frameworkId: 0 }).value();
-  const totalFrameworks = planAsgn ? (planAsgn.hours||0) + (planAsgn.specEdHours||0) + (planAsgn.kinderHours||0) : 0;
+  // תוכנית עבודה = frameworkId=0 | שיבוץ בפועל = frameworkId>0
+  const allAsgns   = db.get(activeCol('assignments')).filter({ employeeId: emp.id }).value();
+  const realAsgns  = allAsgns.filter(a => a.frameworkId > 0);
+  const planAsgn   = allAsgns.find(a => a.frameworkId === 0);
+  const schoolSpecEd = realAsgns.length > 0
+    ? realAsgns.reduce((s, a) => s + (a.hours||0) + (a.specEdHours||0), 0)
+    : (planAsgn ? (planAsgn.hours||0) + (planAsgn.specEdHours||0) : 0);
+  const kinderHours  = realAsgns.reduce((s, a) => s + (a.kinderHours||0), 0)
+    || (planAsgn ? (planAsgn.kinderHours||0) : 0);
+  const totalFrameworks = schoolSpecEd + kinderHours;
 
   const freeHours = Math.round((fteHours - totalInternal - totalFrameworks) * 100) / 100;
   const balance = freeHours;
