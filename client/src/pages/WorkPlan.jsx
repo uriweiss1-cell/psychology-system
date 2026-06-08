@@ -93,7 +93,16 @@ export default function WorkPlan() {
 
   if (loading) return <div className="p-6 text-gray-500">טוען...</div>;
 
-  const getAsgn = (empId) => assignments.find(a => a.employeeId === empId) || {};
+  const getAsgn = (empId) => {
+    const all  = assignments.filter(a => a.employeeId === empId);
+    const real = all.filter(a => a.frameworkId > 0);
+    const list = real.length > 0 ? real : all;
+    return {
+      hours:       list.reduce((s, a) => s + (a.hours       || 0), 0),
+      specEdHours: list.reduce((s, a) => s + (a.specEdHours || 0), 0),
+      kinderHours: list.reduce((s, a) => s + (a.kinderHours || 0), 0),
+    };
+  };
   const getAllFwNames = (empId) => {
     const names = assignments
       .filter(a => a.employeeId === empId && a.frameworkId > 0)
