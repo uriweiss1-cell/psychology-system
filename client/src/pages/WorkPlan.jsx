@@ -173,7 +173,7 @@ export default function WorkPlan() {
                   <td className="table-cell text-center bg-green-50/40">
                     <EditableCell value={asgn.kinderHours ?? 0} onSave={v => saveAsgn(emp.id, 'kinderHours', v)} />
                   </td>
-                  <td className="table-cell text-center bg-green-50 font-semibold">{(asgn.hours||0)+(asgn.specEdHours||0)+(asgn.kinderHours||0)}</td>
+                  <td className="table-cell text-center bg-green-50 font-semibold">{emp.totalFrameworks}</td>
                   <td className="table-cell text-center text-xs text-gray-500">{getAllFwNames(emp.id)}</td>
                   <td className="table-cell text-center"><FreeHoursBadge freeHours={emp.freeHours} /></td>
                   <td className="table-cell">
