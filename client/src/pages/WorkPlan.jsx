@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { getEmployees, updateEmployee, getAssignments, createAssignment, updateAssignment, getFrameworks, deleteEmployee } from '../api';
+import { getEmployees, updateEmployee, getAssignments, updateAssignment, getFrameworks, deleteEmployee } from '../api';
 import AlertsBanner from '../components/AlertsBanner';
 
 const HOURS_FIELDS = [
@@ -73,11 +73,8 @@ export default function WorkPlan() {
   };
 
   const saveAsgn = async (empId, field, value) => {
-    let asgn = assignments.find(a => a.employeeId === empId && a.frameworkId === 0);
-    if (!asgn) {
-      asgn = await createAssignment({ employeeId: empId, frameworkId: 0, hours: 0, specEdHours: 0, kinderHours: 0 });
-      setAssignments(prev => [...prev, asgn]);
-    }
+    const asgn = assignments.find(a => a.employeeId === empId);
+    if (!asgn) return;
     const updated = await updateAssignment(asgn.id, { [field]: value });
     setAssignments(prev => prev.map(a => a.id === asgn.id ? updated : a));
     const emps = await getEmployees(true);
@@ -96,7 +93,7 @@ export default function WorkPlan() {
 
   if (loading) return <div className="p-6 text-gray-500">טוען...</div>;
 
-  const getAsgn = (empId) => assignments.find(a => a.employeeId === empId && a.frameworkId === 0) || {};
+  const getAsgn = (empId) => assignments.find(a => a.employeeId === empId) || {};
   const getAllFwNames = (empId) => {
     const names = assignments
       .filter(a => a.employeeId === empId && a.frameworkId > 0)

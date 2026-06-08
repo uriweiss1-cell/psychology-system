@@ -31,13 +31,8 @@ router.get('/', (req, res) => {
                        (emp.supGivenHours||0) + (emp.therapyHours||0) + (emp.roleHours||0);
     const allAsgns   = assignments.filter(a => a.employeeId === emp.id);
     const realAsgns  = allAsgns.filter(a => a.frameworkId > 0);
-    const planAsgn   = allAsgns.find(a => a.frameworkId === 0);
-    const schoolSpecEd = realAsgns.length > 0
-      ? realAsgns.reduce((s, a) => s + (a.hours||0) + (a.specEdHours||0), 0)
-      : (planAsgn ? (planAsgn.hours||0) + (planAsgn.specEdHours||0) : 0);
-    const kinderHours  = realAsgns.reduce((s, a) => s + (a.kinderHours||0), 0)
-      || (planAsgn ? (planAsgn.kinderHours||0) : 0);
-    const frameworks = schoolSpecEd + kinderHours;
+    const asgnsToSum = realAsgns.length > 0 ? realAsgns : allAsgns.slice(0, 1);
+    const frameworks = asgnsToSum.reduce((s, a) => s + (a.hours||0) + (a.specEdHours||0) + (a.kinderHours||0), 0);
     const freeHours  = Math.round((fteHours - internal - frameworks) * 100) / 100;
     const target     = getTargetHours(emp.ftePercent, freeHoursTargets);
     if (target === null) return null;
@@ -114,13 +109,8 @@ router.get('/', (req, res) => {
         (emp.supGivenHours || 0) + (emp.therapyHours || 0) + (emp.roleHours || 0) + (emp.officeHours || 0);
       const allAsgns   = assignments.filter(a => a.employeeId === emp.id);
       const realAsgns  = allAsgns.filter(a => a.frameworkId > 0);
-      const planAsgn   = allAsgns.find(a => a.frameworkId === 0);
-      const schoolSpecEd = realAsgns.length > 0
-        ? realAsgns.reduce((s, a) => s + (a.hours||0) + (a.specEdHours||0), 0)
-        : (planAsgn ? (planAsgn.hours||0) + (planAsgn.specEdHours||0) : 0);
-      const kinderHours  = realAsgns.reduce((s, a) => s + (a.kinderHours||0), 0)
-        || (planAsgn ? (planAsgn.kinderHours||0) : 0);
-      const frameworks = schoolSpecEd + kinderHours;
+      const asgnsToSum = realAsgns.length > 0 ? realAsgns : allAsgns.slice(0, 1);
+      const frameworks = asgnsToSum.reduce((s, a) => s + (a.hours||0) + (a.specEdHours||0) + (a.kinderHours||0), 0);
       const total = internal + frameworks;
       const balance = Math.round((fteHours - total) * 100) / 100;
       return { id: emp.id, displayName: emp.displayName, balance, fteHours };
