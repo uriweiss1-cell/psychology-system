@@ -14,6 +14,7 @@ export const deleteFramework = (id) => api.delete(`/frameworks/${id}`).then(r =>
 
 export const getAssignments       = () => api.get('/assignments').then(r => r.data);
 export const getAssignmentSummary = () => api.get('/assignments/summary').then(r => r.data);
+export const createAssignment     = (data) => api.post('/assignments', data).then(r => r.data);
 export const updateAssignment     = (id, data) => api.put(`/assignments/${id}`, data).then(r => r.data);
 
 export const getKinder      = () => api.get('/kinder').then(r => r.data);
