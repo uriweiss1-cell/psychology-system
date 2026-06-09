@@ -823,27 +823,35 @@ async function initDB() {
   }
 
   // Migration v16: create frameworkId=0 "planned" records for all employees who lack one
-  const MIGRATION_V16 = 16;
+  // Always runs on the LIVE collections (not draft), regardless of draft state
+  const MIGRATION_V16 = 17;
   if ((db.get('_migrationVersion').value() || 0) < MIGRATION_V16) {
-    const col = db.get('draftActive').value() ? 'draft_assignments' : 'assignments';
-    const employees = db.get(db.get('draftActive').value() ? 'draft_employees' : 'employees').value() || [];
-    const assignments = db.get(col).value() || [];
-    const ids = assignments.map(a => a.id);
-    let nextId = ids.length ? Math.max(...ids) + 1 : 1;
-
-    employees.forEach(emp => {
-      const hasPlanned = assignments.some(a => a.employeeId === emp.id && a.frameworkId === 0);
-      if (hasPlanned) return;
-      // sum all real assignments for this employee
-      const real = assignments.filter(a => a.employeeId === emp.id && a.frameworkId > 0);
-      const hours       = real.reduce((s,a) => s + (a.hours||0), 0);
-      const specEdHours = real.reduce((s,a) => s + (a.specEdHours||0), 0);
-      const kinderHours = real.reduce((s,a) => s + (a.kinderHours||0), 0);
-      db.get(col).push({ id: nextId++, employeeId: emp.id, frameworkId: 0, hours, specEdHours, kinderHours }).write();
-    });
-
+    function ensurePlannedRecords(aCol, eCol) {
+      const employees  = db.get(eCol).value() || [];
+      const assignments = db.get(aCol).value() || [];
+      const allIds = [
+        ...(db.get('assignments').value() || []).map(a => a.id),
+        ...(db.get('draft_assignments').value() || []).map(a => a.id),
+      ];
+      let nextId = allIds.length ? Math.max(...allIds) + 1 : 1;
+      employees.forEach(emp => {
+        const hasPlanned = assignments.some(a => a.employeeId === emp.id && a.frameworkId === 0);
+        if (hasPlanned) return;
+        const real = assignments.filter(a => a.employeeId === emp.id && a.frameworkId > 0);
+        const hours       = real.reduce((s,a) => s + (a.hours||0), 0);
+        const specEdHours = real.reduce((s,a) => s + (a.specEdHours||0), 0);
+        const kinderHours = real.reduce((s,a) => s + (a.kinderHours||0), 0);
+        db.get(aCol).push({ id: nextId++, employeeId: emp.id, frameworkId: 0, hours, specEdHours, kinderHours }).write();
+      });
+    }
+    // Always fix live collections
+    ensurePlannedRecords('assignments', 'employees');
+    // Also fix draft if it exists
+    if (db.get('draftSaved').value()) {
+      ensurePlannedRecords('draft_assignments', 'draft_employees');
+    }
     db.set('_migrationVersion', MIGRATION_V16).write();
-    console.log('Migration v16 applied: created planned (frameworkId=0) records for all employees');
+    console.log('Migration v17 applied: ensured planned (frameworkId=0) records exist in live and draft collections');
   }
 }
 
