@@ -18,10 +18,11 @@ function getTargetHours(ftePercent, targets) {
 
 router.get('/', (req, res) => {
   const employees = db.get(activeCol('employees')).value().filter(e => e.status === 'active' || !e.status);
-  const frameworks = db.get('frameworks').value();
+  const frameworks = db.get(activeCol('frameworks')).value();
   const assignments = db.get(activeCol('assignments')).value();
   const kinderAssignments = db.get(activeCol('kinderAssignments')).value();
-  const settings = db.get('settings').value();
+  const draftSettings = db.get('draftActive').value() && db.get('draft_settings').value();
+  const settings = draftSettings || db.get('settings').value();
   const freeHoursTargets = settings.freeHoursTargets || [];
 
   // שעות פנויות — חריגה מהיעד

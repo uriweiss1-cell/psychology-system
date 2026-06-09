@@ -2,10 +2,14 @@ const express = require('express');
 const router = express.Router();
 const { db } = require('../database');
 
-const DRAFT_COLS = ['employees', 'assignments', 'kinderAssignments', 'specEdClasses', 'teams', 'supervisions'];
+const DRAFT_COLS = ['employees', 'assignments', 'kinderAssignments', 'specEdClasses', 'teams', 'supervisions', 'frameworks'];
+const DRAFT_OBJECTS = ['settings']; // object collections (not arrays)
 
 function copyToDraft() {
   DRAFT_COLS.forEach(col => {
+    db.set(`draft_${col}`, JSON.parse(JSON.stringify(db.get(col).value()))).write();
+  });
+  DRAFT_OBJECTS.forEach(col => {
     db.set(`draft_${col}`, JSON.parse(JSON.stringify(db.get(col).value()))).write();
   });
 }
@@ -14,10 +18,14 @@ function copyFromDraft() {
   DRAFT_COLS.forEach(col => {
     db.set(col, JSON.parse(JSON.stringify(db.get(`draft_${col}`).value()))).write();
   });
+  DRAFT_OBJECTS.forEach(col => {
+    db.set(col, JSON.parse(JSON.stringify(db.get(`draft_${col}`).value()))).write();
+  });
 }
 
 function clearDraft() {
   DRAFT_COLS.forEach(col => db.set(`draft_${col}`, []).write());
+  DRAFT_OBJECTS.forEach(col => db.set(`draft_${col}`, null).write());
 }
 
 router.get('/status', (req, res) => {
