@@ -280,9 +280,32 @@ function SchoolTable({ items, assignments, employees, specEdClasses, editingAsgn
                     {SECTORS.map(s => <option key={s} value={s}>{s}</option>)}
                   </select>
                 </td>
-                <td className="table-cell text-center text-gray-500">{fw.allocatedHours ?? '—'}</td>
                 <td className="table-cell text-center">
-                  {editingTarget?.id === fw.id ? (
+                  {editingTarget?.id === fw.id && editingTarget.field === 'allocatedHours' ? (
+                    <input
+                      autoFocus
+                      type="number"
+                      className="input text-xs py-0.5 w-16 text-center"
+                      defaultValue={fw.allocatedHours ?? ''}
+                      onBlur={async e => {
+                        const val = parseInt(e.target.value) || null;
+                        await updateFramework(fw.id, { allocatedHours: val });
+                        setSummary(await getAssignmentSummary());
+                        setEditingTarget(null);
+                      }}
+                      onKeyDown={e => { if (e.key === 'Escape') setEditingTarget(null); }}
+                    />
+                  ) : (
+                    <span
+                      className="cursor-pointer hover:bg-blue-50 px-1 rounded"
+                      onClick={() => setEditingTarget({ id: fw.id, field: 'allocatedHours' })}
+                    >
+                      {fw.allocatedHours ?? '—'}
+                    </span>
+                  )}
+                </td>
+                <td className="table-cell text-center">
+                  {editingTarget?.id === fw.id && editingTarget.field !== 'allocatedHours' ? (
                     <input
                       autoFocus
                       type="number"
@@ -362,8 +385,6 @@ function SchoolTable({ items, assignments, employees, specEdClasses, editingAsgn
                             value={editingAsgn.hours} onChange={e => setEditingAsgn(p => ({...p, hours: e.target.value}))} />
                           <input type="number" className="input text-xs py-0.5 w-12" placeholder='ח"מ'
                             value={editingAsgn.specEdHours} onChange={e => setEditingAsgn(p => ({...p, specEdHours: e.target.value}))} />
-                          <input type="number" className="input text-xs py-0.5 w-12" placeholder="גנים"
-                            value={editingAsgn.kinderHours} onChange={e => setEditingAsgn(p => ({...p, kinderHours: e.target.value}))} />
                           <button className="btn-primary text-xs py-0.5" onClick={saveAssignment}>✓</button>
                           <button className="btn-secondary text-xs py-0.5" onClick={() => setEditingAsgn(null)}>✕</button>
                         </div>
