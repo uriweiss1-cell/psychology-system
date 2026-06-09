@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getKinder, getEmployees, createKinder, updateKinder, deleteKinder, previewImport, applyImport, getAlerts } from '../api';
 import ImportModal from '../components/ImportModal';
+import AlertsBanner from '../components/AlertsBanner';
 
 const COLS = [
   { key: 'gardenName',   label: 'שם הגן',    width: 'min-w-[120px]' },
@@ -78,6 +79,7 @@ export default function Kindergartens() {
 
   return (
     <div>
+      <AlertsBanner page="kinder" />
       {showImport && (
         <ImportModal
           type="kinder"

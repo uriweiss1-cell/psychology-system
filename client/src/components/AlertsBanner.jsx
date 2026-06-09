@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { getAlerts } from '../api';
 
-export default function AlertsBanner() {
+export default function AlertsBanner({ page = 'workplan' }) {
   const [alerts, setAlerts] = useState(null);
   const [open, setOpen] = useState(true);
 
@@ -20,8 +20,17 @@ export default function AlertsBanner() {
   }, [refresh]);
 
   if (!alerts) return null;
-  const { unassignedFrameworks, frameworksWithVacancy = [], overBudget, freeHoursAlerts = [], supAlerts = [], noEdSupervision = [] } = alerts;
-  const total = unassignedFrameworks.length + frameworksWithVacancy.length + overBudget.length + freeHoursAlerts.length + supAlerts.length + noEdSupervision.length;
+  const { unassignedFrameworks, frameworksWithVacancy = [], overBudget, freeHoursAlerts = [], supAlerts = [], noEdSupervision = [], schoolGapAlerts = [], kinderGapAlerts = [] } = alerts;
+
+  const showSchoolGaps = page === 'workplan' || page === 'schools';
+  const showKinderGaps = page === 'workplan' || page === 'kinder';
+  const showGeneral    = page === 'workplan';
+
+  const visibleSchoolGaps = showSchoolGaps ? schoolGapAlerts : [];
+  const visibleKinderGaps = showKinderGaps ? kinderGapAlerts : [];
+
+  const total = (showGeneral ? unassignedFrameworks.length + frameworksWithVacancy.length + overBudget.length + freeHoursAlerts.length + supAlerts.length + noEdSupervision.length : 0)
+    + visibleSchoolGaps.length + visibleKinderGaps.length;
   if (total === 0) return null;
 
   return (
@@ -35,7 +44,31 @@ export default function AlertsBanner() {
       </button>
       {open && (
         <div className="bg-white p-3 space-y-2 text-sm">
-          {noEdSupervision.length > 0 && (
+          {visibleSchoolGaps.length > 0 && (
+            <div>
+              <p className="font-semibold text-blue-700 mb-1">פער בשעות בתי ספר ({visibleSchoolGaps.length}):</p>
+              <div className="flex flex-wrap gap-1">
+                {visibleSchoolGaps.map(e => (
+                  <span key={e.id} className="badge bg-blue-100 text-blue-800">
+                    {e.displayName}: מתוכנן {e.planned} / בפועל {e.actual} ({e.gap > 0 ? `+${e.gap}` : e.gap} ש׳)
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+          {visibleKinderGaps.length > 0 && (
+            <div>
+              <p className="font-semibold text-green-700 mb-1">פער בשעות גנים ({visibleKinderGaps.length}):</p>
+              <div className="flex flex-wrap gap-1">
+                {visibleKinderGaps.map(e => (
+                  <span key={e.id} className="badge bg-green-100 text-green-800">
+                    {e.displayName}: מתוכנן {e.planned} / בפועל {e.actual} ({e.gap > 0 ? `+${e.gap}` : e.gap} ש׳)
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+          {showGeneral && noEdSupervision.length > 0 && (
             <div>
               <p className="font-semibold text-teal-700 mb-1">ללא הדרכה חינוכית פרטנית ({noEdSupervision.length}):</p>
               <div className="flex flex-wrap gap-1">
@@ -45,7 +78,7 @@ export default function AlertsBanner() {
               </div>
             </div>
           )}
-          {supAlerts.length > 0 && (
+          {showGeneral && supAlerts.length > 0 && (
             <div>
               <p className="font-semibold text-purple-700 mb-1">פערים בהדרכות ({supAlerts.length}):</p>
               <div className="flex flex-wrap gap-1">
@@ -62,7 +95,7 @@ export default function AlertsBanner() {
               </div>
             </div>
           )}
-          {freeHoursAlerts.length > 0 && (
+          {showGeneral && freeHoursAlerts.length > 0 && (
             <div>
               <p className="font-semibold text-orange-700 mb-1">חריגה בשעות פנויות ({freeHoursAlerts.length}):</p>
               <div className="flex flex-wrap gap-1">
@@ -74,7 +107,7 @@ export default function AlertsBanner() {
               </div>
             </div>
           )}
-          {unassignedFrameworks.length > 0 && (
+          {showGeneral && unassignedFrameworks.length > 0 && (
             <div>
               <p className="font-semibold text-orange-700 mb-1">מסגרות ללא פסיכולוג ({unassignedFrameworks.length}):</p>
               <div className="flex flex-wrap gap-1">
@@ -84,7 +117,7 @@ export default function AlertsBanner() {
               </div>
             </div>
           )}
-          {frameworksWithVacancy.length > 0 && (
+          {showGeneral && frameworksWithVacancy.length > 0 && (
             <div>
               <p className="font-semibold text-yellow-700 mb-1">מסגרות עם חלון פנוי — חסר פסיכולוג מחליף ({frameworksWithVacancy.length}):</p>
               <div className="flex flex-wrap gap-1">
@@ -94,7 +127,7 @@ export default function AlertsBanner() {
               </div>
             </div>
           )}
-          {overBudget.length > 0 && (
+          {showGeneral && overBudget.length > 0 && (
             <div>
               <p className="font-semibold text-yellow-700 mb-1">חריגת שעות ({overBudget.length}):</p>
               <div className="flex flex-wrap gap-1">

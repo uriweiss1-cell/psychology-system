@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import AlertsBanner from '../components/AlertsBanner';
 import { getAssignmentSummary, getEmployees, getAssignments, updateAssignment, getFrameworks, updateFramework, getSpecEdClasses, createSpecEdClass, updateSpecEdClass, deleteSpecEdClass, advanceSpecEdYear, getAlerts } from '../api';
 import axios from 'axios';
 
@@ -157,6 +158,7 @@ export default function Schools() {
 
   return (
     <div>
+      <AlertsBanner page="schools" />
       {freeHoursAlerts.length > 0 && (
         <div className="mb-4 border border-orange-200 rounded overflow-hidden">
           <button

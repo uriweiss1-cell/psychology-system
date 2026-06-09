@@ -113,6 +113,33 @@ router.get('/', (req, res) => {
     })
     .filter(e => e.balance < -0.5);
 
+  // פערים בין מתוכנן לבפועל — בתי ספר
+  const schoolGapAlerts = employees.map(emp => {
+    const planAsgn   = assignments.find(a => a.employeeId === emp.id && a.frameworkId === 0);
+    const plannedSchool = planAsgn ? (planAsgn.hours||0) + (planAsgn.specEdHours||0) : 0;
+    const realAsgns  = assignments.filter(a => a.employeeId === emp.id && a.frameworkId > 0);
+    const actualSchool = realAsgns.reduce((s,a) => s + (a.hours||0) + (a.specEdHours||0), 0);
+    const gap = Math.round((actualSchool - plannedSchool) * 100) / 100;
+    if (gap === 0) return null;
+    return { id: emp.id, displayName: emp.displayName, gap, planned: plannedSchool, actual: actualSchool };
+  }).filter(Boolean);
+
+  // פערים בין מתוכנן לבפועל — גנים (חובה=1ש, התפתחותי=1.5ש, תקשורת=מתעלמים)
+  const kinderGapAlerts = employees.map(emp => {
+    const planAsgn     = assignments.find(a => a.employeeId === emp.id && a.frameworkId === 0);
+    const plannedKinder = planAsgn ? (planAsgn.kinderHours||0) : 0;
+    const empKinder    = kinderAssignments.filter(a => a.employeeId === emp.id);
+    const actualKinder = empKinder.reduce((s, a) => {
+      const ag = (a.ageGroup || '').trim();
+      if (ag === 'חובה') return s + 1;
+      if (ag === 'התפתחותי') return s + 1.5;
+      return s; // תקשורת ואחרים — מתעלמים
+    }, 0);
+    const gap = Math.round((actualKinder - plannedKinder) * 100) / 100;
+    if (gap === 0) return null;
+    return { id: emp.id, displayName: emp.displayName, gap, planned: plannedKinder, actual: actualKinder };
+  }).filter(Boolean);
+
   // עובדים שאינם מדריכי הדרכה חינוכית פרטנית ואינם מודרכים בה
   const educationalSups      = supervisions.filter(s => s.type === 'educational');
   const edSupervisors        = new Set(educationalSups.map(s => s.supervisorName).filter(Boolean));
@@ -121,7 +148,7 @@ router.get('/', (req, res) => {
     .filter(e => !edSupervisors.has(e.displayName) && !edSupervisees.has(e.displayName))
     .map(e => ({ id: e.id, displayName: e.displayName }));
 
-  res.json({ unassignedEmployees, unassignedFrameworks, frameworksWithVacancy, overBudget, freeHoursAlerts, supAlerts, noEdSupervision });
+  res.json({ unassignedEmployees, unassignedFrameworks, frameworksWithVacancy, overBudget, freeHoursAlerts, supAlerts, noEdSupervision, schoolGapAlerts, kinderGapAlerts });
 });
 
 module.exports = router;
