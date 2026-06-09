@@ -821,6 +821,30 @@ async function initDB() {
     db.set('_migrationVersion', MIGRATION_V15).write();
     console.log('Migration v15 applied: removed inactive/deleted employees from teams and supervisions');
   }
+
+  // Migration v16: create frameworkId=0 "planned" records for all employees who lack one
+  const MIGRATION_V16 = 16;
+  if ((db.get('_migrationVersion').value() || 0) < MIGRATION_V16) {
+    const col = db.get('draftActive').value() ? 'draft_assignments' : 'assignments';
+    const employees = db.get(db.get('draftActive').value() ? 'draft_employees' : 'employees').value() || [];
+    const assignments = db.get(col).value() || [];
+    const ids = assignments.map(a => a.id);
+    let nextId = ids.length ? Math.max(...ids) + 1 : 1;
+
+    employees.forEach(emp => {
+      const hasPlanned = assignments.some(a => a.employeeId === emp.id && a.frameworkId === 0);
+      if (hasPlanned) return;
+      // sum all real assignments for this employee
+      const real = assignments.filter(a => a.employeeId === emp.id && a.frameworkId > 0);
+      const hours       = real.reduce((s,a) => s + (a.hours||0), 0);
+      const specEdHours = real.reduce((s,a) => s + (a.specEdHours||0), 0);
+      const kinderHours = real.reduce((s,a) => s + (a.kinderHours||0), 0);
+      db.get(col).push({ id: nextId++, employeeId: emp.id, frameworkId: 0, hours, specEdHours, kinderHours }).write();
+    });
+
+    db.set('_migrationVersion', MIGRATION_V16).write();
+    console.log('Migration v16 applied: created planned (frameworkId=0) records for all employees');
+  }
 }
 
 // Returns the active collection name (draft or current) for assignment-like data

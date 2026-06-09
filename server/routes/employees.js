@@ -55,10 +55,8 @@ function withComputed(emp) {
   const totalInternal = (emp.meetingHours || 0) + (emp.supReceivedHours || 0) +
     (emp.supGivenHours || 0) + (emp.therapyHours || 0) + (emp.roleHours || 0);
 
-  const allAsgns  = db.get(activeCol('assignments')).filter({ employeeId: emp.id }).value();
-  const realAsgns = allAsgns.filter(a => a.frameworkId > 0);
-  const asgnsToSum = realAsgns.length > 0 ? realAsgns : allAsgns.slice(0, 1);
-  const totalFrameworks = asgnsToSum.reduce((s, a) => s + (a.hours||0) + (a.specEdHours||0) + (a.kinderHours||0), 0);
+  const planAsgn = db.get(activeCol('assignments')).find({ employeeId: emp.id, frameworkId: 0 }).value();
+  const totalFrameworks = planAsgn ? (planAsgn.hours||0) + (planAsgn.specEdHours||0) + (planAsgn.kinderHours||0) : 0;
 
   const freeHours = Math.round((fteHours - totalInternal - totalFrameworks) * 100) / 100;
   const balance = freeHours;
