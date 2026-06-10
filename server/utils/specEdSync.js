@@ -150,7 +150,7 @@ function syncSpecEdAssignments(db, activeCol, frameworkId) {
  */
 function advanceAllGrades(db, activeCol) {
   const specCol    = activeCol('specEdClasses');
-  const frameworks = db.get('frameworks').value();
+  const frameworks = db.get(activeCol('frameworks')).value();
   const affected   = new Set();
 
   db.get(specCol).value().forEach(cls => {

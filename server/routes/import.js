@@ -17,7 +17,7 @@ function parseXlsx(buffer) {
 router.post('/employees/preview', upload.single('file'), (req, res) => {
   try {
     const rows = parseXlsx(req.file.buffer);
-    const existing = db.get('employees').value();
+    const existing = db.get(activeCol('employees')).value();
     const preview = rows.map(row => {
       const displayName = String(row['שם תצוגה'] || row['שם'] || '').trim();
       const ftePercent = parseFloat(row['אחוז משרה'] || row['משרה'] || 0);
@@ -45,7 +45,7 @@ router.post('/employees/apply', (req, res) => {
   rows.forEach(row => {
     if (row.action === 'create') {
       const nextId = db.get('_nextId.employees').value();
-      db.get('employees').push({
+      db.get(activeCol('employees')).push({
         id: nextId, displayName: row.displayName, firstName: row.firstName || '',
         lastName: row.lastName || '', ftePercent: row.ftePercent || 1.0,
         type: row.type || 'expert', status: 'active',
@@ -60,7 +60,7 @@ router.post('/employees/apply', (req, res) => {
       if (row.type) update.type = row.type;
       if (row.firstName) update.firstName = row.firstName;
       if (row.lastName) update.lastName = row.lastName;
-      db.get('employees').find({ id: row.existingId }).assign(update).write();
+      db.get(activeCol('employees')).find({ id: row.existingId }).assign(update).write();
       updated++;
     }
   });
@@ -71,7 +71,7 @@ router.post('/employees/apply', (req, res) => {
 router.post('/kinder/preview', upload.single('file'), (req, res) => {
   try {
     const rows = parseXlsx(req.file.buffer);
-    const employees = db.get('employees').value();
+    const employees = db.get(activeCol('employees')).value();
     const preview = rows.map(row => {
       const empName = String(row['פסיכולוג'] || row['שם פסיכולוג'] || '').trim();
       const emp = employees.find(e => e.displayName === empName);
