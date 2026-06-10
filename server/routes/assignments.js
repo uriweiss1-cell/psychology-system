@@ -6,7 +6,7 @@ router.get('/', (req, res) => {
   const col = activeCol('assignments');
   const assignments = db.get(col).value();
   const employees = db.get(activeCol('employees')).value();
-  const frameworks = db.get('frameworks').value();
+  const frameworks = db.get(activeCol('frameworks')).value();
   const enriched = assignments.map(a => {
     const emp = employees.find(e => e.id === a.employeeId);
     const fw = frameworks.find(f => f.id === a.frameworkId);
@@ -29,7 +29,7 @@ router.post('/', (req, res) => {
   };
   db.get(col).push(a).write();
   const emp = db.get(activeCol('employees')).find({ id: a.employeeId }).value();
-  const fw = db.get('frameworks').find({ id: a.frameworkId }).value();
+  const fw = db.get(activeCol('frameworks')).find({ id: a.frameworkId }).value();
   res.json({ ...a, employeeName: emp?.displayName || '?', frameworkName: fw?.name || '(לא מוגדר)' });
 });
 
@@ -44,7 +44,7 @@ router.put('/:id', (req, res) => {
   db.get(col).find({ id }).assign(update).write();
   const updated = db.get(col).find({ id }).value();
   const emp = db.get(activeCol('employees')).find({ id: updated.employeeId }).value();
-  const fw = db.get('frameworks').find({ id: updated.frameworkId }).value();
+  const fw = db.get(activeCol('frameworks')).find({ id: updated.frameworkId }).value();
   res.json({ ...updated, employeeName: emp?.displayName || '?', frameworkName: fw?.name || '(לא מוגדר)' });
 });
 
@@ -56,7 +56,7 @@ router.delete('/:id', (req, res) => {
 
 router.get('/summary', (req, res) => {
   const col = activeCol('assignments');
-  const frameworks = db.get('frameworks').value();
+  const frameworks = db.get(activeCol('frameworks')).value();
   const assignments = db.get(col).value();
   const employees = db.get(activeCol('employees')).value();
   const summary = frameworks.filter(f => f.type !== 'kindergarten').map(fw => {
