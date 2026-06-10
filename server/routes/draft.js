@@ -35,12 +35,29 @@ router.get('/status', (req, res) => {
   });
 });
 
+function ensureDraftComplete() {
+  DRAFT_COLS.forEach(col => {
+    const val = db.get(`draft_${col}`).value();
+    if (!val || !val.length) {
+      db.set(`draft_${col}`, JSON.parse(JSON.stringify(db.get(col).value()))).write();
+    }
+  });
+  DRAFT_OBJECTS.forEach(col => {
+    const val = db.get(`draft_${col}`).value();
+    if (!val) {
+      db.set(`draft_${col}`, JSON.parse(JSON.stringify(db.get(col).value()))).write();
+    }
+  });
+}
+
 // Open future planning — if saved draft exists, resume it; otherwise create fresh copy
 router.post('/activate', (req, res) => {
   if (db.get('draftActive').value()) return res.json({ ok: true, already: true });
   if (!db.get('draftSaved').value()) {
     copyToDraft();
     db.set('draftSaved', true).write();
+  } else {
+    ensureDraftComplete(); // fill any missing collections (e.g. frameworks added after draft was created)
   }
   db.set('draftActive', true).write();
   res.json({ ok: true });
@@ -55,6 +72,7 @@ router.post('/pause', (req, res) => {
 // Resume — go back to saved draft
 router.post('/resume', (req, res) => {
   if (!db.get('draftSaved').value()) return res.status(400).json({ error: 'אין טיוטה שמורה' });
+  ensureDraftComplete();
   db.set('draftActive', true).write();
   res.json({ ok: true });
 });
