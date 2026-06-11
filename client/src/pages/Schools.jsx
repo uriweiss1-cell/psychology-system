@@ -291,7 +291,7 @@ function SchoolTable({ items, assignments, employees, specEdClasses, editingAsgn
                       defaultValue={fw.allocatedHours ?? ''}
                       onBlur={async e => {
                         const val = parseInt(e.target.value) || null;
-                        await updateFramework(fw.id, { allocatedHours: val });
+                        await updateFramework(fw.id, { allocatedHours: val, targetHours: null });
                         setSummary(await getAssignmentSummary());
                         setEditingTarget(null);
                       }}
