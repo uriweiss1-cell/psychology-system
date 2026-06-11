@@ -135,8 +135,9 @@ router.get('/', (req, res) => {
       const name = (a.gardenName || '').trim();
       if (ag === 'חנ"מ') {
         if (name.includes('תקשורת')) return s; // גן תקשורת — מתעלמים
-        return s + 1.5; // גן התפתחותי
+        return s + 1.5; // גן עיכוב התפתחותי
       }
+      if (name.includes('התפתחותי')) return s + 1.5; // שם הגן מציין התפתחותי
       return s + 1; // חובה, ט. חובה וכו'
     }, 0);
     const gap = Math.round((actualKinder - plannedKinder) * 100) / 100;
