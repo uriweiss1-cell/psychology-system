@@ -13,26 +13,39 @@ function parseXlsx(buffer) {
   return XLSX.utils.sheet_to_json(ws, { defval: '' });
 }
 
+// Build display name: first name + first letter of last name (e.g. "אור ה.")
+function buildDisplayName(firstName, lastName) {
+  if (!lastName) return firstName;
+  return `${firstName} ${lastName[0]}.`;
+}
+
 // Preview import for employees (Standards)
 router.post('/employees/preview', upload.single('file'), (req, res) => {
   try {
     const rows = parseXlsx(req.file.buffer);
     const existing = db.get(activeCol('employees')).value();
     const preview = rows.map(row => {
-      const displayName = String(row['שם תצוגה'] || row['שם'] || '').trim();
-      const ftePercent = parseFloat(row['אחוז משרה'] || row['משרה'] || 0);
-      const type = String(row['סוג'] || '').includes('מתמחה') ? 'trainee' : 'expert';
-      const existing_ = existing.find(e => e.displayName === displayName);
+      const firstName  = String(row['שם פרטי']  || '').trim();
+      const lastName   = String(row['שם משפחה'] || '').trim();
+      if (!firstName) return null;
+      const ftePercent  = parseFloat(row['אחוזי משרה'] || row['אחוז משרה'] || row['משרה'] || 0);
+      const onMaternity = !!(+row['חלד/חלת'] || +row['חל"ד'] || +row['חלד']);
+      const isSubstitute = !!(+row['מילוי מקום חל"ד/חל"ת'] || +row['מילוי מקום']);
+      // Match by firstName + lastName, fallback to firstName only
+      const existing_ = existing.find(e => e.firstName === firstName && e.lastName === lastName)
+                     || existing.find(e => e.firstName === firstName && !lastName);
+      const displayName = existing_?.displayName || buildDisplayName(firstName, lastName);
       return {
         displayName,
-        firstName: String(row['שם פרטי'] || '').trim(),
-        lastName: String(row['שם משפחה'] || '').trim(),
+        firstName,
+        lastName,
         ftePercent: isNaN(ftePercent) ? null : ftePercent,
-        type,
+        onMaternity,
+        isSubstitute,
         action: existing_ ? 'update' : 'create',
         existingId: existing_?.id,
       };
-    }).filter(r => r.displayName);
+    }).filter(Boolean);
     res.json({ rows: preview });
   } catch (e) {
     res.status(400).json({ error: 'שגיאה בקריאת הקובץ: ' + e.message });
@@ -43,23 +56,22 @@ router.post('/employees/apply', (req, res) => {
   const { rows } = req.body;
   let created = 0, updated = 0;
   rows.forEach(row => {
+    const status = row.onMaternity ? 'maternity' : 'active';
     if (row.action === 'create') {
       const nextId = db.get('_nextId.employees').value();
       db.get(activeCol('employees')).push({
         id: nextId, displayName: row.displayName, firstName: row.firstName || '',
         lastName: row.lastName || '', ftePercent: row.ftePercent || 1.0,
-        type: row.type || 'expert', status: 'active',
+        type: 'expert', status,
+        isSubstitute: row.isSubstitute || false,
         meetingHours: 0, supReceivedHours: 0, supGivenHours: 0,
         therapyHours: 0, roleHours: 0, roleName: '', officeHours: 0, notes: ''
       }).write();
       db.set('_nextId.employees', nextId + 1).write();
       created++;
     } else if (row.action === 'update' && row.existingId) {
-      const update = {};
+      const update = { status, isSubstitute: row.isSubstitute || false };
       if (row.ftePercent !== null) update.ftePercent = row.ftePercent;
-      if (row.type) update.type = row.type;
-      if (row.firstName) update.firstName = row.firstName;
-      if (row.lastName) update.lastName = row.lastName;
       db.get(activeCol('employees')).find({ id: row.existingId }).assign(update).write();
       updated++;
     }
