@@ -138,7 +138,15 @@ export default function Kindergartens() {
             {COLS.map(col => (
               <div key={col.key}>
                 <label className="block text-xs text-gray-600 mb-1">{col.label}</label>
-                <input className="input w-full" value={newRow[col.key]} onChange={e => setNewRow(p => ({...p, [col.key]: e.target.value}))} />
+                {col.key === 'ageGroup' ? (
+                  <select className="input w-full" value={newRow.ageGroup} onChange={e => setNewRow(p => ({...p, ageGroup: e.target.value}))}>
+                    <option value="גן חינוך רגיל">גן חינוך רגיל</option>
+                    <option value="גן עיכוב התפתחותי">גן עיכוב התפתחותי</option>
+                    <option value="גן תקשורת">גן תקשורת</option>
+                  </select>
+                ) : (
+                  <input className="input w-full" value={newRow[col.key]} onChange={e => setNewRow(p => ({...p, [col.key]: e.target.value}))} />
+                )}
               </div>
             ))}
           </div>
@@ -195,7 +203,15 @@ function KinderTable({ rows, employees, editRow, setEditRow, saveEdit, removeRow
                   </td>
                   {COLS.map(col => (
                     <td key={col.key} className="table-cell">
-                      <input className="input w-full text-xs" value={editRow[col.key] || ''} onChange={e => setEditRow(p => ({...p, [col.key]: e.target.value}))} />
+                      {col.key === 'ageGroup' ? (
+                        <select className="input w-full text-xs" value={editRow.ageGroup || 'גן חינוך רגיל'} onChange={e => setEditRow(p => ({...p, ageGroup: e.target.value}))}>
+                          <option value="גן חינוך רגיל">גן חינוך רגיל</option>
+                          <option value="גן עיכוב התפתחותי">גן עיכוב התפתחותי</option>
+                          <option value="גן תקשורת">גן תקשורת</option>
+                        </select>
+                      ) : (
+                        <input className="input w-full text-xs" value={editRow[col.key] || ''} onChange={e => setEditRow(p => ({...p, [col.key]: e.target.value}))} />
+                      )}
                     </td>
                   ))}
                   <td className="table-cell">

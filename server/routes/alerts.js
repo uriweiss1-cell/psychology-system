@@ -132,9 +132,9 @@ router.get('/', (req, res) => {
     const empKinder    = kinderAssignments.filter(a => a.employeeId === emp.id);
     const actualKinder = empKinder.reduce((s, a) => {
       const ag = (a.ageGroup || '').trim();
-      if (ag === 'חובה') return s + 1;
-      if (ag === 'התפתחותי') return s + 1.5;
-      return s; // תקשורת ואחרים — מתעלמים
+      if (ag.includes('תקשורת')) return s; // גני תקשורת — מתעלמים
+      if (ag.includes('התפתחותי')) return s + 1.5;
+      return s + 1; // כל השאר (חובה, טרום חובה וכו') = 1 שעה
     }, 0);
     const gap = Math.round((actualKinder - plannedKinder) * 100) / 100;
     if (gap === 0) return null;
