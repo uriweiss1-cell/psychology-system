@@ -24,47 +24,61 @@ router.post('/employees/preview', upload.single('file'), (req, res) => {
   try {
     const rows = parseXlsx(req.file.buffer);
     const existing = db.get(activeCol('employees')).value();
+    const matchedIds = new Set();
+
     const preview = rows.map(row => {
-      const firstName  = String(row['שם פרטי']  || '').trim();
-      const lastName   = String(row['שם משפחה'] || '').trim();
+      const firstName = String(row['שם פרטי']  || '').trim();
+      const lastName  = String(row['שם משפחה'] || '').trim();
       if (!firstName) return null;
+
       const fteRaw     = row['אחוזי משרה'] ?? row['אחוז משרה'] ?? row['משרה'];
       const ftePercent = (fteRaw !== '' && fteRaw != null) ? parseFloat(fteRaw) : null;
-      // חל"ד: רק אם יש ערך מפורש (1 או "1"), לא תא ריק
       const matRaw     = row['חלד/חלת'] ?? row['חל"ד'] ?? row['חלד'] ?? '';
-      const onMaternity = matRaw !== '' && matRaw != null ? !!+matRaw : null; // null = לא ידוע
+      const onMaternity  = !!(matRaw !== '' && +matRaw);
       const subRaw     = row['מילוי מקום חל"ד/חל"ת'] ?? row['מילוי מקום'] ?? '';
       const isSubstitute = !!(subRaw !== '' && +subRaw);
-      // התאמה: 1. שם פרטי + שם משפחה, 2. displayName === שם פרטי (למקרה של אי-התאמה)
+
+      const hasActivity = (ftePercent && ftePercent > 0 && !isNaN(ftePercent)) || onMaternity || isSubstitute;
+
       const existing_ = existing.find(e => e.firstName === firstName && e.lastName === lastName)
                      || existing.find(e => e.displayName === firstName);
+      if (existing_) matchedIds.add(existing_.id);
+
       const displayName = existing_?.displayName || buildDisplayName(firstName, lastName);
+
+      if (!hasActivity) {
+        return { displayName, firstName, lastName, action: 'remove', existingId: existing_?.id };
+      }
+
       return {
         displayName, firstName, lastName,
-        ftePercent: (!ftePercent || isNaN(ftePercent)) ? null : ftePercent,
-        onMaternity,
-        isSubstitute,
+        ftePercent: ftePercent && !isNaN(ftePercent) ? ftePercent : null,
+        onMaternity, isSubstitute,
         action: existing_ ? 'update' : 'create',
         existingId: existing_?.id,
       };
     }).filter(Boolean);
-    res.json({ rows: preview });
+
+    // IDs of employees not in Excel at all (will be deleted on apply)
+    const toDeleteIds = existing.filter(e => !matchedIds.has(e.id)).map(e => e.id);
+
+    res.json({ rows: preview, toDeleteIds });
   } catch (e) {
     res.status(400).json({ error: 'שגיאה בקריאת הקובץ: ' + e.message });
   }
 });
 
 router.post('/employees/apply', (req, res) => {
-  const { rows } = req.body;
-  let created = 0, updated = 0;
+  const { rows, toDeleteIds = [] } = req.body;
+  let created = 0, updated = 0, removed = 0, deleted = 0;
+
   rows.forEach(row => {
     if (row.action === 'create') {
       const nextId = db.get('_nextId.employees').value();
-      const status = row.onMaternity ? 'maternity' : 'active';
       db.get(activeCol('employees')).push({
         id: nextId, displayName: row.displayName, firstName: row.firstName || '',
         lastName: row.lastName || '', ftePercent: row.ftePercent || 1.0,
-        type: 'expert', status,
+        type: 'expert', status: row.onMaternity ? 'maternity' : 'active',
         isSubstitute: row.isSubstitute || false,
         meetingHours: 0, supReceivedHours: 0, supGivenHours: 0,
         therapyHours: 0, roleHours: 0, roleName: '', officeHours: 0, notes: ''
@@ -72,16 +86,26 @@ router.post('/employees/apply', (req, res) => {
       db.set('_nextId.employees', nextId + 1).write();
       created++;
     } else if (row.action === 'update' && row.existingId) {
-      const update = { isSubstitute: row.isSubstitute || false };
-      // עדכן FTE רק אם קיים וחיובי
+      const update = {
+        isSubstitute: row.isSubstitute || false,
+        status: row.onMaternity ? 'maternity' : 'active',
+      };
       if (row.ftePercent && row.ftePercent > 0) update.ftePercent = row.ftePercent;
-      // עדכן סטטוס רק אם עמודת חל"ד הכילה ערך מפורש
-      if (row.onMaternity !== null) update.status = row.onMaternity ? 'maternity' : 'active';
       db.get(activeCol('employees')).find({ id: row.existingId }).assign(update).write();
       updated++;
+    } else if (row.action === 'remove' && row.existingId) {
+      db.get(activeCol('employees')).find({ id: row.existingId }).assign({ status: 'inactive' }).write();
+      removed++;
     }
   });
-  res.json({ ok: true, created, updated });
+
+  // Delete employees not in Excel at all
+  toDeleteIds.forEach(id => {
+    db.get(activeCol('employees')).remove({ id }).write();
+    deleted++;
+  });
+
+  res.json({ ok: true, created, updated, removed, deleted });
 });
 
 // Preview import for kinder assignments

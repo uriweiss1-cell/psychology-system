@@ -37,7 +37,7 @@ export const approveDraft        = () => api.post('/draft/approve').then(r => r.
 export const discardDraft        = () => api.post('/draft/discard').then(r => r.data);
 
 export const previewImport       = (type, file) => { const fd = new FormData(); fd.append('file', file); return api.post(`/import/${type}/preview`, fd).then(r => r.data); };
-export const applyImport         = (type, rows) => api.post(`/import/${type}/apply`, { rows }).then(r => r.data);
+export const applyImport         = (type, rows, toDeleteIds = []) => api.post(`/import/${type}/apply`, { rows, toDeleteIds }).then(r => r.data);
 
 export const getSpecEdClasses    = () => api.get('/spec-ed').then(r => r.data);
 export const createSpecEdClass   = (data) => api.post('/spec-ed', data).then(r => r.data);

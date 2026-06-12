@@ -4,6 +4,7 @@ import { previewImport, applyImport } from '../api';
 export default function ImportModal({ type, label, columns, onDone, onClose }) {
   const [step, setStep] = useState('upload'); // upload | preview | done
   const [rows, setRows] = useState([]);
+  const [toDeleteIds, setToDeleteIds] = useState([]);
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -17,6 +18,7 @@ export default function ImportModal({ type, label, columns, onDone, onClose }) {
     try {
       const data = await previewImport(type, file);
       setRows(data.rows);
+      setToDeleteIds(data.toDeleteIds || []);
       setStep('preview');
     } catch (err) {
       setError(err.response?.data?.error || 'שגיאה בקריאת הקובץ');
@@ -27,7 +29,7 @@ export default function ImportModal({ type, label, columns, onDone, onClose }) {
   const handleApply = async () => {
     setLoading(true);
     try {
-      const data = await applyImport(type, rows.filter(r => r.selected !== false));
+      const data = await applyImport(type, rows.filter(r => r.selected !== false), toDeleteIds);
       setResult(data);
       setStep('done');
       onDone?.();
@@ -84,8 +86,12 @@ export default function ImportModal({ type, label, columns, onDone, onClose }) {
                         })}
                         {row.action && (
                           <td className="table-cell text-center">
-                            <span className={`badge ${row.action === 'create' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
-                              {row.action === 'create' ? 'חדש' : 'עדכון'}
+                            <span className={`badge ${
+                              row.action === 'create' ? 'bg-green-100 text-green-700' :
+                              row.action === 'remove' ? 'bg-red-100 text-red-700' :
+                              'bg-blue-100 text-blue-700'
+                            }`}>
+                              {row.action === 'create' ? 'חדש' : row.action === 'remove' ? 'הסרה' : 'עדכון'}
                             </span>
                           </td>
                         )}
@@ -103,6 +109,8 @@ export default function ImportModal({ type, label, columns, onDone, onClose }) {
               <p className="text-green-600 text-lg font-semibold mb-2">✓ יובא בהצלחה</p>
               {result?.created > 0 && <p className="text-sm text-gray-600">נוצרו {result.created} רשומות חדשות</p>}
               {result?.updated > 0 && <p className="text-sm text-gray-600">עודכנו {result.updated} רשומות</p>}
+              {result?.removed > 0 && <p className="text-sm text-gray-600">הוגדרו כלא פעילים {result.removed} עובדים</p>}
+              {result?.deleted > 0 && <p className="text-sm text-gray-600">הוסרו {result.deleted} עובדים</p>}
             </div>
           )}
         </div>
