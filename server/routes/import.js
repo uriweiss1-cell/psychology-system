@@ -28,18 +28,20 @@ router.post('/employees/preview', upload.single('file'), (req, res) => {
       const firstName  = String(row['שם פרטי']  || '').trim();
       const lastName   = String(row['שם משפחה'] || '').trim();
       if (!firstName) return null;
-      const ftePercent  = parseFloat(row['אחוזי משרה'] || row['אחוז משרה'] || row['משרה'] || 0);
-      const onMaternity = !!(+row['חלד/חלת'] || +row['חל"ד'] || +row['חלד']);
-      const isSubstitute = !!(+row['מילוי מקום חל"ד/חל"ת'] || +row['מילוי מקום']);
-      // Match by firstName + lastName, fallback to firstName only
+      const fteRaw     = row['אחוזי משרה'] ?? row['אחוז משרה'] ?? row['משרה'];
+      const ftePercent = (fteRaw !== '' && fteRaw != null) ? parseFloat(fteRaw) : null;
+      // חל"ד: רק אם יש ערך מפורש (1 או "1"), לא תא ריק
+      const matRaw     = row['חלד/חלת'] ?? row['חל"ד'] ?? row['חלד'] ?? '';
+      const onMaternity = matRaw !== '' && matRaw != null ? !!+matRaw : null; // null = לא ידוע
+      const subRaw     = row['מילוי מקום חל"ד/חל"ת'] ?? row['מילוי מקום'] ?? '';
+      const isSubstitute = !!(subRaw !== '' && +subRaw);
+      // התאמה: 1. שם פרטי + שם משפחה, 2. displayName === שם פרטי (למקרה של אי-התאמה)
       const existing_ = existing.find(e => e.firstName === firstName && e.lastName === lastName)
-                     || existing.find(e => e.firstName === firstName && !lastName);
+                     || existing.find(e => e.displayName === firstName);
       const displayName = existing_?.displayName || buildDisplayName(firstName, lastName);
       return {
-        displayName,
-        firstName,
-        lastName,
-        ftePercent: isNaN(ftePercent) ? null : ftePercent,
+        displayName, firstName, lastName,
+        ftePercent: (!ftePercent || isNaN(ftePercent)) ? null : ftePercent,
         onMaternity,
         isSubstitute,
         action: existing_ ? 'update' : 'create',
@@ -56,9 +58,9 @@ router.post('/employees/apply', (req, res) => {
   const { rows } = req.body;
   let created = 0, updated = 0;
   rows.forEach(row => {
-    const status = row.onMaternity ? 'maternity' : 'active';
     if (row.action === 'create') {
       const nextId = db.get('_nextId.employees').value();
+      const status = row.onMaternity ? 'maternity' : 'active';
       db.get(activeCol('employees')).push({
         id: nextId, displayName: row.displayName, firstName: row.firstName || '',
         lastName: row.lastName || '', ftePercent: row.ftePercent || 1.0,
@@ -70,8 +72,11 @@ router.post('/employees/apply', (req, res) => {
       db.set('_nextId.employees', nextId + 1).write();
       created++;
     } else if (row.action === 'update' && row.existingId) {
-      const update = { status, isSubstitute: row.isSubstitute || false };
-      if (row.ftePercent !== null) update.ftePercent = row.ftePercent;
+      const update = { isSubstitute: row.isSubstitute || false };
+      // עדכן FTE רק אם קיים וחיובי
+      if (row.ftePercent && row.ftePercent > 0) update.ftePercent = row.ftePercent;
+      // עדכן סטטוס רק אם עמודת חל"ד הכילה ערך מפורש
+      if (row.onMaternity !== null) update.status = row.onMaternity ? 'maternity' : 'active';
       db.get(activeCol('employees')).find({ id: row.existingId }).assign(update).write();
       updated++;
     }
