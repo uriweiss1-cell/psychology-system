@@ -5,6 +5,33 @@ const XLSX = require('xlsx');
 const { db, activeCol } = require('../database');
 const { recalcDisplayNames } = require('../utils/displayName');
 
+function removeFromTeamsAndSupervisions(displayName) {
+  const teamsCol = activeCol('teams');
+  const supCol   = activeCol('supervisions');
+  db.get(teamsCol).value().forEach(team => {
+    if (team.headDisplayName === displayName) {
+      db.get(teamsCol).remove({ id: team.id }).write();
+    } else {
+      const filtered = (team.memberDisplayNames || []).filter(n => n !== displayName);
+      if (filtered.length !== (team.memberDisplayNames || []).length)
+        db.get(teamsCol).find({ id: team.id }).assign({ memberDisplayNames: filtered }).write();
+    }
+  });
+  db.get(supCol).value().forEach(sup => {
+    if (sup.supervisorName === displayName) { db.get(supCol).remove({ id: sup.id }).write(); return; }
+    const filtered = (sup.superviseeNames || []).filter(n => n !== displayName);
+    if (filtered.length !== (sup.superviseeNames || []).length) {
+      if (filtered.length === 0) db.get(supCol).remove({ id: sup.id }).write();
+      else db.get(supCol).find({ id: sup.id }).assign({ superviseeNames: filtered }).write();
+    }
+  });
+}
+
+function clearKinderAssignments(employeeId) {
+  db.get(activeCol('kinderAssignments')).filter({ employeeId }).value()
+    .forEach(a => db.get(activeCol('kinderAssignments')).find({ id: a.id }).assign({ employeeId: 0 }).write());
+}
+
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 
 // Parse xlsx buffer → array of row objects
@@ -84,7 +111,7 @@ router.post('/employees/apply', (req, res) => {
         lastName: row.lastName || '', ftePercent: row.ftePercent || 1.0,
         type: 'expert', status: row.onMaternity ? 'maternity' : 'active',
         isSubstitute: row.isSubstitute || false,
-        meetingHours: 0, supReceivedHours: 0, supGivenHours: 0,
+        meetingHours: 4, supReceivedHours: 0, supGivenHours: 0,
         therapyHours: 0, roleHours: 0, roleName: '', officeHours: 0, notes: ''
       }).write();
       db.set('_nextId.employees', nextId + 1).write();
@@ -96,15 +123,20 @@ router.post('/employees/apply', (req, res) => {
       };
       if (row.ftePercent && row.ftePercent > 0) update.ftePercent = row.ftePercent;
       db.get(activeCol('employees')).find({ id: row.existingId }).assign(update).write();
+      if (update.status === 'maternity' || update.status === 'inactive')
+        clearKinderAssignments(row.existingId);
       updated++;
     } else if (row.action === 'remove' && row.existingId) {
       db.get(activeCol('employees')).find({ id: row.existingId }).assign({ status: 'inactive' }).write();
+      clearKinderAssignments(row.existingId);
       removed++;
     }
   });
 
-  // Delete employees not in Excel at all
+  // Delete employees not in Excel at all — remove from teams/supervisions too
   toDeleteIds.forEach(id => {
+    const emp = db.get(activeCol('employees')).find({ id }).value();
+    if (emp) removeFromTeamsAndSupervisions(emp.displayName);
     db.get(activeCol('employees')).remove({ id }).write();
     deleted++;
   });
