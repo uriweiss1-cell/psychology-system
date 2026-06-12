@@ -35,19 +35,7 @@ function removeFromTeamsAndSupervisions(db, activeCol, displayName) {
   });
 }
 
-// Auto-compute displayName: firstName if unique, else firstName + " " + lastName[0] + "."
-function recalcDisplayNames(db, col, firstName) {
-  if (!firstName) return;
-  const group = db.get(col).filter({ firstName }).value();
-  if (group.length <= 1) {
-    group.forEach(e => db.get(col).find({ id: e.id }).assign({ displayName: e.firstName }).write());
-  } else {
-    group.forEach(e => {
-      const suffix = e.lastName ? ' ' + e.lastName[0] + '.' : ' .';
-      db.get(col).find({ id: e.id }).assign({ displayName: e.firstName + suffix }).write();
-    });
-  }
-}
+const { recalcDisplayNames } = require('../utils/displayName');
 
 // Computed fields helper — uses active collection for both employees and assignments
 function withComputed(emp) {
@@ -158,6 +146,14 @@ router.delete('/:id', (req, res) => {
   db.get(activeCol('kinderAssignments')).remove({ employeeId: id }).write();
   if (emp) removeFromTeamsAndSupervisions(db, activeCol, emp.displayName);
   res.json({ ok: true });
+});
+
+// Recalc all displayNames (repair endpoint)
+router.post('/recalc-display-names', (req, res) => {
+  const col = activeCol('employees');
+  const firstNames = [...new Set(db.get(col).value().map(e => e.firstName).filter(Boolean))];
+  firstNames.forEach(fn => recalcDisplayNames(db, col, fn));
+  res.json({ ok: true, recalculated: firstNames.length });
 });
 
 module.exports = router;

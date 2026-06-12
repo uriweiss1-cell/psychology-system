@@ -3,6 +3,7 @@ const router = express.Router();
 const multer = require('multer');
 const XLSX = require('xlsx');
 const { db, activeCol } = require('../database');
+const { recalcDisplayNames } = require('../utils/displayName');
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 
@@ -107,6 +108,10 @@ router.post('/employees/apply', (req, res) => {
     db.get(activeCol('employees')).remove({ id }).write();
     deleted++;
   });
+
+  // Recalc displayNames for all affected firstNames
+  const affectedFirstNames = [...new Set(rows.map(r => r.firstName).filter(Boolean))];
+  affectedFirstNames.forEach(fn => recalcDisplayNames(db, activeCol('employees'), fn));
 
   res.json({ ok: true, created, updated, removed, deleted });
 });
