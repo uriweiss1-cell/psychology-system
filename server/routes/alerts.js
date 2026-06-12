@@ -105,7 +105,7 @@ router.get('/', (req, res) => {
     .map(emp => {
       const fteHours = Math.ceil(emp.ftePercent * 40);
       const internal = (emp.meetingHours || 0) + (emp.supReceivedHours || 0) +
-        (emp.supGivenHours || 0) + (emp.therapyHours || 0) + (emp.roleHours || 0) + (emp.officeHours || 0);
+        (emp.supGivenHours || 0) + (emp.therapyHours || 0) + (emp.roleHours || 0);
       const planAsgn   = assignments.find(a => a.employeeId === emp.id && a.frameworkId === 0);
       const frameworks = planAsgn ? (planAsgn.hours||0) + (planAsgn.specEdHours||0) + (planAsgn.kinderHours||0) : 0;
       const total = internal + frameworks;

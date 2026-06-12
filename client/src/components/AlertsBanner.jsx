@@ -20,7 +20,7 @@ export default function AlertsBanner({ page = 'workplan' }) {
   }, [refresh]);
 
   if (!alerts) return null;
-  const { unassignedFrameworks, frameworksWithVacancy = [], overBudget, freeHoursAlerts = [], supAlerts = [], noEdSupervision = [], schoolGapAlerts = [], kinderGapAlerts = [] } = alerts;
+  const { unassignedFrameworks, frameworksWithVacancy = [], freeHoursAlerts = [], supAlerts = [], noEdSupervision = [], schoolGapAlerts = [], kinderGapAlerts = [] } = alerts;
 
   const showSchoolGaps = page === 'workplan' || page === 'schools';
   const showKinderGaps = page === 'workplan' || page === 'kinder';
@@ -29,7 +29,7 @@ export default function AlertsBanner({ page = 'workplan' }) {
   const visibleSchoolGaps = showSchoolGaps ? schoolGapAlerts : [];
   const visibleKinderGaps = showKinderGaps ? kinderGapAlerts : [];
 
-  const total = (showGeneral ? unassignedFrameworks.length + frameworksWithVacancy.length + overBudget.length + freeHoursAlerts.length + supAlerts.length + noEdSupervision.length : 0)
+  const total = (showGeneral ? unassignedFrameworks.length + frameworksWithVacancy.length + freeHoursAlerts.length + supAlerts.length + noEdSupervision.length : 0)
     + visibleSchoolGaps.length + visibleKinderGaps.length;
   if (total === 0) return null;
 
@@ -127,18 +127,7 @@ export default function AlertsBanner({ page = 'workplan' }) {
               </div>
             </div>
           )}
-          {showGeneral && overBudget.length > 0 && (
-            <div>
-              <p className="font-semibold text-yellow-700 mb-1">חריגת שעות ({overBudget.length}):</p>
-              <div className="flex flex-wrap gap-1">
-                {overBudget.map(e => (
-                  <span key={e.id} className="badge bg-yellow-100 text-yellow-700">
-                    {e.displayName} ({e.balance} ש׳)
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
+
         </div>
       )}
     </div>
