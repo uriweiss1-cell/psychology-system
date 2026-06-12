@@ -40,8 +40,11 @@ router.post('/employees/preview', upload.single('file'), (req, res) => {
 
       const hasActivity = (ftePercent && ftePercent > 0 && !isNaN(ftePercent)) || onMaternity || isSubstitute;
 
+      const firstWord = firstName.split(' ')[0];
       const existing_ = existing.find(e => e.firstName === firstName && e.lastName === lastName)
-                     || existing.find(e => e.displayName === firstName);
+                     || existing.find(e => e.displayName === firstName)
+                     || existing.find(e => e.firstName === firstWord && e.lastName === lastName)
+                     || existing.find(e => e.firstName === firstWord && !e.lastName);
       if (existing_) matchedIds.add(existing_.id);
 
       const displayName = existing_?.displayName || buildDisplayName(firstName, lastName);
