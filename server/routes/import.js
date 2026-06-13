@@ -197,23 +197,22 @@ router.post('/kinder/preview', upload.single('file'), (req, res) => {
 router.post('/kinder/apply', (req, res) => {
   const { rows } = req.body;
   const col = activeCol('kinderAssignments');
-  // Full-sync: replace all existing records
-  db.set(col, []).write();
-  let created = 0;
-  rows.forEach(row => {
-    const nextId = db.get('_nextId.kinderAssignments').value();
-    db.get(col).push({
-      id: nextId,
-      employeeId: row.employeeId || 0,
-      gardenName: row.gardenName, ageGroup: row.ageGroup,
-      address: row.address || '', phone: row.phone || '',
-      sector: row.sector || '', teacher: row.teacher || '',
-      teacherPhone: row.teacherPhone || '', email: row.email || ''
-    }).write();
-    db.set('_nextId.kinderAssignments', nextId + 1).write();
-    created++;
-  });
-  res.json({ ok: true, created });
+  let nextId = db.get('_nextId.kinderAssignments').value();
+  const newList = rows.map(row => ({
+    id: nextId++,
+    employeeId: row.employeeId || 0,
+    gardenName: row.gardenName || row['שם גן'] || '',
+    ageGroup: row.ageGroup || row['גיל'] || '',
+    address: row.address || row['כתובת'] || '',
+    phone: row.phone || row['טלפון'] || '',
+    sector: row.sector || row['סקטור'] || '',
+    teacher: row.teacher || row['גננת'] || '',
+    teacherPhone: row.teacherPhone || row['נייד'] || '',
+    email: row.email || row['מייל'] || '',
+  }));
+  db.set(col, newList).write();
+  db.set('_nextId.kinderAssignments', nextId).write();
+  res.json({ ok: true, created: newList.length });
 });
 
 module.exports = router;
