@@ -201,7 +201,7 @@ router.post('/kinder/preview', upload.single('file'), (req, res) => {
       const gardenName = String(row['שם הגן'] || row['שם גן'] || row['גן'] || row['עמודה1'] || '').trim();
       if (!gardenName) return null;
       const ageGroup = String(row['גיל'] || row['קבוצת גיל'] || 'חובה').trim();
-      if (!empName && ageGroup.includes('טרום')) return null;
+      if (!empName && ageGroup.startsWith('ט')) return null;
       const baseName = empName.replace(/\s*\(.*?\)\s*/g, '').replace(/וו/g, 'ו').trim();
       const parts = baseName.split(/\s+/);
       const emp = !empName ? null :
