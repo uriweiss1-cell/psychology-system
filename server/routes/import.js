@@ -45,6 +45,17 @@ function parseXlsx(buffer) {
   return [];
 }
 
+// Debug: return raw first rows as arrays
+function parseXlsxRaw(buffer) {
+  const wb = XLSX.read(buffer, { type: 'buffer' });
+  for (const name of wb.SheetNames) {
+    const ws = wb.Sheets[name];
+    const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+    if (rows.length > 0) return { sheetName: name, rows: rows.slice(0, 3) };
+  }
+  return { sheetName: null, rows: [] };
+}
+
 // Build display name: first name + first letter of last name (e.g. "אור ה.")
 function buildDisplayName(firstName, lastName) {
   if (!lastName) return firstName;
@@ -163,6 +174,7 @@ router.post('/kinder/preview', upload.single('file'), (req, res) => {
     const rows = parseXlsx(req.file.buffer);
     const employees = db.get(activeCol('employees')).value();
     const detectedColumns = rows.length > 0 ? Object.keys(rows[0]) : [];
+    const rawDebug = rows.length === 0 ? parseXlsxRaw(req.file.buffer) : null;
     const preview = rows.map(row => {
       const empName = String(row['שם הפסיכולוגית'] || row['פסיכולוג'] || row['שם פסיכולוג'] || '').trim();
       const gardenName = String(row['שם הגן'] || row['שם גן'] || row['גן'] || '').trim();
@@ -193,7 +205,7 @@ router.post('/kinder/preview', upload.single('file'), (req, res) => {
         found: !!emp,
       };
     }).filter(Boolean);
-    res.json({ rows: preview, detectedColumns });
+    res.json({ rows: preview, detectedColumns, rawDebug });
   } catch (e) {
     res.status(400).json({ error: 'שגיאה בקריאת הקובץ: ' + e.message });
   }

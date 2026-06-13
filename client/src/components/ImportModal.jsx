@@ -5,6 +5,7 @@ export default function ImportModal({ type, label, columns, onDone, onClose }) {
   const [step, setStep] = useState('upload'); // upload | preview | done
   const [rows, setRows] = useState([]);
   const [detectedColumns, setDetectedColumns] = useState([]);
+  const [rawDebug, setRawDebug] = useState(null);
   const [toDeleteIds, setToDeleteIds] = useState([]);
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -20,6 +21,7 @@ export default function ImportModal({ type, label, columns, onDone, onClose }) {
       const data = await previewImport(type, file);
       setRows(data.rows);
       setDetectedColumns(data.detectedColumns || []);
+      setRawDebug(data.rawDebug || null);
       setToDeleteIds(data.toDeleteIds || []);
       setStep('preview');
     } catch (err) {
@@ -67,6 +69,9 @@ export default function ImportModal({ type, label, columns, onDone, onClose }) {
               <p className="text-sm text-gray-600 mb-3">נמצאו <strong>{rows.length}</strong> שורות. בדוק ואשר:</p>
               {rows.length === 0 && detectedColumns.length > 0 && (
                 <p className="text-sm text-orange-600 mb-3">עמודות שזוהו בקובץ: <span className="font-mono">{detectedColumns.join(' | ')}</span></p>
+              )}
+              {rows.length === 0 && rawDebug && (
+                <pre className="text-xs bg-gray-100 rounded p-2 mt-2 text-left overflow-x-auto">{JSON.stringify(rawDebug, null, 2)}</pre>
               )}
               <div className="overflow-x-auto">
                 <table className="w-full text-sm border border-gray-200 rounded">
