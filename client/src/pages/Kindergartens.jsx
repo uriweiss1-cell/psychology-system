@@ -121,7 +121,7 @@ export default function Kindergartens() {
         <div className="flex gap-2 items-center">
           <input className="input" placeholder="חיפוש גן או פסיכולוג..." value={filter} onChange={e => setFilter(e.target.value)} />
           <button className="btn-secondary" onClick={() => window.print()}>🖨️ הדפסה</button>
-          <button className="btn-secondary" onClick={() => setShowImport(true)} disabled={!isDraft} title={!isDraft ? 'ייבוא זמין בטיוטה בלבד' : ''}>📥 ייבוא מקובץ</button>
+          {isDraft && <button className="btn-secondary" onClick={() => setShowImport(true)}>📥 ייבוא מקובץ</button>}
           <button className="btn-primary" onClick={() => setShowAdd(true)}>+ גן חדש</button>
         </div>
       </div>
