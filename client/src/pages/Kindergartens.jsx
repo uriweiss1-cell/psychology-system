@@ -84,7 +84,7 @@ export default function Kindergartens() {
         <ImportModal
           type="kinder"
           label="גנים"
-          columns={['שם גן', 'גיל', 'כתובת', 'טלפון', 'גננת', 'נייד גננת', 'מייל', 'פסיכולוג']}
+          columns={['שם גן', 'גיל', 'כתובת', 'טלפון', 'סקטור', 'גננת', 'נייד', 'מייל', 'פסיכולוג', 'נמצא']}
           onDone={load}
           onClose={() => setShowImport(false)}
         />

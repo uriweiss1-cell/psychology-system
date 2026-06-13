@@ -159,21 +159,35 @@ router.post('/kinder/preview', upload.single('file'), (req, res) => {
     const rows = parseXlsx(req.file.buffer);
     const employees = db.get(activeCol('employees')).value();
     const preview = rows.map(row => {
-      const empName = String(row['פסיכולוג'] || row['שם פסיכולוג'] || '').trim();
+      const empName = String(row['שם הפסיכולוגית'] || row['פסיכולוג'] || row['שם פסיכולוג'] || '').trim();
+      const gardenName = String(row['שם הגן'] || row['שם גן'] || row['גן'] || '').trim();
+      if (!gardenName) return null;
       const emp = employees.find(e => e.displayName === empName);
+      const ageGroup = String(row['גיל'] || row['קבוצת גיל'] || 'חובה').trim();
+      const address = String(row['כתובת'] || '').trim();
+      const phone = String(row['טלפון בגן'] || row['טלפון'] || '').trim();
+      const sector = String(row['סקטור'] || '').trim();
+      const teacher = String(row['גננת'] || '').trim();
+      const teacherPhone = String(row['נייד'] || row['נייד גננת'] || '').trim();
+      const email = String(row['מייל'] || '').trim();
       return {
-        gardenName: String(row['שם גן'] || row['גן'] || '').trim(),
-        ageGroup: String(row['גיל'] || row['קבוצת גיל'] || 'חובה').trim(),
-        address: String(row['כתובת'] || '').trim(),
-        phone: String(row['טלפון'] || '').trim(),
-        teacher: String(row['גננת'] || '').trim(),
-        teacherPhone: String(row['נייד גננת'] || '').trim(),
-        email: String(row['מייל'] || '').trim(),
+        'שם גן': gardenName,
+        'גיל': ageGroup,
+        'כתובת': address,
+        'טלפון': phone,
+        'סקטור': sector,
+        'גננת': teacher,
+        'נייד': teacherPhone,
+        'מייל': email,
+        'פסיכולוג': empName,
+        'נמצא': emp ? '✓' : empName ? '✗' : '—',
+        // internal fields for apply
+        gardenName, ageGroup, address, phone, sector, teacher, teacherPhone, email,
         psychologistName: empName,
-        employeeId: emp?.id || null,
+        employeeId: emp?.id || 0,
         found: !!emp,
       };
-    }).filter(r => r.gardenName);
+    }).filter(Boolean);
     res.json({ rows: preview });
   } catch (e) {
     res.status(400).json({ error: 'שגיאה בקריאת הקובץ: ' + e.message });
@@ -183,15 +197,18 @@ router.post('/kinder/preview', upload.single('file'), (req, res) => {
 router.post('/kinder/apply', (req, res) => {
   const { rows } = req.body;
   const col = activeCol('kinderAssignments');
+  // Full-sync: replace all existing records
+  db.set(col, []).write();
   let created = 0;
   rows.forEach(row => {
-    if (!row.employeeId) return;
     const nextId = db.get('_nextId.kinderAssignments').value();
     db.get(col).push({
-      id: nextId, employeeId: row.employeeId,
+      id: nextId,
+      employeeId: row.employeeId || 0,
       gardenName: row.gardenName, ageGroup: row.ageGroup,
-      address: row.address, phone: row.phone,
-      teacher: row.teacher, teacherPhone: row.teacherPhone, email: row.email
+      address: row.address || '', phone: row.phone || '',
+      sector: row.sector || '', teacher: row.teacher || '',
+      teacherPhone: row.teacherPhone || '', email: row.email || ''
     }).write();
     db.set('_nextId.kinderAssignments', nextId + 1).write();
     created++;
