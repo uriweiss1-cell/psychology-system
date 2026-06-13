@@ -197,7 +197,7 @@ router.post('/kinder/preview', upload.single('file'), (req, res) => {
       console.log('[kinder/preview] system displayNames sample:', employees.slice(0, 5).map(e => e.displayName));
     }
     const preview = rows.map(row => {
-      const empName = String(row['שם הפסיכולוגית'] || row['פסיכולוג'] || row['שם פסיכולוג'] || '').trim();
+      const empName = String(row['שם הפסיכולוג.ית'] || row['שם הפסיכולוגית'] || row['פסיכולוג'] || row['שם פסיכולוג'] || '').trim();
       const gardenName = String(row['שם הגן'] || row['שם גן'] || row['גן'] || '').trim();
       if (!gardenName) return null;
       const emp = empName
