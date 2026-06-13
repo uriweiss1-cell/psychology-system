@@ -56,6 +56,7 @@ router.get('/', (req, res) => {
   const col = activeCol('employees');
   let emps = db.get(col).value();
   if (req.query.activeOnly) emps = emps.filter(e => e.status !== 'inactive' && e.status !== 'maternity');
+  emps = emps.slice().sort((a, b) => (a.displayName || '').localeCompare(b.displayName || '', 'he'));
   res.json(emps.map(withComputed));
 });
 
