@@ -34,22 +34,30 @@ function clearKinderAssignments(employeeId) {
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 
-// Parse xlsx buffer → array of row objects
-// Searches all sheets and all rows for the header row (handles title rows above headers)
+// Standard xlsx parser — first non-chart sheet with data
 function parseXlsx(buffer) {
+  const wb = XLSX.read(buffer, { type: 'buffer' });
+  for (const name of wb.SheetNames) {
+    const ws = wb.Sheets[name];
+    if (ws['!type'] && ws['!type'] !== 'sheet') continue;
+    const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+    if (rows.length > 0) return rows;
+  }
+  return [];
+}
+
+// Kinder xlsx parser — finds header row containing kinder column names, skips chart sheets
+function parseKinderXlsx(buffer) {
   const KINDER_KEYS = ['גן', 'פסיכולוג', 'גיל', 'גננת', 'כתובת', 'טלפון', 'מייל'];
   const wb = XLSX.read(buffer, { type: 'buffer' });
   for (const name of wb.SheetNames) {
     const ws = wb.Sheets[name];
-    if (ws['!type'] && ws['!type'] !== 'sheet') continue; // skip charts
+    if (ws['!type'] && ws['!type'] !== 'sheet') continue;
     const raw = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
     if (!raw.length) continue;
-    // Try each row as a potential header row
     for (let hi = 0; hi < Math.min(raw.length, 10); hi++) {
       const headerRow = raw[hi].map(c => String(c).trim());
-      const hasKinderCol = headerRow.some(h => KINDER_KEYS.some(k => h.includes(k)));
-      if (!hasKinderCol) continue;
-      // Build objects using this row as headers
+      if (!headerRow.some(h => KINDER_KEYS.some(k => h.includes(k)))) continue;
       const result = [];
       for (let ri = hi + 1; ri < raw.length; ri++) {
         const obj = {};
@@ -58,7 +66,6 @@ function parseXlsx(buffer) {
       }
       if (result.length > 0) return result;
     }
-    // Fallback: standard parse
     const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
     if (rows.length > 0) return rows;
   }
@@ -188,7 +195,7 @@ router.post('/kinder/preview', upload.single('file'), (req, res) => {
       const raw = require('xlsx').utils.sheet_to_json(wb.Sheets[name], { header: 1, defval: '' });
       console.log(`[kinder/preview] sheet "${name}": ${raw.length} rows, first row:`, JSON.stringify(raw[0]));
     });
-    const rows = parseXlsx(req.file.buffer);
+    const rows = parseKinderXlsx(req.file.buffer);
     const employees = db.get(activeCol('employees')).value();
     const detectedColumns = rows.length > 0 ? Object.keys(rows[0]) : [];
     if (rows.length > 0) {
