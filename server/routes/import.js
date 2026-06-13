@@ -179,6 +179,14 @@ router.post('/employees/apply', (req, res) => {
 // Preview import for kinder assignments
 router.post('/kinder/preview', upload.single('file'), (req, res) => {
   try {
+    const buf = req.file.buffer;
+    console.log('[kinder/preview] buffer size:', buf.length, 'mimetype:', req.file.mimetype, 'originalname:', req.file.originalname);
+    const wb = require('xlsx').read(buf, { type: 'buffer' });
+    console.log('[kinder/preview] sheets:', wb.SheetNames);
+    wb.SheetNames.forEach(name => {
+      const raw = require('xlsx').utils.sheet_to_json(wb.Sheets[name], { header: 1, defval: '' });
+      console.log(`[kinder/preview] sheet "${name}": ${raw.length} rows, first row:`, JSON.stringify(raw[0]));
+    });
     const rows = parseXlsx(req.file.buffer);
     const employees = db.get(activeCol('employees')).value();
     const detectedColumns = rows.length > 0 ? Object.keys(rows[0]) : [];
