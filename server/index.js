@@ -23,6 +23,8 @@ async function main() {
   app.use('/api/draft',            require('./routes/draft'));
   app.use('/api/import',           require('./routes/import'));
 
+  app.get('/ping', (req, res) => res.json({ ok: true }));
+
   const clientDist = path.join(__dirname, '..', 'client', 'dist');
   if (fs.existsSync(clientDist)) {
     app.use(express.static(clientDist));
