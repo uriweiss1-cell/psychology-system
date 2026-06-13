@@ -62,8 +62,8 @@ export default function Kindergartens() {
   };
 
   const addRow = async () => {
-    if (!newRow.gardenName || !newRow.employeeId) return;
-    const created = await createKinder({ ...newRow, employeeId: +newRow.employeeId });
+    if (!newRow.gardenName) return;
+    const created = await createKinder({ ...newRow, employeeId: +newRow.employeeId || 0 });
     setAssignments(prev => [...prev, created]);
     setShowAdd(false);
     setNewRow({ employeeId: '', gardenName: '', ageGroup: 'חובה', address: '', phone: '', teacher: '', teacherPhone: '', email: '' });
@@ -133,7 +133,7 @@ export default function Kindergartens() {
             <div>
               <label className="block text-xs text-gray-600 mb-1">פסיכולוג</label>
               <select className="input w-full" value={newRow.employeeId} onChange={e => setNewRow(p => ({...p, employeeId: e.target.value}))}>
-                <option value="">בחר...</option>
+                <option value="">ללא פסיכולוג</option>
                 {employees.map(e => <option key={e.id} value={e.id}>{e.displayName}</option>)}
               </select>
             </div>
@@ -191,7 +191,8 @@ function KinderTable({ rows, employees, editRow, setEditRow, saveEdit, removeRow
               {editRow?.id === row.id ? (
                 <>
                   <td className="table-cell">
-                    <select className="input w-full text-xs" value={editRow.employeeId} onChange={e => setEditRow(p => ({...p, employeeId: +e.target.value}))}>
+                    <select className="input w-full text-xs" value={editRow.employeeId || 0} onChange={e => setEditRow(p => ({...p, employeeId: +e.target.value}))}>
+                      <option value={0}>ללא פסיכולוג</option>
                       {employees.map(e => <option key={e.id} value={e.id}>{e.displayName}</option>)}
                     </select>
                   </td>
