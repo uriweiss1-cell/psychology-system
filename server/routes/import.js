@@ -191,6 +191,11 @@ router.post('/kinder/preview', upload.single('file'), (req, res) => {
     const rows = parseXlsx(req.file.buffer);
     const employees = db.get(activeCol('employees')).value();
     const detectedColumns = rows.length > 0 ? Object.keys(rows[0]) : [];
+    if (rows.length > 0) {
+      const sampleNames = rows.slice(0, 5).map(r => r['שם הפסיכולוגית'] || r['פסיכולוג'] || '(ריק)');
+      console.log('[kinder/preview] sample emp names:', sampleNames);
+      console.log('[kinder/preview] system displayNames sample:', employees.slice(0, 5).map(e => e.displayName));
+    }
     const preview = rows.map(row => {
       const empName = String(row['שם הפסיכולוגית'] || row['פסיכולוג'] || row['שם פסיכולוג'] || '').trim();
       const gardenName = String(row['שם הגן'] || row['שם גן'] || row['גן'] || '').trim();
