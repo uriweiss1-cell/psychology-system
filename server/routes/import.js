@@ -123,12 +123,17 @@ router.post('/employees/apply', (req, res) => {
       };
       if (row.ftePercent && row.ftePercent > 0) update.ftePercent = row.ftePercent;
       db.get(activeCol('employees')).find({ id: row.existingId }).assign(update).write();
-      if (update.status === 'maternity' || update.status === 'inactive')
+      if (update.status === 'maternity' || update.status === 'inactive') {
         clearKinderAssignments(row.existingId);
+        const emp = db.get(activeCol('employees')).find({ id: row.existingId }).value();
+        if (emp) removeFromTeamsAndSupervisions(emp.displayName);
+      }
       updated++;
     } else if (row.action === 'remove' && row.existingId) {
+      const emp = db.get(activeCol('employees')).find({ id: row.existingId }).value();
       db.get(activeCol('employees')).find({ id: row.existingId }).assign({ status: 'inactive' }).write();
       clearKinderAssignments(row.existingId);
+      if (emp) removeFromTeamsAndSupervisions(emp.displayName);
       removed++;
     }
   });
