@@ -7,8 +7,8 @@ router.get('/', (req, res) => {
   const assignments = db.get(col).value();
   const employees = db.get(activeCol('employees')).value();
   const enriched = assignments.map(a => {
-    const emp = employees.find(e => e.id === a.employeeId);
-    return { ...a, employeeName: emp?.displayName || '' };
+    const emp = employees.find(e => e.id === a.employeeId && e.status !== 'inactive' && e.status !== 'maternity');
+    return { ...a, employeeId: emp ? a.employeeId : 0, employeeName: emp?.displayName || '' };
   });
   res.json(enriched);
 });
