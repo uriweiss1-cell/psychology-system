@@ -34,11 +34,15 @@ function clearKinderAssignments(employeeId) {
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 
-// Parse xlsx buffer → array of row objects
+// Parse xlsx buffer → array of row objects (first sheet with data)
 function parseXlsx(buffer) {
   const wb = XLSX.read(buffer, { type: 'buffer' });
-  const ws = wb.Sheets[wb.SheetNames[0]];
-  return XLSX.utils.sheet_to_json(ws, { defval: '' });
+  for (const name of wb.SheetNames) {
+    const ws = wb.Sheets[name];
+    const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+    if (rows.length > 0) return rows;
+  }
+  return [];
 }
 
 // Build display name: first name + first letter of last name (e.g. "אור ה.")
