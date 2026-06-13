@@ -228,24 +228,29 @@ router.post('/kinder/preview', upload.single('file'), (req, res) => {
 });
 
 router.post('/kinder/apply', (req, res) => {
-  const { rows } = req.body;
-  const col = activeCol('kinderAssignments');
-  let nextId = db.get('_nextId.kinderAssignments').value();
-  const newList = rows.map(row => ({
-    id: nextId++,
-    employeeId: row.employeeId || 0,
-    gardenName: row.gardenName || row['שם גן'] || '',
-    ageGroup: row.ageGroup || row['גיל'] || '',
-    address: row.address || row['כתובת'] || '',
-    phone: row.phone || row['טלפון'] || '',
-    sector: row.sector || row['סקטור'] || '',
-    teacher: row.teacher || row['גננת'] || '',
-    teacherPhone: row.teacherPhone || row['נייד'] || '',
-    email: row.email || row['מייל'] || '',
-  }));
-  db.set(col, newList).write();
-  db.set('_nextId.kinderAssignments', nextId).write();
-  res.json({ ok: true, created: newList.length });
+  try {
+    const { rows } = req.body;
+    const col = activeCol('kinderAssignments');
+    let nextId = db.get('_nextId.kinderAssignments').value() || 1;
+    const newList = rows.map(row => ({
+      id: nextId++,
+      employeeId: row.employeeId || 0,
+      gardenName: row.gardenName || row['שם גן'] || '',
+      ageGroup: row.ageGroup || row['גיל'] || '',
+      address: row.address || row['כתובת'] || '',
+      phone: row.phone || row['טלפון'] || row['טלפון בגן'] || '',
+      sector: row.sector || row['סקטור'] || '',
+      teacher: row.teacher || row['גננת'] || '',
+      teacherPhone: row.teacherPhone || row['נייד'] || '',
+      email: row.email || row['מייל'] || '',
+    }));
+    db.set(col, newList).write();
+    db.set('_nextId.kinderAssignments', nextId).write();
+    res.json({ ok: true, created: newList.length });
+  } catch (e) {
+    console.error('[kinder/apply] error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
 });
 
 module.exports = router;
