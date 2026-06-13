@@ -158,6 +158,7 @@ router.post('/kinder/preview', upload.single('file'), (req, res) => {
   try {
     const rows = parseXlsx(req.file.buffer);
     const employees = db.get(activeCol('employees')).value();
+    const detectedColumns = rows.length > 0 ? Object.keys(rows[0]) : [];
     const preview = rows.map(row => {
       const empName = String(row['שם הפסיכולוגית'] || row['פסיכולוג'] || row['שם פסיכולוג'] || '').trim();
       const gardenName = String(row['שם הגן'] || row['שם גן'] || row['גן'] || '').trim();
@@ -188,7 +189,7 @@ router.post('/kinder/preview', upload.single('file'), (req, res) => {
         found: !!emp,
       };
     }).filter(Boolean);
-    res.json({ rows: preview });
+    res.json({ rows: preview, detectedColumns });
   } catch (e) {
     res.status(400).json({ error: 'שגיאה בקריאת הקובץ: ' + e.message });
   }

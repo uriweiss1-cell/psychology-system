@@ -4,6 +4,7 @@ import { previewImport, applyImport } from '../api';
 export default function ImportModal({ type, label, columns, onDone, onClose }) {
   const [step, setStep] = useState('upload'); // upload | preview | done
   const [rows, setRows] = useState([]);
+  const [detectedColumns, setDetectedColumns] = useState([]);
   const [toDeleteIds, setToDeleteIds] = useState([]);
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -18,6 +19,7 @@ export default function ImportModal({ type, label, columns, onDone, onClose }) {
     try {
       const data = await previewImport(type, file);
       setRows(data.rows);
+      setDetectedColumns(data.detectedColumns || []);
       setToDeleteIds(data.toDeleteIds || []);
       setStep('preview');
     } catch (err) {
@@ -63,6 +65,9 @@ export default function ImportModal({ type, label, columns, onDone, onClose }) {
           {step === 'preview' && (
             <div>
               <p className="text-sm text-gray-600 mb-3">נמצאו <strong>{rows.length}</strong> שורות. בדוק ואשר:</p>
+              {rows.length === 0 && detectedColumns.length > 0 && (
+                <p className="text-sm text-orange-600 mb-3">עמודות שזוהו בקובץ: <span className="font-mono">{detectedColumns.join(' | ')}</span></p>
+              )}
               <div className="overflow-x-auto">
                 <table className="w-full text-sm border border-gray-200 rounded">
                   <thead className="bg-gray-50">
