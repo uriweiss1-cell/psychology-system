@@ -192,15 +192,13 @@ router.post('/kinder/preview', upload.single('file'), (req, res) => {
     const employees = db.get(activeCol('employees')).value();
     const detectedColumns = rows.length > 0 ? Object.keys(rows[0]) : [];
     if (rows.length > 0) {
-      const allEmpNames = [...new Set(rows.map(r => String(r['שם הפסיכולוג.ית'] || r['שם הפסיכולוגית'] || r['פסיכולוג'] || '').trim()).filter(Boolean))];
-      const unmatched = allEmpNames.filter(name => !employees.find(e => e.displayName === name || e.firstName === name));
-      console.log('[kinder/preview] all emp names in file:', allEmpNames);
-      console.log('[kinder/preview] unmatched names:', unmatched);
-      console.log('[kinder/preview] system firstNames:', employees.map(e => e.firstName));
+      const noEmpRows = rows.filter(r => !String(r['שם הפסיכולוג.ית'] || r['שם הפסיכולוגית'] || r['פסיכולוג'] || '').trim());
+      const noEmpAgeGroups = [...new Set(noEmpRows.map(r => String(r['גיל'] || r['קבוצת גיל'] || '').trim()))];
+      console.log('[kinder/preview] age groups with no psychologist:', noEmpAgeGroups);
     }
     const preview = rows.map(row => {
       const empName = String(row['שם הפסיכולוג.ית'] || row['שם הפסיכולוגית'] || row['פסיכולוג'] || row['שם פסיכולוג'] || '').trim();
-      const gardenName = String(row['שם הגן'] || row['שם גן'] || row['גן'] || '').trim();
+      const gardenName = String(row['שם הגן'] || row['שם גן'] || row['גן'] || row['עמודה1'] || '').trim();
       if (!gardenName) return null;
       const ageGroup = String(row['גיל'] || row['קבוצת גיל'] || 'חובה').trim();
       if (!empName && ageGroup.includes('טרום')) return null;
