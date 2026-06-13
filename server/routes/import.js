@@ -192,9 +192,11 @@ router.post('/kinder/preview', upload.single('file'), (req, res) => {
     const employees = db.get(activeCol('employees')).value();
     const detectedColumns = rows.length > 0 ? Object.keys(rows[0]) : [];
     if (rows.length > 0) {
-      const sampleNames = rows.slice(0, 5).map(r => r['שם הפסיכולוגית'] || r['פסיכולוג'] || '(ריק)');
-      console.log('[kinder/preview] sample emp names:', sampleNames);
-      console.log('[kinder/preview] system displayNames sample:', employees.slice(0, 5).map(e => e.displayName));
+      const allEmpNames = [...new Set(rows.map(r => String(r['שם הפסיכולוג.ית'] || r['שם הפסיכולוגית'] || r['פסיכולוג'] || '').trim()).filter(Boolean))];
+      const unmatched = allEmpNames.filter(name => !employees.find(e => e.displayName === name || e.firstName === name));
+      console.log('[kinder/preview] all emp names in file:', allEmpNames);
+      console.log('[kinder/preview] unmatched names:', unmatched);
+      console.log('[kinder/preview] system firstNames:', employees.map(e => e.firstName));
     }
     const preview = rows.map(row => {
       const empName = String(row['שם הפסיכולוג.ית'] || row['שם הפסיכולוגית'] || row['פסיכולוג'] || row['שם פסיכולוג'] || '').trim();
