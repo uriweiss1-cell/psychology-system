@@ -41,6 +41,7 @@ function parseXlsx(buffer) {
   const wb = XLSX.read(buffer, { type: 'buffer' });
   for (const name of wb.SheetNames) {
     const ws = wb.Sheets[name];
+    if (ws['!type'] && ws['!type'] !== 'sheet') continue; // skip charts
     const raw = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
     if (!raw.length) continue;
     // Try each row as a potential header row
