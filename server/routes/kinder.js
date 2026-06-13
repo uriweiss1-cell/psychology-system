@@ -8,7 +8,7 @@ router.get('/', (req, res) => {
   const employees = db.get(activeCol('employees')).value();
   const enriched = assignments.map(a => {
     const emp = employees.find(e => e.id === a.employeeId);
-    return { ...a, employeeName: emp?.displayName || '?' };
+    return { ...a, employeeName: emp?.displayName || '' };
   });
   res.json(enriched);
 });
@@ -30,7 +30,7 @@ router.post('/', (req, res) => {
   db.get(col).push(a).write();
   db.set('_nextId.kinderAssignments', nextId + 1).write();
   const emp = db.get(activeCol('employees')).find({ id: a.employeeId }).value();
-  res.json({ ...a, employeeName: emp?.displayName || '?' });
+  res.json({ ...a, employeeName: emp?.displayName || '' });
 });
 
 router.put('/:id', (req, res) => {
@@ -44,7 +44,7 @@ router.put('/:id', (req, res) => {
   db.get(col).find({ id }).assign(update).write();
   const updated = db.get(col).find({ id }).value();
   const emp = db.get(activeCol('employees')).find({ id: updated.employeeId }).value();
-  res.json({ ...updated, employeeName: emp?.displayName || '?' });
+  res.json({ ...updated, employeeName: emp?.displayName || '' });
 });
 
 router.delete('/:id', (req, res) => {
