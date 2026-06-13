@@ -195,15 +195,9 @@ router.post('/kinder/preview', upload.single('file'), (req, res) => {
       const empName = String(row['שם הפסיכולוגית'] || row['פסיכולוג'] || row['שם פסיכולוג'] || '').trim();
       const gardenName = String(row['שם הגן'] || row['שם גן'] || row['גן'] || '').trim();
       if (!gardenName) return null;
-      const emp = employees.find(e => e.displayName === empName)
-        || employees.find(e => {
-          if (!empName) return false;
-          const parts = empName.split(' ');
-          const first = parts[0];
-          const last = parts.slice(1).join(' ');
-          return e.firstName === first && last && e.lastName && e.lastName.startsWith(last[0]);
-        })
-        || employees.find(e => empName && e.firstName === empName.split(' ')[0] && empName.startsWith(e.firstName));
+      const emp = empName
+        ? (employees.find(e => e.displayName === empName) || employees.find(e => e.firstName === empName))
+        : null;
       const ageGroup = String(row['גיל'] || row['קבוצת גיל'] || 'חובה').trim();
       const address = String(row['כתובת'] || '').trim();
       const phone = String(row['טלפון בגן'] || row['טלפון'] || '').trim();
