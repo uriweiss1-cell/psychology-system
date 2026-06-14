@@ -11,10 +11,10 @@ import { getDraftStatus, activateDraft, pauseDraft, resumeDraft, approveDraft, d
 export const DraftContext = createContext({ isDraft: false });
 
 const NAV = [
-  { to: '/standards',     label: 'תקנים' },
-  { to: '/work-plan',     label: 'תוכנית עבודה' },
-  { to: '/schools',       label: 'שיבוצי בתי ספר' },
-  { to: '/kindergartens', label: 'שיבוצי גנים' },
+  { to: '/standards',     label: 'תקנים',           desktopOnly: true },
+  { to: '/work-plan',     label: 'תוכנית עבודה',    desktopOnly: true },
+  { to: '/schools',       label: 'שיבוצי בתי ספר',  desktopOnly: true },
+  { to: '/kindergartens', label: 'שיבוצי גנים',     desktopOnly: true },
   { to: '/teams',         label: 'צוותים' },
   { to: '/supervisions',  label: 'הדרכות' },
 ];
@@ -90,7 +90,7 @@ export default function App() {
                 className={({ isActive }) =>
                   `px-4 py-3 text-sm font-medium transition-colors hover:bg-white/20 ${
                     isActive ? 'bg-white/30 border-b-2 border-white' : ''
-                  }`
+                  } ${n.desktopOnly ? 'hidden md:block' : ''}`
                 }
               >
                 {n.label}
