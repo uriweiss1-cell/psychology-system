@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import * as XLSX from 'xlsx';
 import AlertsBanner from '../components/AlertsBanner';
 import { getAssignmentSummary, getEmployees, getAssignments, updateAssignment, getFrameworks, updateFramework, getSpecEdClasses, createSpecEdClass, updateSpecEdClass, deleteSpecEdClass, advanceSpecEdYear, getAlerts } from '../api';
 import axios from 'axios';
@@ -168,6 +169,33 @@ export default function Schools() {
     return acc;
   }, {});
 
+  const exportXlsx = () => {
+    const rows = summary.map(fw => {
+      const fwAsgns = assignments.filter(a => a.frameworkId === fw.id);
+      const fwSpec  = specEdClasses.filter(s => s.frameworkId === fw.id);
+      const target  = calcTargetHours(fw, fwSpec);
+      const actual  = fwAsgns.reduce((sum, a) => sum + (a.hours || 0) + (a.specEdHours || 0), 0);
+      const psychs  = fwAsgns.map(a => {
+        const emp = employees.find(e => e.id === a.employeeId);
+        return emp ? `${emp.displayName} (${(a.hours||0)+(a.specEdHours||0)} ש׳)` : '';
+      }).filter(Boolean).join(', ');
+      return {
+        'שם מסגרת': fw.name,
+        'מגזר': fw.sector || '',
+        'סוג': fw.subType || fw.type || '',
+        'תלמידים': fw.allocatedHours ?? '',
+        'שעות יעד': target ?? '',
+        'שעות בפועל': actual || '',
+        'פער': target != null ? actual - target : '',
+        'פסיכולוגים': psychs,
+      };
+    });
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'שיבוצי בתי ספר');
+    XLSX.writeFile(wb, 'שיבוצי_בתי_ספר.xlsx');
+  };
+
   if (loading) return <div className="p-6 text-gray-500">טוען...</div>;
 
   return (
@@ -206,6 +234,7 @@ export default function Schools() {
             <option value="special_ed">חינוך מיוחד</option>
           </select>
           <input className="input" placeholder="חיפוש..." value={filter} onChange={e => setFilter(e.target.value)} />
+          <button className="btn-secondary" onClick={exportXlsx}>📊 ייצוא xlsx</button>
           <button
             className="btn-secondary text-xs py-1 border-amber-400 text-amber-700 hover:bg-amber-50"
             onClick={async () => {

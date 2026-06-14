@@ -1,4 +1,5 @@
 import { useEffect, useState, useContext } from 'react';
+import * as XLSX from 'xlsx';
 import { getKinder, getEmployees, createKinder, updateKinder, deleteKinder, previewImport, applyImport, getAlerts } from '../api';
 import ImportModal from '../components/ImportModal';
 import AlertsBanner from '../components/AlertsBanner';
@@ -69,6 +70,23 @@ export default function Kindergartens() {
     setNewRow({ employeeId: '', gardenName: '', ageGroup: 'חובה', address: '', phone: '', teacher: '', teacherPhone: '', email: '' });
   };
 
+  const exportXlsx = () => {
+    const rows = filtered.map(a => ({
+      'פסיכולוג': a.employeeName || '',
+      'שם הגן': a.gardenName || '',
+      'גיל': a.ageGroup || '',
+      'כתובת': a.address || '',
+      'טלפון בגן': a.phone || '',
+      'גננת': a.teacher || '',
+      'נייד גננת': a.teacherPhone || '',
+      'מייל': a.email || '',
+    }));
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'שיבוצי גנים');
+    XLSX.writeFile(wb, 'שיבוצי_גנים.xlsx');
+  };
+
   const removeRow = async (id, name) => {
     if (!confirm(`למחוק גן "${name}"?`)) return;
     await deleteKinder(id);
@@ -120,6 +138,7 @@ export default function Kindergartens() {
         </div>
         <div className="flex gap-2 items-center">
           <input className="input" placeholder="חיפוש גן או פסיכולוג..." value={filter} onChange={e => setFilter(e.target.value)} />
+          <button className="btn-secondary" onClick={exportXlsx}>📊 ייצוא xlsx</button>
           <button className="btn-secondary" onClick={() => window.print()}>🖨️ הדפסה</button>
           {isDraft && <button className="btn-secondary" onClick={() => setShowImport(true)}>📥 ייבוא מקובץ</button>}
           <button className="btn-primary" onClick={() => setShowAdd(true)}>+ גן חדש</button>
