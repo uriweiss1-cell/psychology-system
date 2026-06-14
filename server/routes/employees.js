@@ -84,9 +84,9 @@ router.put('/:id', (req, res) => {
   // Recalc displayNames when name changes
   if (update.firstName !== undefined || update.lastName !== undefined) {
     const nowFirst = db.get(col).find({ id }).value().firstName;
-    recalcDisplayNames(db, col, nowFirst);
+    recalcDisplayNames(db, col, nowFirst, activeCol);
     if (update.firstName !== undefined && update.firstName !== oldFirstName) {
-      recalcDisplayNames(db, col, oldFirstName); // fix former group too
+      recalcDisplayNames(db, col, oldFirstName, activeCol);
     }
   }
 
@@ -132,7 +132,7 @@ router.post('/', (req, res) => {
   };
   db.get(col).push(emp).write();
   db.set('_nextId.employees', nextId + 1).write();
-  recalcDisplayNames(db, col, emp.firstName);
+  recalcDisplayNames(db, col, emp.firstName, activeCol);
   const created = db.get(col).find({ id: nextId }).value();
   res.json(withComputed(created));
 });
@@ -153,7 +153,7 @@ router.delete('/:id', (req, res) => {
 router.post('/recalc-display-names', (req, res) => {
   const col = activeCol('employees');
   const firstNames = [...new Set(db.get(col).value().map(e => e.firstName).filter(Boolean))];
-  firstNames.forEach(fn => recalcDisplayNames(db, col, fn));
+  firstNames.forEach(fn => recalcDisplayNames(db, col, fn, activeCol));
   res.json({ ok: true, recalculated: firstNames.length });
 });
 

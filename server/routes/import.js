@@ -179,7 +179,7 @@ router.post('/employees/apply', (req, res) => {
 
   // Recalc displayNames for all affected firstNames
   const affectedFirstNames = [...new Set(rows.map(r => r.firstName).filter(Boolean))];
-  affectedFirstNames.forEach(fn => recalcDisplayNames(db, activeCol('employees'), fn));
+  affectedFirstNames.forEach(fn => recalcDisplayNames(db, activeCol('employees'), fn, activeCol));
 
   res.json({ ok: true, created, updated, removed, deleted });
 });
