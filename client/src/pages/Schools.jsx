@@ -265,8 +265,10 @@ function SchoolTable({ items, assignments, employees, specEdClasses, editingAsgn
             const actual = fwAsgns.reduce((sum, a) => sum + (a.hours || 0) + (a.specEdHours || 0), 0);
             const gap = target != null ? Math.round((actual - target) * 100) / 100 : null;
             const gapColor = gap == null ? '' : gap === 0 ? 'text-green-600' : gap > 0 ? 'text-orange-500' : 'text-red-600';
+            const rowHighlight = rowBg ||
+              (gap != null && gap < 0 ? 'bg-amber-50' : gap != null && gap > 0 ? 'bg-orange-50' : '');
             return (
-              <tr key={fw.id} className={`hover:bg-gray-50 align-top ${rowBg}`}>
+              <tr key={fw.id} className={`hover:bg-gray-50 align-top ${rowHighlight}`}>
                 <td className="table-cell font-medium">
                   <EditableName fw={fw} setSummary={setSummary} />
                 </td>
