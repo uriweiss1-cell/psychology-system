@@ -130,7 +130,12 @@ function syncSpecEdAssignments(db, activeCol, frameworkId) {
     .filter(a => a.frameworkId === frameworkId && a.employeeId > 0 && a.id !== primaryAsgn?.id)
     .forEach(a => {
       if (!keepEmpIds.has(a.employeeId)) {
-        db.get(asgnCol).remove({ id: a.id }).write();
+        if ((a.hours || 0) > 0) {
+          // Has regular school hours — keep assignment, just clear specEdHours
+          db.get(asgnCol).find({ id: a.id }).assign({ specEdHours: 0 }).write();
+        } else {
+          db.get(asgnCol).remove({ id: a.id }).write();
+        }
       }
     });
 
