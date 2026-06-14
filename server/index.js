@@ -25,6 +25,29 @@ async function main() {
 
   app.get('/ping', (req, res) => res.json({ ok: true }));
 
+  app.get('/api/public/frameworks', (req, res) => {
+    const { db, activeCol } = require('./database');
+    const employees  = db.get(activeCol('employees')).value();
+    const frameworks = db.get(activeCol('frameworks')).value();
+    const assignments = db.get(activeCol('assignments')).value();
+    const kinder     = db.get(activeCol('kinderAssignments')).value();
+
+    const schools = frameworks.map(fw => {
+      const psychs = assignments
+        .filter(a => a.frameworkId === fw.id && a.employeeId > 0)
+        .map(a => employees.find(e => e.id === a.employeeId)?.displayName)
+        .filter(Boolean);
+      return { name: fw.name, type: 'school', psychologists: psychs };
+    });
+
+    const gardens = kinder.map(k => {
+      const emp = k.employeeId ? employees.find(e => e.id === k.employeeId) : null;
+      return { name: k.gardenName, type: 'kinder', psychologists: emp ? [emp.displayName] : [] };
+    });
+
+    res.json([...schools, ...gardens]);
+  });
+
   const clientDist = path.join(__dirname, '..', 'client', 'dist');
   if (fs.existsSync(clientDist)) {
     app.use(express.static(clientDist));
