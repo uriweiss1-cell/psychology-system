@@ -61,6 +61,8 @@ export default function Schools() {
   const [addingSpecFor, setAddingSpecFor] = useState(null); // frameworkId
   const [freeHoursAlerts, setFreeHoursAlerts] = useState([]);
   const [alertsOpen, setAlertsOpen] = useState(true);
+  const [partialOpen, setPartialOpen] = useState(true);
+  const [overOpen, setOverOpen] = useState(true);
   const [editingTarget, setEditingTarget] = useState(null); // { id, value }
 
   const load = async () => {
@@ -135,6 +137,18 @@ export default function Schools() {
     assignments.filter(a => activeEmpIds.has(a.employeeId) && a.employeeId > 0).map(a => a.frameworkId)
   );
 
+  const getGap = (fw) => {
+    const fwSpec = specEdClasses.filter(s => s.frameworkId === fw.id);
+    const target = calcTargetHours(fw, fwSpec);
+    if (target == null) return null;
+    const actual = assignments.filter(a => a.frameworkId === fw.id)
+      .reduce((sum, a) => sum + (a.hours || 0) + (a.specEdHours || 0), 0);
+    return Math.round((actual - target) * 100) / 100;
+  };
+
+  const partialCoverage = summary.filter(fw => assignedActiveFwIds.has(fw.id) && (getGap(fw) ?? 0) < 0);
+  const overCoverage    = summary.filter(fw => assignedActiveFwIds.has(fw.id) && (getGap(fw) ?? 0) > 0);
+
   const unassignedItems = summary.filter(fw => {
     const matchFilter = !filter || fw.name.includes(filter);
     const matchType = filterType === 'all' || fw.sector === filterType || (filterType === 'special_ed' && fw.type === 'special_ed');
@@ -204,6 +218,40 @@ export default function Schools() {
           </button>
         </div>
       </div>
+
+      {partialCoverage.length > 0 && (
+        <div className="mb-4 border border-amber-200 rounded overflow-hidden">
+          <button className="w-full flex items-center justify-between bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-800 hover:bg-amber-100"
+            onClick={() => setPartialOpen(o => !o)}>
+            <span>🟡 כיסוי חלקי ({partialCoverage.length})</span>
+            <span>{partialOpen ? '▲' : '▼'}</span>
+          </button>
+          {partialOpen && (
+            <div className="bg-white p-3 text-sm flex flex-wrap gap-1">
+              {partialCoverage.sort((a,b) => a.name.localeCompare(b.name,'he')).map(fw => (
+                <span key={fw.id} className="badge bg-amber-100 text-amber-800">{fw.name} ({getGap(fw)} ש׳)</span>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {overCoverage.length > 0 && (
+        <div className="mb-4 border border-orange-200 rounded overflow-hidden">
+          <button className="w-full flex items-center justify-between bg-orange-50 px-3 py-2 text-sm font-semibold text-orange-800 hover:bg-orange-100"
+            onClick={() => setOverOpen(o => !o)}>
+            <span>🟠 חריגה מעל יעד ({overCoverage.length})</span>
+            <span>{overOpen ? '▲' : '▼'}</span>
+          </button>
+          {overOpen && (
+            <div className="bg-white p-3 text-sm flex flex-wrap gap-1">
+              {overCoverage.sort((a,b) => a.name.localeCompare(b.name,'he')).map(fw => (
+                <span key={fw.id} className="badge bg-orange-100 text-orange-800">{fw.name} (+{getGap(fw)} ש׳)</span>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {unassignedItems.length > 0 && (
         <div className="mb-6">
