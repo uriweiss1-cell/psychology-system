@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { getSupervisions, createSupervision, updateSupervision, deleteSupervision, getAlerts } from '../api';
+import { useEffect, useState, useRef } from 'react';
+import { getSupervisions, createSupervision, updateSupervision, deleteSupervision, getAlerts, getEmployees } from '../api';
 
 const TYPE_LABELS = {
   educational:    'הדרכה חינוכית פרטנית',
@@ -56,13 +56,18 @@ export default function Supervisions() {
   const [noEdSupervision, setNoEdSupervision] = useState([]);
   const [supAlerts, setSupAlerts] = useState([]);
   const [alertsOpen, setAlertsOpen] = useState(true);
+  const [employees, setEmployees] = useState([]);
   const [search, setSearch] = useState('');
+  const [selectedName, setSelectedName] = useState('');
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const searchRef = useRef(null);
 
   const load = async () => {
-    const [sups, alertsData] = await Promise.all([getSupervisions(), getAlerts()]);
+    const [sups, alertsData, emps] = await Promise.all([getSupervisions(), getAlerts(), getEmployees(true)]);
     setSupervisions(sups);
     setNoEdSupervision(alertsData.noEdSupervision || []);
     setSupAlerts(alertsData.supAlerts || []);
+    setEmployees(emps);
     setLoading(false);
   };
 
@@ -213,18 +218,44 @@ export default function Supervisions() {
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-xl font-bold text-gray-800">הדרכות</h1>
         <div className="flex gap-2 items-center">
-          <input className="input" placeholder="חיפוש עובד..." value={search} onChange={e => setSearch(e.target.value)} />
+          <div className="relative" ref={searchRef}>
+            <input
+              className="input"
+              placeholder="חיפוש עובד..."
+              value={search}
+              onChange={e => { setSearch(e.target.value); setSelectedName(''); setShowSuggestions(true); }}
+              onFocus={() => setShowSuggestions(true)}
+              onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+            />
+            {showSuggestions && search.trim() && (() => {
+              const suggestions = employees.filter(e => e.displayName.includes(search.trim()));
+              if (!suggestions.length) return null;
+              return (
+                <ul className="absolute z-50 bg-white border border-gray-200 rounded shadow w-48 mt-1 max-h-48 overflow-y-auto text-sm">
+                  {suggestions.map(e => (
+                    <li key={e.id} className="px-3 py-1.5 hover:bg-blue-50 cursor-pointer"
+                      onMouseDown={() => { setSelectedName(e.displayName); setSearch(e.displayName); setShowSuggestions(false); }}>
+                      {e.displayName}
+                    </li>
+                  ))}
+                </ul>
+              );
+            })()}
+          </div>
           <button className="btn-primary" onClick={() => { setShowAdd(true); setAddError(''); }}>+ הדרכה חדשה</button>
         </div>
       </div>
 
-      {search.trim() && (() => {
-        const q = search.trim();
-        const asSupervisee = supervisions.filter(s => (s.superviseeNames || []).some(n => n.includes(q)));
-        const asSupervisor = supervisions.filter(s => (s.supervisorName || '').includes(q));
+      {selectedName && (() => {
+        const q = selectedName;
+        const asSupervisee = supervisions.filter(s => (s.superviseeNames || []).some(n => n === q));
+        const asSupervisor = supervisions.filter(s => (s.supervisorName || '').trim() === q);
         return (
           <div className="mb-6 border border-blue-200 rounded overflow-hidden">
-            <div className="bg-blue-700 text-white text-sm font-semibold px-3 py-2">🔍 תוצאות עבור "{q}"</div>
+            <div className="bg-blue-700 text-white text-sm font-semibold px-3 py-2 flex justify-between items-center">
+              <span>🔍 {q}</span>
+              <button className="text-blue-200 hover:text-white text-xs" onClick={() => { setSelectedName(''); setSearch(''); }}>✕</button>
+            </div>
             <div className="bg-white p-4 space-y-4">
               {asSupervisee.length > 0 && (
                 <div>
