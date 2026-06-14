@@ -56,6 +56,7 @@ export default function Supervisions() {
   const [noEdSupervision, setNoEdSupervision] = useState([]);
   const [supAlerts, setSupAlerts] = useState([]);
   const [alertsOpen, setAlertsOpen] = useState(true);
+  const [search, setSearch] = useState('');
 
   const load = async () => {
     const [sups, alertsData] = await Promise.all([getSupervisions(), getAlerts()]);
@@ -211,8 +212,58 @@ export default function Supervisions() {
     <div>
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-xl font-bold text-gray-800">הדרכות</h1>
-        <button className="btn-primary" onClick={() => { setShowAdd(true); setAddError(''); }}>+ הדרכה חדשה</button>
+        <div className="flex gap-2 items-center">
+          <input className="input" placeholder="חיפוש עובד..." value={search} onChange={e => setSearch(e.target.value)} />
+          <button className="btn-primary" onClick={() => { setShowAdd(true); setAddError(''); }}>+ הדרכה חדשה</button>
+        </div>
       </div>
+
+      {search.trim() && (() => {
+        const q = search.trim();
+        const asSupervisee = supervisions.filter(s => (s.superviseeNames || []).some(n => n.includes(q)));
+        const asSupervisor = supervisions.filter(s => (s.supervisorName || '').includes(q));
+        return (
+          <div className="mb-6 border border-blue-200 rounded overflow-hidden">
+            <div className="bg-blue-700 text-white text-sm font-semibold px-3 py-2">🔍 תוצאות עבור "{q}"</div>
+            <div className="bg-white p-4 space-y-4">
+              {asSupervisee.length > 0 && (
+                <div>
+                  <p className="text-sm font-semibold text-gray-700 mb-2">מודרך/ת ע"י:</p>
+                  <div className="space-y-1">
+                    {asSupervisee.map(s => (
+                      <div key={s.id} className="flex items-center gap-2 text-sm">
+                        <span className={`badge text-white text-xs ${getColor(s)}`}>{getLabel(s)}</span>
+                        <span className="text-gray-800 font-medium">{s.supervisorName || '—'}</span>
+                        {s.isExternal && <span className="text-gray-400 text-xs">(חיצוני)</span>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {asSupervisor.length > 0 && (
+                <div>
+                  <p className="text-sm font-semibold text-gray-700 mb-2">מדריך/ה את:</p>
+                  <div className="space-y-1">
+                    {asSupervisor.map(s => (
+                      <div key={s.id} className="flex items-start gap-2 text-sm">
+                        <span className={`badge text-white text-xs mt-0.5 ${getColor(s)}`}>{getLabel(s)}</span>
+                        <div className="flex flex-wrap gap-1">
+                          {(s.superviseeNames || []).length > 0
+                            ? s.superviseeNames.map((n, i) => <span key={i} className="badge bg-gray-100 text-gray-700">{n}</span>)
+                            : <span className="text-gray-400">—</span>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {asSupervisee.length === 0 && asSupervisor.length === 0 && (
+                <p className="text-sm text-gray-400">לא נמצאו תוצאות</p>
+              )}
+            </div>
+          </div>
+        );
+      })()}
 
       {totalAlerts > 0 && (
         <div className="mb-4 border border-red-200 rounded overflow-hidden">
