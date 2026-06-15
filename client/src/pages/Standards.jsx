@@ -17,6 +17,19 @@ export default function Standards() {
   const [newEmp, setNewEmp] = useState({ firstName: '', lastName: '', ftePercent: 1.0 });
   const [editingApproved, setEditingApproved] = useState(false);
   const [approvedInput, setApprovedInput] = useState('');
+  const [marked, setMarked] = useState(() => {
+    try { return new Set(JSON.parse(localStorage.getItem('standards_marked') || '[]')); }
+    catch { return new Set(); }
+  });
+
+  const toggleMark = (id) => {
+    setMarked(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      localStorage.setItem('standards_marked', JSON.stringify([...next]));
+      return next;
+    });
+  };
 
   const load = async () => {
     const [emps, sett] = await Promise.all([getEmployees(), getSettings()]);
@@ -216,6 +229,7 @@ export default function Standards() {
         <table className="w-full text-sm">
           <thead>
             <tr>
+              {isDraft && <th className="table-header w-8"></th>}
               <th className="table-header">שם פרטי</th>
               <th className="table-header">שם משפחה</th>
               <th className="table-header text-center">אחוז משרה</th>
@@ -228,8 +242,15 @@ export default function Standards() {
           <tbody>
             {filtered.map(emp => {
               const isInactive = emp.status === 'inactive' || emp.status === 'maternity';
+              const isMarked = marked.has(emp.id);
               return (
-                <tr key={emp.id} className={`hover:bg-gray-50 ${isInactive ? 'opacity-60' : ''}`}>
+                <tr key={emp.id} className={`hover:bg-yellow-50 ${isMarked ? 'bg-yellow-200' : ''} ${isInactive && !isMarked ? 'opacity-60' : ''}`}>
+                  {isDraft && (
+                    <td className="table-cell text-center">
+                      <input type="checkbox" checked={isMarked} onChange={() => toggleMark(emp.id)}
+                        className="w-4 h-4 cursor-pointer accent-yellow-500" />
+                    </td>
+                  )}
                   <td className="table-cell">
                     <EditField id={emp.id} field="firstName" value={getEditVal(emp, 'firstName')} type="text"
                       onChange={v => setFieldEdit(emp.id, 'firstName', v)} onSave={() => saveField(emp.id, 'firstName')} />
