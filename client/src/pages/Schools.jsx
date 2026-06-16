@@ -62,7 +62,6 @@ export default function Schools() {
   const [addingSpecFor, setAddingSpecFor] = useState(null); // frameworkId
   const [freeHoursAlerts, setFreeHoursAlerts] = useState([]);
   const [alertsOpen, setAlertsOpen] = useState(true);
-  const [partialOpen, setPartialOpen] = useState(true);
   const [overOpen, setOverOpen] = useState(true);
   const [editingTarget, setEditingTarget] = useState(null); // { id, value }
 
@@ -289,19 +288,17 @@ export default function Schools() {
       )}
 
       {partialCoverage.length > 0 && (
-        <div className="mb-4 border border-amber-200 rounded overflow-hidden">
-          <button className="w-full flex items-center justify-between bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-800 hover:bg-amber-100"
-            onClick={() => setPartialOpen(o => !o)}>
-            <span>🟡 כיסוי חלקי ({partialCoverage.length})</span>
-            <span>{partialOpen ? '▲' : '▼'}</span>
-          </button>
-          {partialOpen && (
-            <div className="bg-white p-3 text-sm flex flex-wrap gap-1">
-              {partialCoverage.sort((a,b) => a.name.localeCompare(b.name,'he')).map(fw => (
-                <span key={fw.id} className="badge bg-amber-100 text-amber-800">{fw.name} ({getGap(fw)} ש׳)</span>
-              ))}
-            </div>
-          )}
+        <div className="mb-6">
+          <h2 className="text-sm font-bold text-amber-600 mb-2 border-b border-amber-200 pb-1">
+            🟡 כיסוי חלקי <span className="font-normal text-amber-400 mr-1">({partialCoverage.length})</span>
+          </h2>
+          <SchoolTable items={partialCoverage.slice().sort((a, b) => getGap(a) - getGap(b))} assignments={assignments} employees={employees}
+            specEdClasses={specEdClasses} editingAsgn={editingAsgn} setEditingAsgn={setEditingAsgn}
+            editingSpec={editingSpec} setEditingSpec={setEditingSpec}
+            saveAssignment={saveAssignment} deleteAssignment={deleteAssignment} addAssignment={addAssignment}
+            saveSpec={saveSpec} addSpec={addSpec} deleteSpec={deleteSpec}
+            setSummary={setSummary} editingTarget={editingTarget} setEditingTarget={setEditingTarget}
+            saveTargetHours={saveTargetHours} rowBg="bg-amber-50" />
         </div>
       )}
 
