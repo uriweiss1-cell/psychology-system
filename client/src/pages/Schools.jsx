@@ -150,19 +150,27 @@ export default function Schools() {
   const partialCoverage = summary.filter(fw => assignedActiveFwIds.has(fw.id) && (getGap(fw) ?? 0) < 0);
   const overCoverage    = summary.filter(fw => assignedActiveFwIds.has(fw.id) && (getGap(fw) ?? 0) > 0);
 
+  const fwMatchesFilter = (fw) => {
+    if (!filter) return true;
+    if (fw.name.includes(filter)) return true;
+    const psychNames = [
+      ...assignments.filter(a => a.frameworkId === fw.id).map(a => employees.find(e => e.id === a.employeeId)?.displayName),
+      ...specEdClasses.filter(s => s.frameworkId === fw.id).map(s => s.psychologistName),
+    ].filter(Boolean);
+    return psychNames.some(n => n.includes(filter));
+  };
+
   const unassignedItems = summary.filter(fw => {
-    const matchFilter = !filter || fw.name.includes(filter);
     const matchType = filterType === 'all' || fw.sector === filterType || (filterType === 'special_ed' && fw.type === 'special_ed');
-    return !assignedActiveFwIds.has(fw.id) && matchFilter && matchType;
+    return !assignedActiveFwIds.has(fw.id) && fwMatchesFilter(fw) && matchType;
   }).sort((a, b) => a.name.localeCompare(b.name, 'he'));
 
   const grouped = SUBTYPE_ORDER.reduce((acc, sub) => {
     const items = summary.filter(fw => {
       const matchSub = sub === 'special_ed' ? fw.type === 'special_ed' : (fw.subType === sub && fw.type !== 'special_ed');
       if (sub === '') return false;
-      const matchFilter = !filter || fw.name.includes(filter);
       const matchType = filterType === 'all' || fw.sector === filterType || (filterType === 'special_ed' && fw.type === 'special_ed');
-      return matchSub && matchFilter && matchType && assignedActiveFwIds.has(fw.id);
+      return matchSub && fwMatchesFilter(fw) && matchType && assignedActiveFwIds.has(fw.id);
     }).sort(sectorSort);
     const label = sub === 'יסודי' ? 'יסודי' : sub === 'חטיבה' ? 'חטיבות' : sub === 'תיכון' ? 'תיכונים' : sub === 'special_ed' ? 'חינוך מיוחד' : sub;
     if (items.length) acc[label] = items;
@@ -248,23 +256,6 @@ export default function Schools() {
         </div>
       </div>
 
-      {partialCoverage.length > 0 && (
-        <div className="mb-4 border border-amber-200 rounded overflow-hidden">
-          <button className="w-full flex items-center justify-between bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-800 hover:bg-amber-100"
-            onClick={() => setPartialOpen(o => !o)}>
-            <span>🟡 כיסוי חלקי ({partialCoverage.length})</span>
-            <span>{partialOpen ? '▲' : '▼'}</span>
-          </button>
-          {partialOpen && (
-            <div className="bg-white p-3 text-sm flex flex-wrap gap-1">
-              {partialCoverage.sort((a,b) => a.name.localeCompare(b.name,'he')).map(fw => (
-                <span key={fw.id} className="badge bg-amber-100 text-amber-800">{fw.name} ({getGap(fw)} ש׳)</span>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
       {overCoverage.length > 0 && (
         <div className="mb-4 border border-orange-200 rounded overflow-hidden">
           <button className="w-full flex items-center justify-between bg-orange-50 px-3 py-2 text-sm font-semibold text-orange-800 hover:bg-orange-100"
@@ -294,6 +285,23 @@ export default function Schools() {
             saveSpec={saveSpec} addSpec={addSpec} deleteSpec={deleteSpec}
             setSummary={setSummary} editingTarget={editingTarget} setEditingTarget={setEditingTarget}
             saveTargetHours={saveTargetHours} rowBg="bg-red-50/40" />
+        </div>
+      )}
+
+      {partialCoverage.length > 0 && (
+        <div className="mb-4 border border-amber-200 rounded overflow-hidden">
+          <button className="w-full flex items-center justify-between bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-800 hover:bg-amber-100"
+            onClick={() => setPartialOpen(o => !o)}>
+            <span>🟡 כיסוי חלקי ({partialCoverage.length})</span>
+            <span>{partialOpen ? '▲' : '▼'}</span>
+          </button>
+          {partialOpen && (
+            <div className="bg-white p-3 text-sm flex flex-wrap gap-1">
+              {partialCoverage.sort((a,b) => a.name.localeCompare(b.name,'he')).map(fw => (
+                <span key={fw.id} className="badge bg-amber-100 text-amber-800">{fw.name} ({getGap(fw)} ש׳)</span>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
