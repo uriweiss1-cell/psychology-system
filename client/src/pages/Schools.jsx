@@ -148,6 +148,7 @@ export default function Schools() {
 
   const partialCoverage = summary.filter(fw => assignedActiveFwIds.has(fw.id) && (getGap(fw) ?? 0) < 0);
   const overCoverage    = summary.filter(fw => assignedActiveFwIds.has(fw.id) && (getGap(fw) ?? 0) > 0);
+  const partialFwIds    = new Set(partialCoverage.map(fw => fw.id));
 
   const fwMatchesFilter = (fw) => {
     if (!filter) return true;
@@ -169,7 +170,7 @@ export default function Schools() {
       const matchSub = sub === 'special_ed' ? fw.type === 'special_ed' : (fw.subType === sub && fw.type !== 'special_ed');
       if (sub === '') return false;
       const matchType = filterType === 'all' || fw.sector === filterType || (filterType === 'special_ed' && fw.type === 'special_ed');
-      return matchSub && fwMatchesFilter(fw) && matchType && assignedActiveFwIds.has(fw.id);
+      return matchSub && fwMatchesFilter(fw) && matchType && assignedActiveFwIds.has(fw.id) && !partialFwIds.has(fw.id);
     }).sort(sectorSort);
     const label = sub === 'יסודי' ? 'יסודי' : sub === 'חטיבה' ? 'חטיבות' : sub === 'תיכון' ? 'תיכונים' : sub === 'special_ed' ? 'חינוך מיוחד' : sub;
     if (items.length) acc[label] = items;
