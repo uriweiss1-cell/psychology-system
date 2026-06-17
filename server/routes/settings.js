@@ -23,4 +23,14 @@ router.put('/', (req, res) => {
   res.json(db.get(col).value());
 });
 
+router.get('/marks', (req, res) => {
+  res.json(db.get('settings').get('standardsMarked').value() || []);
+});
+
+router.put('/marks', (req, res) => {
+  const ids = Array.isArray(req.body.ids) ? req.body.ids : [];
+  db.get('settings').assign({ standardsMarked: ids }).write();
+  res.json(ids);
+});
+
 module.exports = router;

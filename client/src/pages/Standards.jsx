@@ -1,5 +1,5 @@
 import { useEffect, useState, useContext } from 'react';
-import { getEmployees, updateEmployee, createEmployee, deleteEmployee, getSettings, updateSettings } from '../api';
+import { getEmployees, updateEmployee, createEmployee, deleteEmployee, getSettings, updateSettings, getStandardsMarked, putStandardsMarked } from '../api';
 import ImportModal from '../components/ImportModal';
 import { DraftContext } from '../App';
 
@@ -17,24 +17,22 @@ export default function Standards() {
   const [newEmp, setNewEmp] = useState({ firstName: '', lastName: '', ftePercent: 1.0 });
   const [editingApproved, setEditingApproved] = useState(false);
   const [approvedInput, setApprovedInput] = useState('');
-  const [marked, setMarked] = useState(() => {
-    try { return new Set(JSON.parse(localStorage.getItem('standards_marked') || '[]')); }
-    catch { return new Set(); }
-  });
+  const [marked, setMarked] = useState(new Set());
 
-  const toggleMark = (id) => {
+  const toggleMark = async (id) => {
     setMarked(prev => {
       const next = new Set(prev);
       next.has(id) ? next.delete(id) : next.add(id);
-      localStorage.setItem('standards_marked', JSON.stringify([...next]));
+      putStandardsMarked([...next]);
       return next;
     });
   };
 
   const load = async () => {
-    const [emps, sett] = await Promise.all([getEmployees(), getSettings()]);
+    const [emps, sett, markedIds] = await Promise.all([getEmployees(), getSettings(), getStandardsMarked()]);
     setEmployees(emps);
     setSettings(sett);
+    setMarked(new Set(markedIds));
     setLoading(false);
   };
 

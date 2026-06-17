@@ -28,6 +28,8 @@ export const getUnassigned  = () => api.get('/teams/unassigned').then(r => r.dat
 export const getAlerts           = () => api.get('/alerts').then(r => r.data);
 export const getSettings         = () => api.get('/settings').then(r => r.data);
 export const updateSettings      = (data) => api.put('/settings', data).then(r => r.data);
+export const getStandardsMarked  = () => api.get('/settings/marks').then(r => r.data);
+export const putStandardsMarked  = (ids) => api.put('/settings/marks', { ids }).then(r => r.data);
 
 export const getDraftStatus      = () => api.get('/draft/status').then(r => r.data);
 export const activateDraft       = () => api.post('/draft/activate').then(r => r.data);
