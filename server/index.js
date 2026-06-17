@@ -26,11 +26,11 @@ async function main() {
   app.get('/ping', (req, res) => res.json({ ok: true }));
 
   app.get('/api/public/frameworks', (req, res) => {
-    const { db, activeCol } = require('./database');
-    const employees  = db.get(activeCol('employees')).value();
-    const frameworks = db.get(activeCol('frameworks')).value();
-    const assignments = db.get(activeCol('assignments')).value();
-    const kinder     = db.get(activeCol('kinderAssignments')).value();
+    const { db } = require('./database');
+    const employees  = db.get('employees').value();
+    const frameworks = db.get('frameworks').value();
+    const assignments = db.get('assignments').value();
+    const kinder     = db.get('kinderAssignments').value();
 
     const schools = frameworks.map(fw => {
       const psychs = assignments
