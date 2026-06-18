@@ -233,6 +233,7 @@ export default function Standards() {
               <th className="table-header text-center">אחוז משרה</th>
               <th className="table-header text-center">סטטוס</th>
               <th className="table-header text-center">מ"מ</th>
+              <th className="table-header">טלפון</th>
               <th className="table-header">הערות</th>
               <th className="table-header text-center">פעולות</th>
             </tr>
@@ -280,6 +281,10 @@ export default function Standards() {
                       title="מילוי מקום"
                       className="w-4 h-4 cursor-pointer"
                     />
+                  </td>
+                  <td className="table-cell">
+                    <EditField id={emp.id} field="phone" value={getEditVal(emp, 'phone')} type="text"
+                      onChange={v => setFieldEdit(emp.id, 'phone', v)} onSave={() => saveField(emp.id, 'phone')} />
                   </td>
                   <td className="table-cell">
                     <EditField id={emp.id} field="notes" value={getEditVal(emp, 'notes')} type="text"

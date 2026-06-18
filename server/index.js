@@ -35,14 +35,14 @@ async function main() {
     const schools = frameworks.map(fw => {
       const psychs = assignments
         .filter(a => a.frameworkId === fw.id && a.employeeId > 0)
-        .map(a => employees.find(e => e.id === a.employeeId)?.displayName)
+        .map(a => { const e = employees.find(emp => emp.id === a.employeeId); return e ? { name: e.displayName, phone: e.phone || '' } : null; })
         .filter(Boolean);
       return { name: fw.name, type: 'school', psychologists: psychs };
     });
 
     const gardens = kinder.map(k => {
       const emp = k.employeeId ? employees.find(e => e.id === k.employeeId) : null;
-      return { name: k.gardenName, type: 'kinder', psychologists: emp ? [emp.displayName] : [] };
+      return { name: k.gardenName, type: 'kinder', psychologists: emp ? [{ name: emp.displayName, phone: emp.phone || '' }] : [] };
     });
 
     res.json([...schools, ...gardens]);
