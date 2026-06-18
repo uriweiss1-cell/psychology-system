@@ -74,7 +74,7 @@ router.put('/:id', (req, res) => {
 
   const allowed = ['displayName','firstName','lastName','ftePercent','type','status','isSubstitute',
     'meetingHours','supReceivedHours','supGivenHours','therapyHours',
-    'roleHours','roleName','officeHours','notes'];
+    'roleHours','roleName','officeHours','notes','phone'];
   const update = {};
   allowed.forEach(k => { if (req.body[k] !== undefined) update[k] = req.body[k]; });
 
