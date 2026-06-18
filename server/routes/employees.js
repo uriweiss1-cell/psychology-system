@@ -81,6 +81,16 @@ router.put('/:id', (req, res) => {
   const oldFirstName = emp.firstName;
   db.get(col).find({ id }).assign(update).write();
 
+  // שדות אדמיניסטרטיביים — תמיד מסונכרנים בין מצב רגיל לטיוטה
+  const adminFields = ['phone', 'notes'];
+  const adminUpdate = {};
+  adminFields.forEach(k => { if (update[k] !== undefined) adminUpdate[k] = update[k]; });
+  if (Object.keys(adminUpdate).length) {
+    const otherCol = col === 'employees' ? 'draft_employees' : 'employees';
+    const otherEmp = db.get(otherCol).find({ id }).value();
+    if (otherEmp) db.get(otherCol).find({ id }).assign(adminUpdate).write();
+  }
+
   // Recalc displayNames when name changes
   if (update.firstName !== undefined || update.lastName !== undefined) {
     const nowFirst = db.get(col).find({ id }).value().firstName;
