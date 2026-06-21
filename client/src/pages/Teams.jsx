@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react';
-import { getTeams, updateTeam, getUnassigned, getEmployees } from '../api';
+import { useEffect, useState, useContext } from 'react';
+import { getTeams, updateTeam, createTeam, deleteTeam, getUnassigned, getEmployees } from '../api';
+import { DraftContext } from '../App';
 
 const TYPE_LABELS = { educational: 'חינוכי', clinical: 'קליני' };
 const TYPE_COLORS = { educational: 'bg-teal-600', clinical: 'bg-indigo-600' };
 
 export default function Teams() {
+  const { isDraft } = useContext(DraftContext);
   const [teams, setTeams] = useState([]);
   const [unassigned, setUnassigned] = useState({ notInEducational: [], notInClinical: [] });
   const [employees, setEmployees] = useState([]);
@@ -43,6 +45,20 @@ export default function Teams() {
     setUnassigned(u);
   };
 
+  const handleCreate = async (type) => {
+    const team = await createTeam({ type });
+    setTeams(prev => [...prev, team]);
+    startEdit(team);
+  };
+
+  const handleDelete = async (id) => {
+    if (!confirm('למחוק צוות זה?')) return;
+    await deleteTeam(id);
+    setTeams(prev => prev.filter(t => t.id !== id));
+    const u = await getUnassigned();
+    setUnassigned(u);
+  };
+
   if (loading) return <div className="p-6 text-gray-500">טוען...</div>;
 
   const edTeams = teams.filter(t => t.type === 'educational');
@@ -77,23 +93,29 @@ export default function Teams() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Educational teams */}
         <div>
-          <h2 className="text-base font-bold text-teal-700 mb-3 flex items-center gap-2">
-            <span className="w-3 h-3 rounded-full bg-teal-600 inline-block"></span>
-            צוותים חינוכיים
-          </h2>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-base font-bold text-teal-700 flex items-center gap-2">
+              <span className="w-3 h-3 rounded-full bg-teal-600 inline-block"></span>
+              צוותים חינוכיים
+            </h2>
+            {isDraft && <button className="btn-secondary text-xs py-1" onClick={() => handleCreate('educational')}>+ צוות חדש</button>}
+          </div>
           <div className="space-y-4">
-            {edTeams.map(team => <TeamCard key={team.id} team={team} editing={editingId === team.id} editData={editData} setEditData={setEditData} onEdit={startEdit} onSave={saveEdit} onCancel={() => setEditingId(null)} />)}
+            {edTeams.map(team => <TeamCard key={team.id} team={team} editing={editingId === team.id} editData={editData} setEditData={setEditData} onEdit={startEdit} onSave={saveEdit} onCancel={() => setEditingId(null)} isDraft={isDraft} onDelete={handleDelete} />)}
           </div>
         </div>
 
         {/* Clinical teams */}
         <div>
-          <h2 className="text-base font-bold text-indigo-700 mb-3 flex items-center gap-2">
-            <span className="w-3 h-3 rounded-full bg-indigo-600 inline-block"></span>
-            צוותים קליניים
-          </h2>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-base font-bold text-indigo-700 flex items-center gap-2">
+              <span className="w-3 h-3 rounded-full bg-indigo-600 inline-block"></span>
+              צוותים קליניים
+            </h2>
+            {isDraft && <button className="btn-secondary text-xs py-1" onClick={() => handleCreate('clinical')}>+ צוות חדש</button>}
+          </div>
           <div className="space-y-4">
-            {clTeams.map(team => <TeamCard key={team.id} team={team} editing={editingId === team.id} editData={editData} setEditData={setEditData} onEdit={startEdit} onSave={saveEdit} onCancel={() => setEditingId(null)} />)}
+            {clTeams.map(team => <TeamCard key={team.id} team={team} editing={editingId === team.id} editData={editData} setEditData={setEditData} onEdit={startEdit} onSave={saveEdit} onCancel={() => setEditingId(null)} isDraft={isDraft} onDelete={handleDelete} />)}
           </div>
         </div>
       </div>
@@ -101,7 +123,7 @@ export default function Teams() {
   );
 }
 
-function TeamCard({ team, editing, editData, setEditData, onEdit, onSave, onCancel }) {
+function TeamCard({ team, editing, editData, setEditData, onEdit, onSave, onCancel, isDraft, onDelete }) {
   const color = team.type === 'educational' ? 'teal' : 'indigo';
   const allMembers = [team.headDisplayName, ...(team.memberDisplayNames || [])];
   const extMembers = team.externalMembers || [];
@@ -139,6 +161,7 @@ function TeamCard({ team, editing, editData, setEditData, onEdit, onSave, onCanc
         <div className="flex items-center gap-2">
           <span className="text-xs opacity-75">{allMembers.length} חברים</span>
           <button className="text-white/80 hover:text-white text-xs" onClick={() => onEdit(team)}>✏️ עריכה</button>
+          {isDraft && <button className="text-white/60 hover:text-red-300 text-xs" onClick={() => onDelete(team.id)}>🗑️</button>}
         </div>
       </div>
       <div className="p-3 bg-white">
