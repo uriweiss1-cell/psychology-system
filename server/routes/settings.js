@@ -24,12 +24,12 @@ router.put('/', (req, res) => {
 });
 
 router.get('/marks', (req, res) => {
-  res.json(db.get('settings').get('standardsMarked').value() || []);
+  res.json(db.get(settingsCol()).get('standardsMarked').value() || []);
 });
 
 router.put('/marks', (req, res) => {
   const ids = Array.isArray(req.body.ids) ? req.body.ids : [];
-  db.get('settings').assign({ standardsMarked: ids }).write();
+  db.get(settingsCol()).assign({ standardsMarked: ids }).write();
   res.json(ids);
 });
 

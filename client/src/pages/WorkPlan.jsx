@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { getEmployees, updateEmployee, getAssignments, updateAssignment, getFrameworks, deleteEmployee } from '../api';
+import axios from 'axios';
 import AlertsBanner from '../components/AlertsBanner';
 
 const HOURS_FIELDS = [
@@ -73,8 +74,12 @@ export default function WorkPlan() {
   };
 
   const saveAsgn = async (empId, field, value) => {
-    const asgn = assignments.find(a => a.employeeId === empId && a.frameworkId === 0);
-    if (!asgn) return;
+    let asgn = assignments.find(a => a.employeeId === empId && a.frameworkId === 0);
+    if (!asgn) {
+      const res = await axios.post('/api/assignments', { frameworkId: 0, employeeId: empId, hours: 0, specEdHours: 0, kinderHours: 0 });
+      asgn = res.data;
+      setAssignments(prev => [...prev, asgn]);
+    }
     const updated = await updateAssignment(asgn.id, { [field]: value });
     setAssignments(prev => prev.map(a => a.id === asgn.id ? updated : a));
     const emps = await getEmployees(true);
