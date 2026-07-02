@@ -58,6 +58,9 @@ export default function Supervisions() {
   const [editData, setEditData] = useState({});
   const [showAdd, setShowAdd] = useState(false);
   const [newSup, setNewSup] = useState({ type: 'educational', customLabel: '', isNewCustomLabel: false, isGroup: false, supervisorName: '', superviseeNames: '', hoursPerSession: 1, isExternal: false, notes: '' });
+  const [typeSearch, setTypeSearch] = useState('');
+  const [showTypeDropdown, setShowTypeDropdown] = useState(false);
+  const typeDropdownRef = useRef(null);
   const [addError, setAddError] = useState('');
   const [editError, setEditError] = useState('');
   const [noEdSupervision, setNoEdSupervision] = useState([]);
@@ -80,6 +83,17 @@ export default function Supervisions() {
   };
 
   useEffect(() => { load(); }, []);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (typeDropdownRef.current && !typeDropdownRef.current.contains(e.target)) {
+        setShowTypeDropdown(false);
+        setTypeSearch('');
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
   const startEdit = (s) => {
     setEditingId(s.id);
@@ -192,7 +206,12 @@ export default function Supervisions() {
     items: customSupervisions.filter(s => s.customLabel === label),
   }));
 
-  const allGroups = [...standardGroups, ...customGroups];
+  const getGroupIsGroup = (g) => {
+    if (g.typeKey !== 'custom') return TYPE_IS_GROUP[g.typeKey] ?? false;
+    return g.items[0]?.isGroup ?? false;
+  };
+  const allGroups = [...standardGroups, ...customGroups]
+    .sort((a, b) => (getGroupIsGroup(a) ? 1 : 0) - (getGroupIsGroup(b) ? 1 : 0));
 
   const renderGroup = ({ key, label, color, items, typeKey, customLabel: cLabel }) => (
     <div key={key}>
@@ -398,23 +417,72 @@ export default function Supervisions() {
         <div className="bg-blue-50 border border-blue-200 rounded p-4 mb-4">
           <h3 className="font-semibold text-blue-800 mb-3">הוספת הדרכה</h3>
           <div className="grid grid-cols-2 gap-3 mb-3">
-            <div>
+            <div className="relative" ref={typeDropdownRef}>
               <label className="block text-xs text-gray-600 mb-1">סוג הדרכה</label>
-              <select className="input w-full" value={typeSelectVal} onChange={e => handleTypeSelectChange(e.target.value)}>
-                <optgroup label="סוגים קבועים">
-                  {Object.entries(TYPE_LABELS)
-                    .filter(([k]) => k !== 'custom' && !hiddenTypes.includes(k))
-                    .map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-                </optgroup>
-                {existingCustomLabels.length > 0 && (
-                  <optgroup label="קטגוריות מותאמות">
-                    {existingCustomLabels.map(label => (
-                      <option key={label} value={`custom::${label}`}>{label}</option>
-                    ))}
-                  </optgroup>
-                )}
-                <option value="custom::__new__">➕ קטגוריה חדשה...</option>
-              </select>
+              <div
+                className="input w-full cursor-pointer flex items-center justify-between"
+                onClick={() => setShowTypeDropdown(o => !o)}
+              >
+                <span className={typeSelectVal ? 'text-gray-800' : 'text-gray-400'}>
+                  {typeSelectVal === 'custom::__new__' ? '➕ קטגוריה חדשה...'
+                    : typeSelectVal?.startsWith('custom::') ? typeSelectVal.slice(8)
+                    : TYPE_LABELS[typeSelectVal] || 'בחר סוג'}
+                </span>
+                <span className="text-gray-400 text-xs">▼</span>
+              </div>
+              {showTypeDropdown && (
+                <div className="absolute z-50 bg-white border border-gray-200 rounded shadow-lg w-full mt-1 max-h-64 overflow-y-auto text-sm" dir="rtl">
+                  <div className="p-2 border-b border-gray-100">
+                    <input
+                      className="input w-full text-sm"
+                      placeholder="חיפוש סוג..."
+                      value={typeSearch}
+                      onChange={e => setTypeSearch(e.target.value)}
+                      onClick={e => e.stopPropagation()}
+                      autoFocus
+                    />
+                  </div>
+                  {(() => {
+                    const q = typeSearch.trim();
+                    const fixedOptions = Object.entries(TYPE_LABELS)
+                      .filter(([k]) => k !== 'custom' && !hiddenTypes.includes(k) && (!q || TYPE_LABELS[k].includes(q)));
+                    const customOptions = existingCustomLabels.filter(l => !q || l.includes(q));
+                    const showNew = !q || '➕ קטגוריה חדשה'.includes(q);
+                    return (
+                      <>
+                        {fixedOptions.length > 0 && (
+                          <>
+                            <div className="px-3 py-1 text-xs text-gray-400 bg-gray-50">סוגים קבועים</div>
+                            {fixedOptions.map(([k, v]) => (
+                              <div key={k} className={`px-3 py-2 cursor-pointer hover:bg-blue-50 ${typeSelectVal === k ? 'bg-blue-100' : ''}`}
+                                onMouseDown={() => { handleTypeSelectChange(k); setShowTypeDropdown(false); setTypeSearch(''); }}>
+                                {v}
+                              </div>
+                            ))}
+                          </>
+                        )}
+                        {customOptions.length > 0 && (
+                          <>
+                            <div className="px-3 py-1 text-xs text-gray-400 bg-gray-50">קטגוריות מותאמות</div>
+                            {customOptions.map(label => (
+                              <div key={label} className={`px-3 py-2 cursor-pointer hover:bg-blue-50 ${typeSelectVal === `custom::${label}` ? 'bg-blue-100' : ''}`}
+                                onMouseDown={() => { handleTypeSelectChange(`custom::${label}`); setShowTypeDropdown(false); setTypeSearch(''); }}>
+                                {label}
+                              </div>
+                            ))}
+                          </>
+                        )}
+                        {showNew && (
+                          <div className="px-3 py-2 cursor-pointer hover:bg-blue-50 text-blue-600"
+                            onMouseDown={() => { handleTypeSelectChange('custom::__new__'); setShowTypeDropdown(false); setTypeSearch(''); }}>
+                            ➕ קטגוריה חדשה...
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
+                </div>
+              )}
             </div>
             {newSup.type === 'custom' && newSup.isNewCustomLabel && (
               <>
