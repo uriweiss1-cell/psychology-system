@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { getSupervisions, createSupervision, updateSupervision, deleteSupervision, getAlerts, getEmployees } from '../api';
+import { getSupervisions, createSupervision, updateSupervision, deleteSupervision, getAlerts, getEmployees, getHiddenSupTypes, putHiddenSupTypes } from '../api';
 
 const TYPE_LABELS = {
   educational:    'הדרכה חינוכית פרטנית',
@@ -34,6 +34,12 @@ const TYPE_HOURS = {
   custom: 1.5,
 };
 
+const TYPE_IS_GROUP = {
+  educational: false, clinical: false, art_therapy: false,
+  psychotherapy: true, orientation: true, sup_of_sup: false,
+  diagnostics: false, therapist_group: true, exam_prep: false,
+};
+
 // Returns the display label for a supervision record
 function getLabel(s) {
   if (s.type === 'custom') return s.customLabel || 'קטגוריה חדשה';
@@ -46,11 +52,12 @@ function getColor(s) {
 
 export default function Supervisions() {
   const [supervisions, setSupervisions] = useState([]);
+  const [hiddenTypes, setHiddenTypes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState(null);
   const [editData, setEditData] = useState({});
   const [showAdd, setShowAdd] = useState(false);
-  const [newSup, setNewSup] = useState({ type: 'educational', customLabel: '', supervisorName: '', superviseeNames: '', hoursPerSession: 1, isExternal: false, notes: '' });
+  const [newSup, setNewSup] = useState({ type: 'educational', customLabel: '', isNewCustomLabel: false, isGroup: false, supervisorName: '', superviseeNames: '', hoursPerSession: 1, isExternal: false, notes: '' });
   const [addError, setAddError] = useState('');
   const [editError, setEditError] = useState('');
   const [noEdSupervision, setNoEdSupervision] = useState([]);
@@ -63,8 +70,9 @@ export default function Supervisions() {
   const searchRef = useRef(null);
 
   const load = async () => {
-    const [sups, alertsData, emps] = await Promise.all([getSupervisions(), getAlerts(), getEmployees(true)]);
+    const [sups, alertsData, emps, hidden] = await Promise.all([getSupervisions(), getAlerts(), getEmployees(true), getHiddenSupTypes()]);
     setSupervisions(sups);
+    setHiddenTypes(hidden || []);
     setNoEdSupervision(alertsData.noEdSupervision || []);
     setSupAlerts(alertsData.supAlerts || []);
     setEmployees(emps);
@@ -94,6 +102,24 @@ export default function Supervisions() {
     }
   };
 
+  const handleTypeSelectChange = (val) => {
+    if (val.startsWith('custom::')) {
+      const label = val.slice(8);
+      if (label === '__new__') {
+        setNewSup(p => ({ ...p, type: 'custom', customLabel: '', isNewCustomLabel: true, isGroup: true }));
+      } else {
+        const existing = supervisions.find(s => s.type === 'custom' && s.customLabel === label);
+        setNewSup(p => ({ ...p, type: 'custom', customLabel: label, isNewCustomLabel: false, isGroup: existing?.isGroup ?? true }));
+      }
+    } else {
+      setNewSup(p => ({ ...p, type: val, customLabel: '', isNewCustomLabel: false, isGroup: TYPE_IS_GROUP[val] ?? false }));
+    }
+  };
+
+  const typeSelectVal = newSup.type !== 'custom' ? newSup.type
+    : newSup.isNewCustomLabel ? 'custom::__new__'
+    : `custom::${newSup.customLabel}`;
+
   const handleAdd = async () => {
     setAddError('');
     if (!newSup.supervisorName.trim() && newSup.type !== 'exam_prep') return;
@@ -108,10 +134,27 @@ export default function Supervisions() {
         hoursPerSession: TYPE_HOURS[newSup.type] || 1.5,
       });
       setSupervisions(prev => [...prev, created]);
-      setNewSup({ type: 'educational', customLabel: '', supervisorName: '', superviseeNames: '', hoursPerSession: 1, isExternal: false, notes: '' });
+      setNewSup({ type: 'educational', customLabel: '', isNewCustomLabel: false, isGroup: false, supervisorName: '', superviseeNames: '', hoursPerSession: 1, isExternal: false, notes: '' });
       setShowAdd(false);
     } catch (e) {
       setAddError(e?.response?.data?.error || 'שגיאה בהוספה');
+    }
+  };
+
+  const handleDeleteCategory = async (typeKey, customLabel) => {
+    const label = typeKey === 'custom' ? customLabel : TYPE_LABELS[typeKey];
+    if (!confirm(`למחוק את הקטגוריה "${label}" וכל ההדרכות שתחתיה?`)) return;
+    const toDelete = supervisions.filter(s =>
+      typeKey === 'custom' ? (s.type === 'custom' && s.customLabel === customLabel) : s.type === typeKey
+    );
+    await Promise.all(toDelete.map(s => deleteSupervision(s.id)));
+    setSupervisions(prev => prev.filter(s =>
+      typeKey === 'custom' ? !(s.type === 'custom' && s.customLabel === customLabel) : s.type !== typeKey
+    ));
+    if (typeKey !== 'custom') {
+      const updated = [...hiddenTypes, typeKey];
+      setHiddenTypes(updated);
+      await putHiddenSupTypes(updated);
     }
   };
 
@@ -125,9 +168,11 @@ export default function Supervisions() {
 
   // Group: fixed types first, then custom groups by customLabel
   const standardGroups = Object.keys(TYPE_LABELS)
-    .filter(t => t !== 'custom')
+    .filter(t => t !== 'custom' && !hiddenTypes.includes(t))
     .map(type => ({
       key: type,
+      typeKey: type,
+      customLabel: null,
       label: TYPE_LABELS[type],
       color: TYPE_COLORS[type],
       items: supervisions.filter(s => s.type === type)
@@ -137,19 +182,28 @@ export default function Supervisions() {
 
   // Custom groups: group by customLabel
   const customSupervisions = supervisions.filter(s => s.type === 'custom');
-  const customLabels = [...new Set(customSupervisions.map(s => s.customLabel || 'קטגוריה חדשה'))];
-  const customGroups = customLabels.map(label => ({
+  const existingCustomLabels = [...new Set(customSupervisions.map(s => s.customLabel || '').filter(Boolean))];
+  const customGroups = existingCustomLabels.map(label => ({
     key: 'custom_' + label,
+    typeKey: 'custom',
+    customLabel: label,
     label,
     color: 'bg-gray-600',
-    items: customSupervisions.filter(s => (s.customLabel || 'קטגוריה חדשה') === label),
+    items: customSupervisions.filter(s => s.customLabel === label),
   }));
 
   const allGroups = [...standardGroups, ...customGroups];
 
-  const renderGroup = ({ key, label, color, items }) => (
+  const renderGroup = ({ key, label, color, items, typeKey, customLabel: cLabel }) => (
     <div key={key}>
-      <h2 className={`text-white text-sm font-semibold px-3 py-2 rounded-t ${color}`}>{label}</h2>
+      <div className={`flex items-center justify-between text-white text-sm font-semibold px-3 py-2 rounded-t ${color}`}>
+        <span>{label}</span>
+        <button
+          className="opacity-60 hover:opacity-100 text-xs px-1"
+          title="מחיקת קטגוריה"
+          onClick={() => handleDeleteCategory(typeKey, cLabel)}
+        >🗑️</button>
+      </div>
       <div className="bg-white border border-gray-200 rounded-b overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
@@ -346,15 +400,38 @@ export default function Supervisions() {
           <div className="grid grid-cols-2 gap-3 mb-3">
             <div>
               <label className="block text-xs text-gray-600 mb-1">סוג הדרכה</label>
-              <select className="input w-full" value={newSup.type} onChange={e => setNewSup(p => ({...p, type: e.target.value, customLabel: ''}))}>
-                {Object.entries(TYPE_LABELS).map(([k,v]) => <option key={k} value={k}>{v}</option>)}
+              <select className="input w-full" value={typeSelectVal} onChange={e => handleTypeSelectChange(e.target.value)}>
+                <optgroup label="סוגים קבועים">
+                  {Object.entries(TYPE_LABELS)
+                    .filter(([k]) => k !== 'custom' && !hiddenTypes.includes(k))
+                    .map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                </optgroup>
+                {existingCustomLabels.length > 0 && (
+                  <optgroup label="קטגוריות מותאמות">
+                    {existingCustomLabels.map(label => (
+                      <option key={label} value={`custom::${label}`}>{label}</option>
+                    ))}
+                  </optgroup>
+                )}
+                <option value="custom::__new__">➕ קטגוריה חדשה...</option>
               </select>
             </div>
-            {newSup.type === 'custom' && (
-              <div>
-                <label className="block text-xs text-gray-600 mb-1">שם הקטגוריה</label>
-                <input className="input w-full" value={newSup.customLabel} onChange={e => setNewSup(p => ({...p, customLabel: e.target.value}))} placeholder="שם הקבוצה / קטגוריה" />
-              </div>
+            {newSup.type === 'custom' && newSup.isNewCustomLabel && (
+              <>
+                <div>
+                  <label className="block text-xs text-gray-600 mb-1">שם הקטגוריה</label>
+                  <input className="input w-full" value={newSup.customLabel} onChange={e => setNewSup(p => ({...p, customLabel: e.target.value}))} placeholder="שם הקבוצה / קטגוריה" />
+                </div>
+                <div className="flex items-center gap-4 pt-5">
+                  <label className="text-sm text-gray-700 font-medium">סוג:</label>
+                  <label className="flex items-center gap-1 text-sm cursor-pointer">
+                    <input type="radio" name="isGroup" checked={!newSup.isGroup} onChange={() => setNewSup(p => ({...p, isGroup: false}))} /> פרטני
+                  </label>
+                  <label className="flex items-center gap-1 text-sm cursor-pointer">
+                    <input type="radio" name="isGroup" checked={newSup.isGroup} onChange={() => setNewSup(p => ({...p, isGroup: true}))} /> קבוצתי
+                  </label>
+                </div>
+              </>
             )}
             <div>
               <label className="block text-xs text-gray-600 mb-1">מדריך/ה</label>

@@ -33,4 +33,15 @@ router.put('/marks', (req, res) => {
   res.json(ids);
 });
 
+// Hidden supervision types — always live (not draft-specific)
+router.get('/hidden-sup-types', (req, res) => {
+  res.json(db.get('settings').get('hiddenSupTypes').value() || []);
+});
+
+router.put('/hidden-sup-types', (req, res) => {
+  const types = Array.isArray(req.body.types) ? req.body.types : [];
+  db.get('settings').assign({ hiddenSupTypes: types }).write();
+  res.json(types);
+});
+
 module.exports = router;

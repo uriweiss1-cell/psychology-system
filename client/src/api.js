@@ -32,6 +32,8 @@ export const getSettings         = () => api.get('/settings').then(r => r.data);
 export const updateSettings      = (data) => api.put('/settings', data).then(r => r.data);
 export const getStandardsMarked  = () => api.get('/settings/marks').then(r => r.data);
 export const putStandardsMarked  = (ids) => api.put('/settings/marks', { ids }).then(r => r.data);
+export const getHiddenSupTypes   = () => api.get('/settings/hidden-sup-types').then(r => r.data);
+export const putHiddenSupTypes   = (types) => api.put('/settings/hidden-sup-types', { types }).then(r => r.data);
 
 export const getDraftStatus      = () => api.get('/draft/status').then(r => r.data);
 export const activateDraft       = () => api.post('/draft/activate').then(r => r.data);

@@ -40,6 +40,7 @@ router.post('/', (req, res) => {
     superviseeNames,
     hoursPerSession: req.body.hoursPerSession || 1,
     isExternal:      req.body.isExternal      || false,
+    isGroup:         req.body.isGroup         !== undefined ? req.body.isGroup : false,
     notes:           req.body.notes           || '',
   };
   db.get(col).push(s).write();
@@ -65,7 +66,7 @@ router.put('/:id', (req, res) => {
     }
   }
 
-  const allowed = ['type','customLabel','supervisorName','superviseeNames','hoursPerSession','isExternal','notes'];
+  const allowed = ['type','customLabel','supervisorName','superviseeNames','hoursPerSession','isExternal','isGroup','notes'];
   const update  = {};
   allowed.forEach(k => { if (req.body[k] !== undefined) update[k] = req.body[k]; });
   db.get(col).find({ id }).assign(update).write();
