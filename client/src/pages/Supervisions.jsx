@@ -207,18 +207,35 @@ export default function Supervisions() {
     items: customSupervisions.filter(s => s.customLabel === label),
   }));
 
-  const getGroupIsGroup = (g) => {
-    if (g.typeKey !== 'custom') return TYPE_IS_GROUP[g.typeKey] ?? false;
-    return g.items[0]?.isGroup ?? false;
+  const getGroupIsGroup = (g) => g.items[0]?.isGroup ?? (TYPE_IS_GROUP[g.typeKey] ?? false);
+
+  const handleToggleGroupType = async (g) => {
+    const newIsGroup = !getGroupIsGroup(g);
+    await Promise.all(g.items.map(s => updateSupervision(s.id, { isGroup: newIsGroup })));
+    setSupervisions(prev => prev.map(s =>
+      g.items.some(gi => gi.id === s.id) ? { ...s, isGroup: newIsGroup } : s
+    ));
   };
   const allGroups = [...standardGroups, ...customGroups]
     .sort((a, b) => (getGroupIsGroup(a) ? 1 : 0) - (getGroupIsGroup(b) ? 1 : 0))
     .filter(g => !typeFilter.trim() || g.label.includes(typeFilter.trim()));
 
-  const renderGroup = ({ key, label, color, items, typeKey, customLabel: cLabel }) => (
+  const renderGroup = (g) => {
+    const { key, label, color, items, typeKey, customLabel: cLabel } = g;
+    const isGroupVal = getGroupIsGroup(g);
+    return (
     <div key={key}>
       <div className={`flex items-center justify-between text-white text-sm font-semibold px-3 py-2 rounded-t ${color}`}>
-        <span>{label}</span>
+        <div className="flex items-center gap-2">
+          <span>{label}</span>
+          <button
+            className={`text-xs px-2 py-0.5 rounded-full border border-white/40 opacity-80 hover:opacity-100 ${isGroupVal ? 'bg-purple-800/60' : 'bg-teal-800/60'}`}
+            title="לחץ לשינוי פרטני/קבוצתי"
+            onClick={() => handleToggleGroupType(g)}
+          >
+            {isGroupVal ? 'קבוצתי' : 'פרטני'}
+          </button>
+        </div>
         <button
           className="opacity-60 hover:opacity-100 text-xs px-1"
           title="מחיקת קטגוריה"
@@ -229,10 +246,9 @@ export default function Supervisions() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
             <tr>
-              <th className="table-header w-28">מדריך/ה</th>
-              <th className="table-header w-24 text-center">פרטני/קבוצתי</th>
+              <th className="table-header w-36">מדריך/ה</th>
               <th className="table-header">מודרכים</th>
-              <th className="table-header w-40">הערות</th>
+              <th className="table-header w-48">הערות</th>
               <th className="table-header text-center w-20">פעולות</th>
             </tr>
           </thead>
@@ -241,12 +257,6 @@ export default function Supervisions() {
               <tr key={s.id} className="bg-yellow-50">
                 <td className="table-cell">
                   <input className="input w-full text-sm" value={editData.supervisorName} onChange={e => setEditData(p => ({...p, supervisorName: e.target.value}))} />
-                </td>
-                <td className="table-cell text-center">
-                  <select className="input text-xs w-full" value={editData.isGroup ? 'group' : 'individual'} onChange={e => setEditData(p => ({...p, isGroup: e.target.value === 'group'}))}>
-                    <option value="individual">פרטני</option>
-                    <option value="group">קבוצתי</option>
-                  </select>
                 </td>
                 <td className="table-cell">
                   <textarea className="input w-full text-sm h-20" value={editData.superviseeNamesText} onChange={e => setEditData(p => ({...p, superviseeNamesText: e.target.value}))} />
@@ -270,11 +280,6 @@ export default function Supervisions() {
                     : <span className="text-gray-400">—</span>
                   }
                 </td>
-                <td className="table-cell text-center">
-                  <span className={`badge text-xs ${s.isGroup ? 'bg-purple-100 text-purple-700' : 'bg-teal-100 text-teal-700'}`}>
-                    {s.isGroup ? 'קבוצתי' : 'פרטני'}
-                  </span>
-                </td>
                 <td className="table-cell">
                   {(s.superviseeNames || []).length === 0
                     ? <span className="text-gray-400 italic">—</span>
@@ -296,7 +301,8 @@ export default function Supervisions() {
         </table>
       </div>
     </div>
-  );
+    );
+  };
 
   const totalAlerts = noEdSupervision.length + supAlerts.length;
 
