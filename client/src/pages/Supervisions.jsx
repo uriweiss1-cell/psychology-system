@@ -61,6 +61,7 @@ export default function Supervisions() {
   const [typeSearch, setTypeSearch] = useState('');
   const [showTypeDropdown, setShowTypeDropdown] = useState(false);
   const typeDropdownRef = useRef(null);
+  const [typeFilter, setTypeFilter] = useState('');
   const [addError, setAddError] = useState('');
   const [editError, setEditError] = useState('');
   const [noEdSupervision, setNoEdSupervision] = useState([]);
@@ -98,7 +99,7 @@ export default function Supervisions() {
   const startEdit = (s) => {
     setEditingId(s.id);
     setEditError('');
-    setEditData({ ...s, superviseeNamesText: (s.superviseeNames || []).join('\n') });
+    setEditData({ ...s, superviseeNamesText: (s.superviseeNames || []).join('\n'), isGroup: s.isGroup ?? false });
   };
 
   const saveEdit = async () => {
@@ -211,7 +212,8 @@ export default function Supervisions() {
     return g.items[0]?.isGroup ?? false;
   };
   const allGroups = [...standardGroups, ...customGroups]
-    .sort((a, b) => (getGroupIsGroup(a) ? 1 : 0) - (getGroupIsGroup(b) ? 1 : 0));
+    .sort((a, b) => (getGroupIsGroup(a) ? 1 : 0) - (getGroupIsGroup(b) ? 1 : 0))
+    .filter(g => !typeFilter.trim() || g.label.includes(typeFilter.trim()));
 
   const renderGroup = ({ key, label, color, items, typeKey, customLabel: cLabel }) => (
     <div key={key}>
@@ -227,9 +229,10 @@ export default function Supervisions() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
             <tr>
-              <th className="table-header w-36">מדריך/ה</th>
+              <th className="table-header w-28">מדריך/ה</th>
+              <th className="table-header w-24 text-center">פרטני/קבוצתי</th>
               <th className="table-header">מודרכים</th>
-              <th className="table-header w-48">הערות</th>
+              <th className="table-header w-40">הערות</th>
               <th className="table-header text-center w-20">פעולות</th>
             </tr>
           </thead>
@@ -238,6 +241,12 @@ export default function Supervisions() {
               <tr key={s.id} className="bg-yellow-50">
                 <td className="table-cell">
                   <input className="input w-full text-sm" value={editData.supervisorName} onChange={e => setEditData(p => ({...p, supervisorName: e.target.value}))} />
+                </td>
+                <td className="table-cell text-center">
+                  <select className="input text-xs w-full" value={editData.isGroup ? 'group' : 'individual'} onChange={e => setEditData(p => ({...p, isGroup: e.target.value === 'group'}))}>
+                    <option value="individual">פרטני</option>
+                    <option value="group">קבוצתי</option>
+                  </select>
                 </td>
                 <td className="table-cell">
                   <textarea className="input w-full text-sm h-20" value={editData.superviseeNamesText} onChange={e => setEditData(p => ({...p, superviseeNamesText: e.target.value}))} />
@@ -260,6 +269,11 @@ export default function Supervisions() {
                       : s.supervisorName
                     : <span className="text-gray-400">—</span>
                   }
+                </td>
+                <td className="table-cell text-center">
+                  <span className={`badge text-xs ${s.isGroup ? 'bg-purple-100 text-purple-700' : 'bg-teal-100 text-teal-700'}`}>
+                    {s.isGroup ? 'קבוצתי' : 'פרטני'}
+                  </span>
                 </td>
                 <td className="table-cell">
                   {(s.superviseeNames || []).length === 0
@@ -291,6 +305,12 @@ export default function Supervisions() {
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-xl font-bold text-gray-800">הדרכות</h1>
         <div className="flex gap-2 items-center">
+          <input
+            className="input"
+            placeholder="חיפוש סוג הדרכה..."
+            value={typeFilter}
+            onChange={e => setTypeFilter(e.target.value)}
+          />
           <div className="relative" ref={searchRef}>
             <input
               className="input"
