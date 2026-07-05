@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import * as XLSX from 'xlsx';
 import AlertsBanner from '../components/AlertsBanner';
-import { getAssignmentSummary, getEmployees, getAssignments, updateAssignment, getFrameworks, updateFramework, getSpecEdClasses, createSpecEdClass, updateSpecEdClass, deleteSpecEdClass, advanceSpecEdYear, getAlerts } from '../api';
+import { getAssignmentSummary, getEmployees, getAssignments, updateAssignment, getFrameworks, updateFramework, getSpecEdClasses, createSpecEdClass, updateSpecEdClass, deleteSpecEdClass, advanceSpecEdYear, getAlerts, createFramework } from '../api';
 import axios from 'axios';
 
 // כיתות שמחושבות כ-2 שעות שבועיות: א (כיתה א'), ז (מעבר לחטב"ע), י (מעבר לתיכון)
@@ -64,6 +64,8 @@ export default function Schools() {
   const [alertsOpen, setAlertsOpen] = useState(true);
   const [overOpen, setOverOpen] = useState(true);
   const [editingTarget, setEditingTarget] = useState(null); // { id, value }
+  const [showAddSchool, setShowAddSchool] = useState(false);
+  const [newSchool, setNewSchool] = useState({ name: '', subType: 'יסודי', sector: 'ממלכתי' });
 
   const load = async () => {
     const [sum, emps, asgns, spec, alertsData] = await Promise.all([
@@ -78,6 +80,20 @@ export default function Schools() {
   };
 
   useEffect(() => { load(); }, []);
+
+  const handleAddSchool = async () => {
+    if (!newSchool.name.trim()) return;
+    const isSpecEd = newSchool.subType === 'חינוך מיוחד';
+    await createFramework({
+      name: newSchool.name.trim(),
+      type: isSpecEd ? 'special_ed' : 'school',
+      subType: isSpecEd ? '' : newSchool.subType,
+      sector: isSpecEd ? 'חינוך מיוחד' : newSchool.sector,
+    });
+    setNewSchool({ name: '', subType: 'יסודי', sector: 'ממלכתי' });
+    setShowAddSchool(false);
+    load();
+  };
 
   const saveAssignment = async () => {
     if (!editingAsgn) return;
@@ -242,6 +258,7 @@ export default function Schools() {
             <option value="special_ed">חינוך מיוחד</option>
           </select>
           <input className="input" placeholder="חיפוש..." value={filter} onChange={e => setFilter(e.target.value)} />
+          <button className="btn-primary" onClick={() => setShowAddSchool(o => !o)}>+ בית ספר</button>
           <button className="btn-secondary" onClick={exportXlsx}>📊 ייצוא xlsx</button>
           <button
             className="btn-secondary text-xs py-1 border-amber-400 text-amber-700 hover:bg-amber-50"
@@ -255,6 +272,39 @@ export default function Schools() {
           </button>
         </div>
       </div>
+
+      {showAddSchool && (
+        <div className="bg-blue-50 border border-blue-200 rounded p-4 mb-4 flex gap-3 items-end flex-wrap">
+          <div>
+            <label className="block text-xs text-gray-600 mb-1">שם בית הספר</label>
+            <input className="input" value={newSchool.name} onChange={e => setNewSchool(p => ({...p, name: e.target.value}))} placeholder="שם..." autoFocus />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-600 mb-1">סוג</label>
+            <select className="input" value={newSchool.subType} onChange={e => setNewSchool(p => ({...p, subType: e.target.value}))}>
+              <option value="יסודי">יסודי</option>
+              <option value="חטיבה">חטיבת ביניים</option>
+              <option value="תיכון">תיכון</option>
+              <option value="חינוך מיוחד">חינוך מיוחד</option>
+            </select>
+          </div>
+          {newSchool.subType !== 'חינוך מיוחד' && (
+            <div>
+              <label className="block text-xs text-gray-600 mb-1">מגזר</label>
+              <select className="input" value={newSchool.sector} onChange={e => setNewSchool(p => ({...p, sector: e.target.value}))}>
+                <option value="ממלכתי">ממלכתי</option>
+                <option value='ממ"ד'>ממ"ד</option>
+                <option value='חמ"ד'>חמ"ד</option>
+                <option value="חרדי">חרדי</option>
+              </select>
+            </div>
+          )}
+          <div className="flex gap-2">
+            <button className="btn-primary" onClick={handleAddSchool}>הוסף</button>
+            <button className="btn-secondary" onClick={() => setShowAddSchool(false)}>ביטול</button>
+          </div>
+        </div>
+      )}
 
       {overCoverage.length > 0 && (
         <div className="mb-4 border border-orange-200 rounded overflow-hidden">
