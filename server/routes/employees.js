@@ -18,10 +18,19 @@ function removeFromTeamsAndSupervisions(db, activeCol, displayName) {
     }
   });
 
+  const empCol = activeCol('employees');
+  const allEmpNames = new Set(db.get(empCol).value().map(e => e.displayName));
+
   const supervisions = db.get(supCol).value();
   supervisions.forEach(sup => {
     if (sup.supervisorName === displayName) {
-      db.get(supCol).find({ id: sup.id }).assign({ supervisorName: '' }).write();
+      // Keep only external supervisees (not in employee list)
+      const externalOnly = (sup.superviseeNames || []).filter(n => !allEmpNames.has(n));
+      if (externalOnly.length > 0) {
+        db.get(supCol).find({ id: sup.id }).assign({ supervisorName: '', superviseeNames: externalOnly }).write();
+      } else {
+        db.get(supCol).remove({ id: sup.id }).write();
+      }
       return;
     }
     const filtered = (sup.superviseeNames || []).filter(n => n !== displayName);
