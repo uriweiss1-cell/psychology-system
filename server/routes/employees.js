@@ -21,7 +21,7 @@ function removeFromTeamsAndSupervisions(db, activeCol, displayName) {
   const supervisions = db.get(supCol).value();
   supervisions.forEach(sup => {
     if (sup.supervisorName === displayName) {
-      db.get(supCol).remove({ id: sup.id }).write();
+      db.get(supCol).find({ id: sup.id }).assign({ supervisorName: '' }).write();
       return;
     }
     const filtered = (sup.superviseeNames || []).filter(n => n !== displayName);
