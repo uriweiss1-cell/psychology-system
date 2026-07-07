@@ -36,7 +36,7 @@ export default function Standards() {
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [isDraft]);
 
   const setFieldEdit = (id, field, value) =>
     setEditing(prev => ({ ...prev, [`${id}_${field}`]: value }));
