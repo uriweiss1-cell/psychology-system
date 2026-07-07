@@ -10,7 +10,9 @@ function copyToDraft() {
     db.set(`draft_${col}`, JSON.parse(JSON.stringify(db.get(col).value()))).write();
   });
   DRAFT_OBJECTS.forEach(col => {
-    db.set(`draft_${col}`, JSON.parse(JSON.stringify(db.get(col).value()))).write();
+    const copy = JSON.parse(JSON.stringify(db.get(col).value()));
+    copy.standardsMarked = [];
+    db.set(`draft_${col}`, copy).write();
   });
 }
 
@@ -19,7 +21,12 @@ function copyFromDraft() {
     db.set(col, JSON.parse(JSON.stringify(db.get(`draft_${col}`).value()))).write();
   });
   DRAFT_OBJECTS.forEach(col => {
+    const liveMarked = db.get(col).get('standardsMarked').value();
     db.set(col, JSON.parse(JSON.stringify(db.get(`draft_${col}`).value()))).write();
+    // standardsMarked is mode-specific — restore live value after overwrite
+    if (liveMarked !== undefined) {
+      db.get(col).assign({ standardsMarked: liveMarked }).write();
+    }
   });
 }
 
