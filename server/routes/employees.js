@@ -91,7 +91,7 @@ router.put('/:id', (req, res) => {
   db.get(col).find({ id }).assign(update).write();
 
   // שדות אדמיניסטרטיביים — תמיד מסונכרנים בין מצב רגיל לטיוטה
-  const adminFields = ['phone', 'notes'];
+  const adminFields = ['phone'];
   const adminUpdate = {};
   adminFields.forEach(k => { if (update[k] !== undefined) adminUpdate[k] = update[k]; });
   if (Object.keys(adminUpdate).length) {
