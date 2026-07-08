@@ -111,12 +111,9 @@ export default function EmployeeCard({ empId, onClose }) {
             {/* Kindergarten assignments */}
             {kinderRows.length > 0 && (
               <Section title={`שיבוצי גנים (${kinderRows.length})`}>
-                <div className="space-y-1">
+                <div className="flex flex-wrap gap-1">
                   {kinderRows.map(k => (
-                    <div key={k.id} className="flex items-center justify-between text-sm bg-green-50 rounded px-3 py-1.5">
-                      <span className="font-medium text-gray-800">{k.gardenName || '—'}</span>
-                      <span className="text-gray-500 text-xs">{k.ageGroup || ''} {k.address ? `· ${k.address}` : ''}</span>
-                    </div>
+                    <span key={k.id} className="badge bg-green-100 text-green-800">{k.gardenName || '—'}</span>
                   ))}
                 </div>
               </Section>

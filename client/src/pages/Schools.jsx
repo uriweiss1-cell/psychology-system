@@ -336,7 +336,7 @@ export default function Schools() {
             saveAssignment={saveAssignment} deleteAssignment={deleteAssignment} addAssignment={addAssignment}
             saveSpec={saveSpec} addSpec={addSpec} deleteSpec={deleteSpec}
             setSummary={setSummary} editingTarget={editingTarget} setEditingTarget={setEditingTarget}
-            saveTargetHours={saveTargetHours} rowBg="bg-red-50/40" />
+            saveTargetHours={saveTargetHours} rowBg="bg-red-50/40" openCardById={openCardById} />
         </div>
       )}
 
@@ -351,7 +351,7 @@ export default function Schools() {
             saveAssignment={saveAssignment} deleteAssignment={deleteAssignment} addAssignment={addAssignment}
             saveSpec={saveSpec} addSpec={addSpec} deleteSpec={deleteSpec}
             setSummary={setSummary} editingTarget={editingTarget} setEditingTarget={setEditingTarget}
-            saveTargetHours={saveTargetHours} rowBg="bg-amber-50" />
+            saveTargetHours={saveTargetHours} rowBg="bg-amber-50" openCardById={openCardById} />
         </div>
       )}
 
@@ -366,7 +366,7 @@ export default function Schools() {
             saveAssignment={saveAssignment} deleteAssignment={deleteAssignment} addAssignment={addAssignment}
             saveSpec={saveSpec} addSpec={addSpec} deleteSpec={deleteSpec}
             setSummary={setSummary} editingTarget={editingTarget} setEditingTarget={setEditingTarget}
-            saveTargetHours={saveTargetHours} />
+            saveTargetHours={saveTargetHours} openCardById={openCardById} />
         </div>
       ))}
     </div>
@@ -375,7 +375,7 @@ export default function Schools() {
 
 function SchoolTable({ items, assignments, employees, specEdClasses, editingAsgn, setEditingAsgn,
   editingSpec, setEditingSpec, saveAssignment, deleteAssignment, addAssignment, setSummary,
-  saveSpec, addSpec, deleteSpec, editingTarget, setEditingTarget, saveTargetHours, rowBg = '' }) {
+  saveSpec, addSpec, deleteSpec, editingTarget, setEditingTarget, saveTargetHours, rowBg = '', openCardById }) {
   return (
     <div className="bg-white rounded shadow overflow-x-auto">
       <table className="w-full text-sm min-w-[900px]">
