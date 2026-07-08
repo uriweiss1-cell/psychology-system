@@ -51,7 +51,7 @@ function sectorSort(a, b) {
 }
 
 export default function Schools() {
-  const { openCardByName } = useContext(EmployeeCardContext);
+  const { openCardById } = useContext(EmployeeCardContext);
   const [summary, setSummary]         = useState([]);
   const [employees, setEmployees]     = useState([]);
   const [assignments, setAssignments] = useState([]);
@@ -533,7 +533,7 @@ function SchoolTable({ items, assignments, employees, specEdClasses, editingAsgn
                             {employees.find(e => e.id === a.employeeId)?.displayName || '?'}
                             {' '}({(a.hours||0)+(a.specEdHours||0)} ש׳)
                           </span>
-                          <span className="text-blue-300 hover:text-blue-600" title="כרטיס עובד" onClick={() => { const emp = employees.find(e => e.id === a.employeeId); if (emp) openCardByName(emp.displayName); }}>👤</span>
+                          <span className="text-blue-300 hover:text-blue-600" title="כרטיס עובד" onClick={() => openCardById(a.employeeId)}>👤</span>
                           <span className="text-blue-400 hover:text-blue-600" onClick={() => setEditingAsgn({ ...a })}>✏️</span>
                           <span className="text-blue-300 hover:text-red-500" onClick={() => deleteAssignment(a.id)}>✕</span>
                         </span>

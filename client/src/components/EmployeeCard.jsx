@@ -1,13 +1,32 @@
 import { useEffect, useState } from 'react';
-import { getEmployees, getAssignments, getFrameworks, getTeams, getSupervisions } from '../api';
+import { getEmployees, getAssignments, getFrameworks, getTeams, getSupervisions, getKinder } from '../api';
 
 const STATUS_LABELS = { active: 'פעיל', maternity: 'חל"ד', inactive: 'לא פעיל' };
 const STATUS_COLORS = { active: 'bg-green-100 text-green-800', inactive: 'bg-red-100 text-red-700', maternity: 'bg-blue-100 text-blue-700' };
+
+const SUP_TYPE_LABELS = {
+  educational:    'הדרכה חינוכית פרטנית',
+  clinical:       'הדרכה קלינית פרטנית',
+  art_therapy:    'הדרכת מטפלות באומנות',
+  psychotherapy:  'קבוצות פסיכותרפיה',
+  orientation:    'קבוצת אוריינטציה',
+  sup_of_sup:     'הדרכה על הדרכה',
+  diagnostics:    'דיאגנוסטיקה',
+  therapist_group:'קבוצות מטפלות',
+  exam_prep:      'הכנה לבחינה',
+  custom:         'קטגוריה חדשה',
+};
+
+function supLabel(s) {
+  if (s.type === 'custom') return s.customLabel || 'קטגוריה חדשה';
+  return SUP_TYPE_LABELS[s.type] || s.type;
+}
 
 export default function EmployeeCard({ empId, onClose }) {
   const [loading, setLoading] = useState(true);
   const [emp, setEmp] = useState(null);
   const [assignments, setAssignments] = useState([]);
+  const [kinderRows, setKinderRows] = useState([]);
   const [teams, setTeams] = useState([]);
   const [supReceived, setSupReceived] = useState([]);
   const [supGiven, setSupGiven] = useState([]);
@@ -15,18 +34,20 @@ export default function EmployeeCard({ empId, onClose }) {
   useEffect(() => {
     if (!empId) return;
     setLoading(true);
-    Promise.all([getEmployees(), getAssignments(), getFrameworks(), getTeams(), getSupervisions()])
-      .then(([emps, asgns, fws, allTeams, sups]) => {
+    Promise.all([getEmployees(), getAssignments(), getFrameworks(), getTeams(), getSupervisions(), getKinder()])
+      .then(([emps, asgns, fws, allTeams, sups, kinder]) => {
         const e = emps.find(x => x.id === empId);
         if (!e) { setLoading(false); return; }
         setEmp(e);
 
         const fwMap = Object.fromEntries(fws.map(f => [f.id, f]));
         const empAsgns = asgns
-          .filter(a => a.employeeId === empId && a.frameworkId !== 0)
+          .filter(a => +a.employeeId === empId && a.frameworkId !== 0)
           .map(a => ({ ...a, framework: fwMap[a.frameworkId] }))
           .filter(a => a.framework);
         setAssignments(empAsgns);
+
+        setKinderRows(kinder.filter(k => +k.employeeId === empId));
 
         setTeams(allTeams.filter(t =>
           t.headDisplayName === e.displayName ||
@@ -68,8 +89,8 @@ export default function EmployeeCard({ empId, onClose }) {
               {emp.notes && <p className="text-sm text-gray-500 mt-2 border-t pt-2">{emp.notes}</p>}
             </Section>
 
-            {/* Assignments */}
-            <Section title={`שיבוצי מסגרות (${assignments.length})`}>
+            {/* School assignments */}
+            <Section title={`שיבוצי בתי ספר (${assignments.length})`}>
               {assignments.length === 0
                 ? <p className="text-sm text-gray-400">אין שיבוצים</p>
                 : <div className="space-y-1">
@@ -86,6 +107,20 @@ export default function EmployeeCard({ empId, onClose }) {
                   </div>
               }
             </Section>
+
+            {/* Kindergarten assignments */}
+            {kinderRows.length > 0 && (
+              <Section title={`שיבוצי גנים (${kinderRows.length})`}>
+                <div className="space-y-1">
+                  {kinderRows.map(k => (
+                    <div key={k.id} className="flex items-center justify-between text-sm bg-green-50 rounded px-3 py-1.5">
+                      <span className="font-medium text-gray-800">{k.gardenName || '—'}</span>
+                      <span className="text-gray-500 text-xs">{k.ageGroup || ''} {k.address ? `· ${k.address}` : ''}</span>
+                    </div>
+                  ))}
+                </div>
+              </Section>
+            )}
 
             {/* Teams */}
             <Section title={`צוותים (${teams.length})`}>
@@ -114,7 +149,7 @@ export default function EmployeeCard({ empId, onClose }) {
                 : <div className="space-y-1">
                     {supReceived.map(s => (
                       <div key={s.id} className="text-sm bg-blue-50 rounded px-3 py-1.5">
-                        <span className="font-medium text-blue-800">{s.customLabel || s.type}</span>
+                        <span className="font-medium text-blue-800">{supLabel(s)}</span>
                         {s.supervisorName && <span className="text-blue-600 mr-2"> — מדריך: {s.supervisorName}</span>}
                         {s.hoursPerSession > 0 && <span className="text-blue-500 text-xs mr-1">({s.hoursPerSession} ש"ש)</span>}
                       </div>
@@ -130,7 +165,7 @@ export default function EmployeeCard({ empId, onClose }) {
                 : <div className="space-y-1">
                     {supGiven.map(s => (
                       <div key={s.id} className="text-sm bg-green-50 rounded px-3 py-1.5">
-                        <span className="font-medium text-green-800">{s.customLabel || s.type}</span>
+                        <span className="font-medium text-green-800">{supLabel(s)}</span>
                         {(s.superviseeNames || []).length > 0 && (
                           <span className="text-green-600 mr-2"> — מודרכים: {s.superviseeNames.join(', ')}</span>
                         )}

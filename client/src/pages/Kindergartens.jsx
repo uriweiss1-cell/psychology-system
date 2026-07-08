@@ -4,7 +4,6 @@ import { getKinder, getEmployees, createKinder, updateKinder, deleteKinder, prev
 import ImportModal from '../components/ImportModal';
 import AlertsBanner from '../components/AlertsBanner';
 import { DraftContext, EmployeeCardContext } from '../App';
-import ClickableName from '../components/ClickableName';
 
 const COLS = [
   { key: 'gardenName',   label: 'שם הגן',    width: 'min-w-[120px]' },
@@ -26,6 +25,7 @@ export default function Kindergartens() {
   const [showImport, setShowImport] = useState(false);
   const [newRow, setNewRow] = useState({ employeeId: '', gardenName: '', ageGroup: 'חובה', address: '', phone: '', teacher: '', teacherPhone: '', email: '' });
   const { isDraft } = useContext(DraftContext);
+  const { openCardById } = useContext(EmployeeCardContext);
   const [freeHoursAlerts, setFreeHoursAlerts] = useState([]);
   const [alertsOpen, setAlertsOpen] = useState(true);
 
@@ -184,7 +184,7 @@ export default function Kindergartens() {
       {Object.values(grouped).map(({ emp, rows }) => (
         <div key={emp.id} className="mb-5">
           <h2 className="text-base font-bold text-blue-800 bg-blue-50 px-3 py-2 rounded-t border border-blue-200">
-            <ClickableName name={emp.displayName} />
+            <button type="button" className="hover:underline hover:text-blue-600 transition-colors" onClick={() => openCardById(emp.id)}>{emp.displayName}</button>
             <span className="text-sm font-normal text-blue-600 mr-2">({rows.length} גנים)</span>
           </h2>
           <KinderTable rows={rows} employees={employees} editRow={editRow} setEditRow={setEditRow} saveEdit={saveEdit} removeRow={removeRow} />

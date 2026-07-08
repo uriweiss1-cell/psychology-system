@@ -10,7 +10,7 @@ import EmployeeCard from './components/EmployeeCard';
 import { getDraftStatus, activateDraft, pauseDraft, resumeDraft, approveDraft, discardDraft, getEmployees } from './api';
 
 export const DraftContext = createContext({ isDraft: false });
-export const EmployeeCardContext = createContext({ openCardByName: () => {} });
+export const EmployeeCardContext = createContext({ openCardByName: () => {}, openCardById: () => {} });
 
 const NAV = [
   { to: '/standards',     label: 'תקנים',           desktopOnly: true },
@@ -44,6 +44,10 @@ export default function App() {
   const openCardByName = (name) => {
     const id = empNameMap[name];
     if (id) setCardEmpId(id);
+  };
+
+  const openCardById = (id) => {
+    if (id) setCardEmpId(+id);
   };
 
   const handleActivate = async () => {
@@ -93,7 +97,7 @@ export default function App() {
   const navBg = isDraft ? 'bg-amber-700' : hasSaved ? 'bg-slate-600' : 'bg-blue-800';
 
   return (
-    <EmployeeCardContext.Provider value={{ openCardByName }}>
+    <EmployeeCardContext.Provider value={{ openCardByName, openCardById }}>
     <DraftContext.Provider value={{ isDraft }}>
       <div className="min-h-screen bg-gray-50 flex flex-col">
         <nav className={`text-white shadow-md ${navBg}`}>
