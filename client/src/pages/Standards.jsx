@@ -1,4 +1,5 @@
 import { useEffect, useState, useContext } from 'react';
+import * as XLSX from 'xlsx';
 import { getEmployees, updateEmployee, createEmployee, deleteEmployee, getSettings, updateSettings, getStandardsMarked, putStandardsMarked } from '../api';
 import ImportModal from '../components/ImportModal';
 import { DraftContext } from '../App';
@@ -107,6 +108,25 @@ export default function Standards() {
     .sort((a, b) => (a.displayName || '').localeCompare(b.displayName || '', 'he')
   );
 
+  const STATUS_LABELS = { active: 'פעיל', maternity: 'חל"ד', inactive: 'לא פעיל' };
+
+  const exportXlsx = () => {
+    const rows = filtered.map(emp => ({
+      'שם פרטי':    emp.firstName || '',
+      'שם משפחה':   emp.lastName || '',
+      'שם מלא':     emp.displayName || '',
+      'אחוז משרה':  emp.ftePercent,
+      'סטטוס':      STATUS_LABELS[emp.status || 'active'] || emp.status,
+      'מ"מ':        emp.isSubstitute ? 'כן' : '',
+      'טלפון':      emp.phone || '',
+      'הערות':      emp.notes || '',
+    }));
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'תקנים');
+    XLSX.writeFile(wb, `תקנים${isDraft ? '_טיוטה' : ''}.xlsx`);
+  };
+
   // חישובי לוח סיכום
   const active       = employees.filter(e => (e.status === 'active' || !e.status) && !e.isSubstitute);
   const maternity    = employees.filter(e => e.status === 'maternity');
@@ -195,6 +215,7 @@ export default function Standards() {
         <div className="flex gap-2">
           <input className="input" placeholder="חיפוש..." value={filter} onChange={e => setFilter(e.target.value)} />
           {isDraft && <button className="btn-secondary" onClick={() => setShowImport(true)}>📥 ייבוא מקובץ</button>}
+          <button className="btn-secondary" onClick={exportXlsx}>📊 ייצוא xlsx</button>
           <button className="btn-primary" onClick={() => setShowAdd(true)}>+ עובד חדש</button>
         </div>
       </div>
