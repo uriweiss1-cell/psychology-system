@@ -1,7 +1,8 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useContext } from 'react';
 import { getEmployees, updateEmployee, getAssignments, updateAssignment, getFrameworks, deleteEmployee } from '../api';
 import axios from 'axios';
 import AlertsBanner from '../components/AlertsBanner';
+import { EmployeeCardContext } from '../App';
 
 const HOURS_FIELDS = [
   { key: 'meetingHours',       label: 'ישיבות' },
@@ -52,6 +53,7 @@ function EditableCell({ value, onSave, type = 'number' }) {
 }
 
 export default function WorkPlan() {
+  const { openCardByName } = useContext(EmployeeCardContext);
   const [employees, setEmployees] = useState([]);
   const [assignments, setAssignments] = useState([]);
   const [frameworks, setFrameworks] = useState([]);
@@ -157,7 +159,7 @@ export default function WorkPlan() {
               return (
                 <tr key={emp.id} className={`hover:bg-gray-50 ${rowBg}`}>
                   <td className="table-cell sticky right-0 bg-white font-medium">
-                    {emp.displayName}
+                    <button type="button" className="hover:underline hover:text-blue-700 transition-colors" onClick={() => openCardByName(emp.displayName)}>{emp.displayName}</button>
                   </td>
                   <td className="table-cell text-center font-semibold">{emp.fteHours}</td>
                   {HOURS_FIELDS.map(f => (

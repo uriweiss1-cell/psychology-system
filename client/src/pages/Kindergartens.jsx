@@ -3,7 +3,8 @@ import * as XLSX from 'xlsx';
 import { getKinder, getEmployees, createKinder, updateKinder, deleteKinder, previewImport, applyImport, getAlerts } from '../api';
 import ImportModal from '../components/ImportModal';
 import AlertsBanner from '../components/AlertsBanner';
-import { DraftContext } from '../App';
+import { DraftContext, EmployeeCardContext } from '../App';
+import ClickableName from '../components/ClickableName';
 
 const COLS = [
   { key: 'gardenName',   label: 'שם הגן',    width: 'min-w-[120px]' },
@@ -183,7 +184,7 @@ export default function Kindergartens() {
       {Object.values(grouped).map(({ emp, rows }) => (
         <div key={emp.id} className="mb-5">
           <h2 className="text-base font-bold text-blue-800 bg-blue-50 px-3 py-2 rounded-t border border-blue-200">
-            {emp.displayName}
+            <ClickableName name={emp.displayName} />
             <span className="text-sm font-normal text-blue-600 mr-2">({rows.length} גנים)</span>
           </h2>
           <KinderTable rows={rows} employees={employees} editRow={editRow} setEditRow={setEditRow} saveEdit={saveEdit} removeRow={removeRow} />

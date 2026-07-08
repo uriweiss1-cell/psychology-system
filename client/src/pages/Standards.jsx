@@ -2,12 +2,13 @@ import { useEffect, useState, useContext } from 'react';
 import * as XLSX from 'xlsx';
 import { getEmployees, updateEmployee, createEmployee, deleteEmployee, getSettings, updateSettings, getStandardsMarked, putStandardsMarked } from '../api';
 import ImportModal from '../components/ImportModal';
-import { DraftContext } from '../App';
+import { DraftContext, EmployeeCardContext } from '../App';
 
 const STATUS_COLORS = { active: 'bg-green-100 text-green-800', inactive: 'bg-red-100 text-red-700', maternity: 'bg-blue-100 text-blue-700' };
 
 export default function Standards() {
   const { isDraft } = useContext(DraftContext);
+  const { openCardByName } = useContext(EmployeeCardContext);
   const [employees, setEmployees] = useState([]);
   const [settings, setSettings] = useState({ approvedPositions: 0 });
   const [loading, setLoading] = useState(true);
@@ -312,7 +313,10 @@ export default function Standards() {
                       onChange={v => setFieldEdit(emp.id, 'notes', v)} onSave={() => saveField(emp.id, 'notes')} />
                   </td>
                   <td className="table-cell text-center">
-                    <button className="text-red-400 hover:text-red-600 text-xs" onClick={() => handleDelete(emp)} title="מחק עובד">🗑️</button>
+                    <div className="flex items-center justify-center gap-1">
+                      <button className="text-blue-400 hover:text-blue-600 text-xs" onClick={() => openCardByName(emp.displayName)} title="כרטיס עובד">👤</button>
+                      <button className="text-red-400 hover:text-red-600 text-xs" onClick={() => handleDelete(emp)} title="מחק עובד">🗑️</button>
+                    </div>
                   </td>
                 </tr>
               );

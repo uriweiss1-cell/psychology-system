@@ -1,5 +1,7 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useContext } from 'react';
 import { getSupervisions, createSupervision, updateSupervision, deleteSupervision, getAlerts, getEmployees, getHiddenSupTypes, putHiddenSupTypes } from '../api';
+import { EmployeeCardContext } from '../App';
+import ClickableName from '../components/ClickableName';
 
 const TYPE_LABELS = {
   educational:    'הדרכה חינוכית פרטנית',
@@ -276,7 +278,7 @@ export default function Supervisions() {
                   {s.supervisorName
                     ? s.isExternal
                       ? <span className="text-gray-400 italic">{s.supervisorName} (חיצוני)</span>
-                      : s.supervisorName
+                      : <ClickableName name={s.supervisorName} />
                     : <span className="text-gray-400">—</span>
                   }
                 </td>
@@ -285,7 +287,7 @@ export default function Supervisions() {
                     ? <span className="text-gray-400 italic">—</span>
                     : <div className="flex flex-wrap gap-1">
                         {s.superviseeNames.map((name, i) => (
-                          <span key={i} className="badge bg-gray-100 text-gray-700">{name}</span>
+                          <span key={i} className="badge bg-gray-100 text-gray-700"><ClickableName name={name} /></span>
                         ))}
                       </div>
                   }

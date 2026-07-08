@@ -1,6 +1,7 @@
 import { useEffect, useState, useContext } from 'react';
 import { getTeams, updateTeam, createTeam, deleteTeam, getUnassigned, getEmployees } from '../api';
 import { DraftContext } from '../App';
+import ClickableName from '../components/ClickableName';
 
 const TYPE_LABELS = { educational: 'חינוכי', clinical: 'קליני' };
 const TYPE_COLORS = { educational: 'bg-teal-600', clinical: 'bg-indigo-600' };
@@ -156,7 +157,7 @@ function TeamCard({ team, editing, editData, setEditData, onEdit, onSave, onCanc
       <div className={`bg-${color}-600 text-white px-4 py-2 flex items-center justify-between`}>
         <div>
           <span className="text-xs opacity-75">ראש צוות:</span>
-          <span className="font-semibold mr-1">{team.headDisplayName}</span>
+          <ClickableName name={team.headDisplayName} className="font-semibold mr-1 text-white" />
         </div>
         <div className="flex items-center gap-2">
           <span className="text-xs opacity-75">{allMembers.length} חברים</span>
@@ -167,10 +168,12 @@ function TeamCard({ team, editing, editData, setEditData, onEdit, onSave, onCanc
       <div className="p-3 bg-white">
         <div className="flex flex-wrap gap-1">
           <span className={`badge bg-${color}-100 text-${color}-800 font-semibold`}>
-            {team.headDisplayName} (ר"צ)
+            <ClickableName name={team.headDisplayName} /> (ר"צ)
           </span>
           {(team.memberDisplayNames || []).map((name, i) => (
-            <span key={i} className="badge bg-gray-100 text-gray-700">{name}</span>
+            <span key={i} className="badge bg-gray-100 text-gray-700">
+              <ClickableName name={name} />
+            </span>
           ))}
         </div>
         {extMembers.length > 0 && (

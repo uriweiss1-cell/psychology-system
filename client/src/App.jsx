@@ -6,9 +6,11 @@ import Kindergartens from './pages/Kindergartens';
 import Teams from './pages/Teams';
 import Standards from './pages/Standards';
 import Supervisions from './pages/Supervisions';
-import { getDraftStatus, activateDraft, pauseDraft, resumeDraft, approveDraft, discardDraft } from './api';
+import EmployeeCard from './components/EmployeeCard';
+import { getDraftStatus, activateDraft, pauseDraft, resumeDraft, approveDraft, discardDraft, getEmployees } from './api';
 
 export const DraftContext = createContext({ isDraft: false });
+export const EmployeeCardContext = createContext({ openCardByName: () => {} });
 
 const NAV = [
   { to: '/standards',     label: 'תקנים',           desktopOnly: true },
@@ -23,11 +25,26 @@ export default function App() {
   const [isDraft,   setIsDraft]   = useState(false);
   const [hasSaved,  setHasSaved]  = useState(false);
   const [draftLoading, setDraftLoading] = useState(false);
+  const [cardEmpId, setCardEmpId] = useState(null);
+  const [empNameMap, setEmpNameMap] = useState({});
 
   const refreshStatus = () =>
     getDraftStatus().then(s => { setIsDraft(s.active); setHasSaved(s.hasSaved); }).catch(() => {});
 
   useEffect(() => { refreshStatus(); }, []);
+
+  useEffect(() => {
+    getEmployees().then(emps => {
+      const map = {};
+      emps.forEach(e => { map[e.displayName] = e.id; });
+      setEmpNameMap(map);
+    }).catch(() => {});
+  }, [isDraft]);
+
+  const openCardByName = (name) => {
+    const id = empNameMap[name];
+    if (id) setCardEmpId(id);
+  };
 
   const handleActivate = async () => {
     setDraftLoading(true);
@@ -76,6 +93,7 @@ export default function App() {
   const navBg = isDraft ? 'bg-amber-700' : hasSaved ? 'bg-slate-600' : 'bg-blue-800';
 
   return (
+    <EmployeeCardContext.Provider value={{ openCardByName }}>
     <DraftContext.Provider value={{ isDraft }}>
       <div className="min-h-screen bg-gray-50 flex flex-col">
         <nav className={`text-white shadow-md ${navBg}`}>
@@ -144,5 +162,7 @@ export default function App() {
         </main>
       </div>
     </DraftContext.Provider>
+    {cardEmpId && <EmployeeCard empId={cardEmpId} onClose={() => setCardEmpId(null)} />}
+    </EmployeeCardContext.Provider>
   );
 }

@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useContext } from 'react';
 import * as XLSX from 'xlsx';
 import AlertsBanner from '../components/AlertsBanner';
 import { getAssignmentSummary, getEmployees, getAssignments, updateAssignment, getFrameworks, updateFramework, getSpecEdClasses, createSpecEdClass, updateSpecEdClass, deleteSpecEdClass, advanceSpecEdYear, getAlerts, createFramework } from '../api';
 import axios from 'axios';
+import { EmployeeCardContext } from '../App';
 
 // כיתות שמחושבות כ-2 שעות שבועיות: א (כיתה א'), ז (מעבר לחטב"ע), י (מעבר לתיכון)
 // הערה: 'י' לבד, לא יא/יב — בדיקה שהתו אחרי האות אינו אות עברית
@@ -50,6 +51,7 @@ function sectorSort(a, b) {
 }
 
 export default function Schools() {
+  const { openCardByName } = useContext(EmployeeCardContext);
   const [summary, setSummary]         = useState([]);
   const [employees, setEmployees]     = useState([]);
   const [assignments, setAssignments] = useState([]);
@@ -531,6 +533,7 @@ function SchoolTable({ items, assignments, employees, specEdClasses, editingAsgn
                             {employees.find(e => e.id === a.employeeId)?.displayName || '?'}
                             {' '}({(a.hours||0)+(a.specEdHours||0)} ש׳)
                           </span>
+                          <span className="text-blue-300 hover:text-blue-600" title="כרטיס עובד" onClick={() => { const emp = employees.find(e => e.id === a.employeeId); if (emp) openCardByName(emp.displayName); }}>👤</span>
                           <span className="text-blue-400 hover:text-blue-600" onClick={() => setEditingAsgn({ ...a })}>✏️</span>
                           <span className="text-blue-300 hover:text-red-500" onClick={() => deleteAssignment(a.id)}>✕</span>
                         </span>
