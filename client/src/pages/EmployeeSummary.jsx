@@ -100,6 +100,30 @@ export default function EmployeeSummary() {
                   }
                 </div>
 
+                {/* Schools */}
+                {emp.schools?.length > 0 && (
+                  <div>
+                    <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">בתי ספר</div>
+                    <div className="flex flex-wrap gap-1">
+                      {emp.schools.map((s, i) => (
+                        <span key={i} className="text-xs bg-blue-50 text-blue-800 border border-blue-200 px-2 py-0.5 rounded">{s}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Gardens */}
+                {emp.gardens?.length > 0 && (
+                  <div>
+                    <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">גנים</div>
+                    <div className="flex flex-wrap gap-1">
+                      {emp.gardens.map((g, i) => (
+                        <span key={i} className="text-xs bg-green-50 text-green-800 border border-green-200 px-2 py-0.5 rounded">{g}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {/* Supervisions received */}
                 {emp.supReceived.length > 0 && (
                   <div>

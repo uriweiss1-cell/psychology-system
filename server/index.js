@@ -30,6 +30,9 @@ async function main() {
     const employees    = db.get('employees').value().filter(e => e.status !== 'inactive');
     const teams        = db.get('teams').value();
     const supervisions = db.get('supervisions').value();
+    const frameworks   = db.get('frameworks').value();
+    const assignments  = db.get('assignments').value();
+    const kinder       = db.get('kinderAssignments').value();
 
     const result = employees
       .slice()
@@ -41,7 +44,15 @@ async function main() {
           .map(t => ({ type: t.type, isHead: t.headDisplayName === name, headName: t.headDisplayName }));
         const supReceived = supervisions.filter(s => (s.superviseeNames || []).includes(name));
         const supGiven    = supervisions.filter(s => s.supervisorName === name);
-        return { name, teams: empTeams, supReceived, supGiven };
+        const schools = assignments
+          .filter(a => a.employeeId === emp.id && a.frameworkId !== 0)
+          .map(a => { const fw = frameworks.find(f => f.id === a.frameworkId); return fw ? fw.name : null; })
+          .filter(Boolean);
+        const gardens = kinder
+          .filter(k => k.employeeId === emp.id)
+          .map(k => k.gardenName)
+          .filter(Boolean);
+        return { name, teams: empTeams, supReceived, supGiven, schools, gardens };
       });
 
     res.json(result);
