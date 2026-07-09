@@ -38,7 +38,7 @@ async function main() {
         const name = emp.displayName;
         const empTeams = teams
           .filter(t => t.headDisplayName === name || (t.memberDisplayNames || []).includes(name))
-          .map(t => ({ type: t.type, isHead: t.headDisplayName === name }));
+          .map(t => ({ type: t.type, isHead: t.headDisplayName === name, headName: t.headDisplayName }));
         const supReceived = supervisions.filter(s => (s.superviseeNames || []).includes(name));
         const supGiven    = supervisions.filter(s => s.supervisorName === name);
         return { name, teams: empTeams, supReceived, supGiven };
