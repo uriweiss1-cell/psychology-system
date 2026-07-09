@@ -25,6 +25,28 @@ async function main() {
 
   app.get('/ping', (req, res) => res.json({ ok: true }));
 
+  app.get('/api/public/employee-summary', (req, res) => {
+    const { db } = require('./database');
+    const employees    = db.get('employees').value().filter(e => e.status !== 'inactive');
+    const teams        = db.get('teams').value();
+    const supervisions = db.get('supervisions').value();
+
+    const result = employees
+      .slice()
+      .sort((a, b) => (a.displayName || '').localeCompare(b.displayName || '', 'he'))
+      .map(emp => {
+        const name = emp.displayName;
+        const empTeams = teams
+          .filter(t => t.headDisplayName === name || (t.memberDisplayNames || []).includes(name))
+          .map(t => ({ type: t.type, isHead: t.headDisplayName === name }));
+        const supReceived = supervisions.filter(s => (s.superviseeNames || []).includes(name));
+        const supGiven    = supervisions.filter(s => s.supervisorName === name);
+        return { name, teams: empTeams, supReceived, supGiven };
+      });
+
+    res.json(result);
+  });
+
   app.get('/api/public/frameworks', (req, res) => {
     const { db } = require('./database');
     const employees  = db.get('employees').value();
@@ -51,6 +73,7 @@ async function main() {
   const clientDist = path.join(__dirname, '..', 'client', 'dist');
   if (fs.existsSync(clientDist)) {
     app.use(express.static(clientDist));
+    app.get('/employee', (req, res) => res.sendFile(path.join(clientDist, 'employee.html')));
     app.get('*', (req, res) => res.sendFile(path.join(clientDist, 'index.html')));
   }
 
