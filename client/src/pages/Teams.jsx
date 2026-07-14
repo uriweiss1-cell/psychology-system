@@ -145,30 +145,26 @@ export default function Teams() {
         <div className="space-y-2 mb-4">
           {(unassigned.notInEducational.length > 0 || edExemptions.length > 0) && (
             <div className="bg-yellow-50 border border-yellow-200 rounded p-3">
+              <p className="text-sm font-semibold text-yellow-800 mb-1">⚠️ לא שובצו לצוות חינוכי ({unassigned.notInEducational.length}):</p>
               {unassigned.notInEducational.length > 0 && (
-                <>
-                  <p className="text-sm font-semibold text-yellow-800 mb-1">⚠️ לא שובצו לצוות חינוכי ({unassigned.notInEducational.length}):</p>
-                  <div className="flex flex-wrap gap-1.5 items-start">
-                    {unassigned.notInEducational.map(e => (
-                      <ExemptableChip key={e.id} emp={e} onExempt={(emp, reason) => addExemption(emp, 'teamEd', reason)} />
-                    ))}
-                  </div>
-                </>
+                <div className="flex flex-wrap gap-1.5 items-start mb-1">
+                  {unassigned.notInEducational.map(e => (
+                    <ExemptableChip key={e.id} emp={e} onExempt={(emp, reason) => addExemption(emp, 'teamEd', reason)} />
+                  ))}
+                </div>
               )}
               <ExemptedSection exemptions={edExemptions} onUnexempt={(empId) => removeExemption(empId, 'teamEd')} />
             </div>
           )}
           {(unassigned.notInClinical.length > 0 || clExemptions.length > 0) && (
             <div className="bg-orange-50 border border-orange-200 rounded p-3">
+              <p className="text-sm font-semibold text-orange-800 mb-1">⚠️ לא שובצו לצוות קליני ({unassigned.notInClinical.length}):</p>
               {unassigned.notInClinical.length > 0 && (
-                <>
-                  <p className="text-sm font-semibold text-orange-800 mb-1">⚠️ לא שובצו לצוות קליני ({unassigned.notInClinical.length}):</p>
-                  <div className="flex flex-wrap gap-1.5 items-start">
-                    {unassigned.notInClinical.map(e => (
-                      <ExemptableChip key={e.id} emp={e} onExempt={(emp, reason) => addExemption(emp, 'teamClin', reason)} />
-                    ))}
-                  </div>
-                </>
+                <div className="flex flex-wrap gap-1.5 items-start mb-1">
+                  {unassigned.notInClinical.map(e => (
+                    <ExemptableChip key={e.id} emp={e} onExempt={(emp, reason) => addExemption(emp, 'teamClin', reason)} />
+                  ))}
+                </div>
               )}
               <ExemptedSection exemptions={clExemptions} onUnexempt={(empId) => removeExemption(empId, 'teamClin')} />
             </div>

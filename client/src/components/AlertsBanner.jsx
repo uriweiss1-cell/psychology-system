@@ -162,16 +162,14 @@ export default function AlertsBanner({ page = 'workplan' }) {
           )}
           {showEdSup && (noEdSupervision.length > 0 || exemptions.some(x => x.type === 'edSupervision')) && (
             <div className="space-y-1">
+              <p className="font-semibold text-teal-700 mb-1">ללא הדרכה חינוכית פרטנית ({noEdSupervision.length}):</p>
               {noEdSupervision.length > 0 && (
-                <>
-                  <p className="font-semibold text-teal-700 mb-1">ללא הדרכה חינוכית פרטנית ({noEdSupervision.length}):</p>
-                  <div className="flex flex-wrap gap-1.5 items-start">
-                    {noEdSupervision.map(e => (
-                      <ExemptableChip key={e.id} emp={e} exemptType="edSupervision"
-                        onExempt={addExemption} color="bg-teal-100 text-teal-800" />
-                    ))}
-                  </div>
-                </>
+                <div className="flex flex-wrap gap-1.5 items-start">
+                  {noEdSupervision.map(e => (
+                    <ExemptableChip key={e.id} emp={e} exemptType="edSupervision"
+                      onExempt={addExemption} color="bg-teal-100 text-teal-800" />
+                  ))}
+                </div>
               )}
               <ExemptedSection exemptions={exemptions} type="edSupervision" onUnexempt={removeExemption} />
             </div>
