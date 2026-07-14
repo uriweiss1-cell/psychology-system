@@ -149,11 +149,13 @@ router.get('/', (req, res) => {
   const educationalSups      = supervisions.filter(s => s.type === 'educational');
   const edSupervisors        = new Set(educationalSups.map(s => s.supervisorName).filter(Boolean));
   const edSupervisees        = new Set(educationalSups.flatMap(s => s.superviseeNames || []));
+  const exemptions           = db.get('settings').get('exemptions').value() || [];
+  const edExemptIds          = new Set(exemptions.filter(x => x.type === 'edSupervision').map(x => x.empId));
   const noEdSupervision      = employees
-    .filter(e => !edSupervisors.has(e.displayName) && !edSupervisees.has(e.displayName))
+    .filter(e => !edSupervisors.has(e.displayName) && !edSupervisees.has(e.displayName) && !edExemptIds.has(e.id))
     .map(e => ({ id: e.id, displayName: e.displayName }));
 
-  res.json({ unassignedEmployees, unassignedFrameworks, frameworksWithVacancy, overBudget, freeHoursAlerts, supAlerts, noEdSupervision, schoolGapAlerts, kinderGapAlerts });
+  res.json({ unassignedEmployees, unassignedFrameworks, frameworksWithVacancy, overBudget, freeHoursAlerts, supAlerts, noEdSupervision, schoolGapAlerts, kinderGapAlerts, exemptions });
 });
 
 module.exports = router;

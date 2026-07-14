@@ -44,4 +44,16 @@ router.put('/hidden-sup-types', (req, res) => {
   res.json(types);
 });
 
+// Exemptions — always live (not draft-specific)
+// Each exemption: { empId, empName, type: 'team' | 'edSupervision', reason }
+router.get('/exemptions', (req, res) => {
+  res.json(db.get('settings').get('exemptions').value() || []);
+});
+
+router.put('/exemptions', (req, res) => {
+  const exemptions = Array.isArray(req.body.exemptions) ? req.body.exemptions : [];
+  db.get('settings').assign({ exemptions }).write();
+  res.json(exemptions);
+});
+
 module.exports = router;

@@ -1,7 +1,59 @@
 import { useEffect, useState, useContext } from 'react';
-import { getTeams, updateTeam, createTeam, deleteTeam, getUnassigned, getEmployees } from '../api';
+import { getTeams, updateTeam, createTeam, deleteTeam, getUnassigned, getEmployees, putExemptions } from '../api';
 import { DraftContext } from '../App';
 import ClickableName from '../components/ClickableName';
+
+function ExemptableChip({ emp, onExempt }) {
+  const [showing, setShowing] = useState(false);
+  const [reason, setReason] = useState('');
+  const save = () => {
+    if (!reason.trim()) return;
+    onExempt(emp, reason.trim());
+    setShowing(false);
+    setReason('');
+  };
+  return (
+    <span className="inline-flex flex-col gap-1">
+      <span className="badge bg-yellow-100 text-yellow-800 flex items-center gap-1">
+        {emp.displayName}
+        <button className="opacity-40 hover:opacity-100 transition-opacity text-xs leading-none pr-0.5" title="הגדר פטור" onClick={() => setShowing(s => !s)}>✕</button>
+      </span>
+      {showing && (
+        <span className="inline-flex items-center gap-1 bg-white border border-yellow-300 rounded px-2 py-1 text-xs">
+          <input autoFocus className="outline-none text-gray-800 w-40 bg-transparent placeholder-gray-400" placeholder="סיבה..." value={reason}
+            onChange={e => setReason(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') save(); if (e.key === 'Escape') setShowing(false); }} />
+          <button className="bg-yellow-400 hover:bg-yellow-500 text-white rounded px-2 py-0.5 font-medium" onClick={save}>שמור</button>
+          <button className="text-gray-400 hover:text-gray-600" onClick={() => setShowing(false)}>ביטול</button>
+        </span>
+      )}
+    </span>
+  );
+}
+
+function ExemptedSection({ exemptions, onUnexempt }) {
+  const [open, setOpen] = useState(false);
+  if (!exemptions.length) return null;
+  return (
+    <div className="border border-gray-200 rounded text-xs mt-1">
+      <button className="w-full flex items-center justify-between px-3 py-1.5 text-gray-500 hover:bg-gray-50" onClick={() => setOpen(o => !o)}>
+        <span className="font-medium">פטורים ({exemptions.length})</span>
+        <span>{open ? '▲' : '▼'}</span>
+      </button>
+      {open && (
+        <div className="border-t border-gray-100 px-3 py-2 space-y-1 bg-gray-50">
+          {exemptions.map(x => (
+            <div key={x.empId} className="flex items-baseline gap-2">
+              <span className="font-medium text-gray-700">{x.empName}</span>
+              <span className="text-gray-400 italic flex-1">{x.reason}</span>
+              <button className="text-gray-300 hover:text-red-400 transition-colors" title="בטל פטור" onClick={() => onUnexempt(x.empId)}>↩</button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 const TYPE_LABELS = { educational: 'חינוכי', clinical: 'קליני' };
 const TYPE_COLORS = { educational: 'bg-teal-600', clinical: 'bg-indigo-600' };
@@ -9,7 +61,7 @@ const TYPE_COLORS = { educational: 'bg-teal-600', clinical: 'bg-indigo-600' };
 export default function Teams() {
   const { isDraft } = useContext(DraftContext);
   const [teams, setTeams] = useState([]);
-  const [unassigned, setUnassigned] = useState({ notInEducational: [], notInClinical: [] });
+  const [unassigned, setUnassigned] = useState({ notInEducational: [], notInClinical: [], exemptions: [] });
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState(null);
@@ -60,6 +112,24 @@ export default function Teams() {
     setUnassigned(u);
   };
 
+  const exemptions = unassigned.exemptions || [];
+  const teamExemptions = exemptions.filter(x => x.type === 'team');
+
+  const addExemption = async (emp, reason) => {
+    const next = [...exemptions.filter(x => !(x.empId === emp.id && x.type === 'team')),
+      { empId: emp.id, empName: emp.displayName, type: 'team', reason }];
+    await putExemptions(next);
+    const u = await getUnassigned();
+    setUnassigned(u);
+  };
+
+  const removeExemption = async (empId) => {
+    const next = exemptions.filter(x => !(x.empId === empId && x.type === 'team'));
+    await putExemptions(next);
+    const u = await getUnassigned();
+    setUnassigned(u);
+  };
+
   if (loading) return <div className="p-6 text-gray-500">טוען...</div>;
 
   const edTeams = teams.filter(t => t.type === 'educational');
@@ -70,24 +140,29 @@ export default function Teams() {
       <h1 className="text-xl font-bold text-gray-800 mb-4">צוותים</h1>
 
       {/* Alerts */}
-      {unassigned.notInEducational.length > 0 && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded p-3 mb-4">
-          <p className="text-sm font-semibold text-yellow-800 mb-1">⚠️ לא שובצו לצוות חינוכי ({unassigned.notInEducational.length}):</p>
-          <div className="flex flex-wrap gap-1">
-            {unassigned.notInEducational.map(e => (
-              <span key={e.id} className="badge bg-yellow-100 text-yellow-800">{e.displayName}</span>
-            ))}
-          </div>
-        </div>
-      )}
-      {unassigned.notInClinical.length > 0 && (
-        <div className="bg-orange-50 border border-orange-200 rounded p-3 mb-4">
-          <p className="text-sm font-semibold text-orange-800 mb-1">⚠️ לא שובצו לצוות קליני ({unassigned.notInClinical.length}):</p>
-          <div className="flex flex-wrap gap-1">
-            {unassigned.notInClinical.map(e => (
-              <span key={e.id} className="badge bg-orange-100 text-orange-800">{e.displayName}</span>
-            ))}
-          </div>
+      {(unassigned.notInEducational.length > 0 || unassigned.notInClinical.length > 0 || teamExemptions.length > 0) && (
+        <div className="space-y-2 mb-4">
+          {unassigned.notInEducational.length > 0 && (
+            <div className="bg-yellow-50 border border-yellow-200 rounded p-3">
+              <p className="text-sm font-semibold text-yellow-800 mb-1">⚠️ לא שובצו לצוות חינוכי ({unassigned.notInEducational.length}):</p>
+              <div className="flex flex-wrap gap-1.5 items-start">
+                {unassigned.notInEducational.map(e => (
+                  <ExemptableChip key={e.id} emp={e} onExempt={addExemption} />
+                ))}
+              </div>
+            </div>
+          )}
+          {unassigned.notInClinical.length > 0 && (
+            <div className="bg-orange-50 border border-orange-200 rounded p-3">
+              <p className="text-sm font-semibold text-orange-800 mb-1">⚠️ לא שובצו לצוות קליני ({unassigned.notInClinical.length}):</p>
+              <div className="flex flex-wrap gap-1.5 items-start">
+                {unassigned.notInClinical.map(e => (
+                  <ExemptableChip key={e.id} emp={e} onExempt={addExemption} />
+                ))}
+              </div>
+            </div>
+          )}
+          <ExemptedSection exemptions={teamExemptions} onUnexempt={removeExemption} />
         </div>
       )}
 

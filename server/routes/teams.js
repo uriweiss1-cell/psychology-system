@@ -63,9 +63,11 @@ router.delete('/:id', (req, res) => {
 });
 
 router.get('/unassigned', (req, res) => {
-  const employees = db.get(activeCol('employees')).value()
+  const employees  = db.get(activeCol('employees')).value()
     .filter(e => e.status === 'active' || !e.status);
-  const teams     = db.get(activeCol('teams')).value();
+  const teams      = db.get(activeCol('teams')).value();
+  const exemptions = db.get('settings').get('exemptions').value() || [];
+  const teamExemptIds = new Set(exemptions.filter(x => x.type === 'team').map(x => x.empId));
 
   const allEdMembers = new Set();
   const allClMembers = new Set();
@@ -75,10 +77,10 @@ router.get('/unassigned', (req, res) => {
     [t.headDisplayName, ...(t.memberDisplayNames || [])].forEach(n => target.add(n));
   });
 
-  const notInEducational = employees.filter(e => !allEdMembers.has(e.displayName));
-  const notInClinical    = employees.filter(e => !allClMembers.has(e.displayName));
+  const notInEducational = employees.filter(e => !allEdMembers.has(e.displayName) && !teamExemptIds.has(e.id));
+  const notInClinical    = employees.filter(e => !allClMembers.has(e.displayName) && !teamExemptIds.has(e.id));
 
-  res.json({ notInEducational, notInClinical });
+  res.json({ notInEducational, notInClinical, exemptions });
 });
 
 module.exports = router;
