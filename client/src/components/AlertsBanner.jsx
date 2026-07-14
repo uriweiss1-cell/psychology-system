@@ -112,16 +112,18 @@ export default function AlertsBanner({ page = 'workplan' }) {
     saveExemptions(exemptions.filter(x => !(x.empId === empId && x.type === type)));
   };
 
-  const showSchoolGaps = page === 'workplan' || page === 'schools';
-  const showKinderGaps = page === 'workplan' || page === 'kinder';
-  const showGeneral    = page === 'workplan';
+  const showSchoolGaps  = page === 'workplan' || page === 'schools';
+  const showKinderGaps  = page === 'workplan' || page === 'kinder';
+  const showEdSup       = page === 'workplan' || page === 'supervisions';
+  const showGeneral     = page === 'workplan';
 
   const visibleSchoolGaps = showSchoolGaps ? schoolGapAlerts : [];
   const visibleKinderGaps = showKinderGaps ? kinderGapAlerts : [];
 
-  const total = (showGeneral ? unassignedFrameworks.length + frameworksWithVacancy.length + freeHoursAlerts.length + supAlerts.length + noEdSupervision.length : 0)
+  const total = (showGeneral ? unassignedFrameworks.length + frameworksWithVacancy.length + freeHoursAlerts.length + supAlerts.length : 0)
+    + (showEdSup ? noEdSupervision.length : 0)
     + visibleSchoolGaps.length + visibleKinderGaps.length;
-  if (total === 0 && (!showGeneral || !exemptions.some(x => x.type === 'edSupervision'))) return null;
+  if (total === 0 && !exemptions.some(x => x.type === 'edSupervision')) return null;
 
   return (
     <div className="mb-4 border border-red-200 rounded overflow-hidden">
@@ -158,7 +160,7 @@ export default function AlertsBanner({ page = 'workplan' }) {
               </div>
             </div>
           )}
-          {showGeneral && (noEdSupervision.length > 0 || exemptions.some(x => x.type === 'edSupervision')) && (
+          {showEdSup && (noEdSupervision.length > 0 || exemptions.some(x => x.type === 'edSupervision')) && (
             <div className="space-y-1">
               {noEdSupervision.length > 0 && (
                 <>

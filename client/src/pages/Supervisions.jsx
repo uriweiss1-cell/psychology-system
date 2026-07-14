@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef, useContext } from 'react';
 import { getSupervisions, createSupervision, updateSupervision, deleteSupervision, getAlerts, getEmployees, getHiddenSupTypes, putHiddenSupTypes } from '../api';
+import AlertsBanner from '../components/AlertsBanner';
 import { EmployeeCardContext } from '../App';
 import ClickableName from '../components/ClickableName';
 
@@ -310,6 +311,7 @@ export default function Supervisions() {
 
   return (
     <div>
+      <AlertsBanner page="supervisions" />
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-xl font-bold text-gray-800">הדרכות</h1>
         <div className="flex gap-2 items-center">
