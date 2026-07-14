@@ -113,18 +113,19 @@ export default function Teams() {
   };
 
   const exemptions = unassigned.exemptions || [];
-  const teamExemptions = exemptions.filter(x => x.type === 'team');
+  const edExemptions = exemptions.filter(x => x.type === 'teamEd');
+  const clExemptions = exemptions.filter(x => x.type === 'teamClin');
 
-  const addExemption = async (emp, reason) => {
-    const next = [...exemptions.filter(x => !(x.empId === emp.id && x.type === 'team')),
-      { empId: emp.id, empName: emp.displayName, type: 'team', reason }];
+  const addExemption = async (emp, type, reason) => {
+    const next = [...exemptions.filter(x => !(x.empId === emp.id && x.type === type)),
+      { empId: emp.id, empName: emp.displayName, type, reason }];
     await putExemptions(next);
     const u = await getUnassigned();
     setUnassigned(u);
   };
 
-  const removeExemption = async (empId) => {
-    const next = exemptions.filter(x => !(x.empId === empId && x.type === 'team'));
+  const removeExemption = async (empId, type) => {
+    const next = exemptions.filter(x => !(x.empId === empId && x.type === type));
     await putExemptions(next);
     const u = await getUnassigned();
     setUnassigned(u);
@@ -140,29 +141,38 @@ export default function Teams() {
       <h1 className="text-xl font-bold text-gray-800 mb-4">צוותים</h1>
 
       {/* Alerts */}
-      {(unassigned.notInEducational.length > 0 || unassigned.notInClinical.length > 0 || teamExemptions.length > 0) && (
+      {(unassigned.notInEducational.length > 0 || unassigned.notInClinical.length > 0 || edExemptions.length > 0 || clExemptions.length > 0) && (
         <div className="space-y-2 mb-4">
-          {unassigned.notInEducational.length > 0 && (
+          {(unassigned.notInEducational.length > 0 || edExemptions.length > 0) && (
             <div className="bg-yellow-50 border border-yellow-200 rounded p-3">
-              <p className="text-sm font-semibold text-yellow-800 mb-1">⚠️ לא שובצו לצוות חינוכי ({unassigned.notInEducational.length}):</p>
-              <div className="flex flex-wrap gap-1.5 items-start">
-                {unassigned.notInEducational.map(e => (
-                  <ExemptableChip key={e.id} emp={e} onExempt={addExemption} />
-                ))}
-              </div>
+              {unassigned.notInEducational.length > 0 && (
+                <>
+                  <p className="text-sm font-semibold text-yellow-800 mb-1">⚠️ לא שובצו לצוות חינוכי ({unassigned.notInEducational.length}):</p>
+                  <div className="flex flex-wrap gap-1.5 items-start">
+                    {unassigned.notInEducational.map(e => (
+                      <ExemptableChip key={e.id} emp={e} onExempt={(emp, reason) => addExemption(emp, 'teamEd', reason)} />
+                    ))}
+                  </div>
+                </>
+              )}
+              <ExemptedSection exemptions={edExemptions} onUnexempt={(empId) => removeExemption(empId, 'teamEd')} />
             </div>
           )}
-          {unassigned.notInClinical.length > 0 && (
+          {(unassigned.notInClinical.length > 0 || clExemptions.length > 0) && (
             <div className="bg-orange-50 border border-orange-200 rounded p-3">
-              <p className="text-sm font-semibold text-orange-800 mb-1">⚠️ לא שובצו לצוות קליני ({unassigned.notInClinical.length}):</p>
-              <div className="flex flex-wrap gap-1.5 items-start">
-                {unassigned.notInClinical.map(e => (
-                  <ExemptableChip key={e.id} emp={e} onExempt={addExemption} />
-                ))}
-              </div>
+              {unassigned.notInClinical.length > 0 && (
+                <>
+                  <p className="text-sm font-semibold text-orange-800 mb-1">⚠️ לא שובצו לצוות קליני ({unassigned.notInClinical.length}):</p>
+                  <div className="flex flex-wrap gap-1.5 items-start">
+                    {unassigned.notInClinical.map(e => (
+                      <ExemptableChip key={e.id} emp={e} onExempt={(emp, reason) => addExemption(emp, 'teamClin', reason)} />
+                    ))}
+                  </div>
+                </>
+              )}
+              <ExemptedSection exemptions={clExemptions} onUnexempt={(empId) => removeExemption(empId, 'teamClin')} />
             </div>
           )}
-          <ExemptedSection exemptions={teamExemptions} onUnexempt={removeExemption} />
         </div>
       )}
 
