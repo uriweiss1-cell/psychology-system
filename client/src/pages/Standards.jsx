@@ -1,6 +1,6 @@
 import { useEffect, useState, useContext } from 'react';
 import * as XLSX from 'xlsx';
-import { getEmployees, updateEmployee, createEmployee, deleteEmployee, getSettings, updateSettings, getStandardsMarked, putStandardsMarked } from '../api';
+import { getEmployees, updateEmployee, createEmployee, deleteEmployee, getSettings, updateSettings, getStandardsMarked, putStandardsMarked, getSecretaries, createSecretary, updateSecretary, deleteSecretary } from '../api';
 import ImportModal from '../components/ImportModal';
 import { DraftContext, EmployeeCardContext } from '../App';
 
@@ -10,7 +10,12 @@ export default function Standards() {
   const { isDraft } = useContext(DraftContext);
   const { openCardByName } = useContext(EmployeeCardContext);
   const [employees, setEmployees] = useState([]);
-  const [settings, setSettings] = useState({ approvedPositions: 0 });
+  const [settings, setSettings] = useState({ approvedPositions: 0, approvedSecretaryPositions: 0 });
+  const [secretaries, setSecretaries] = useState([]);
+  const [showAddSec, setShowAddSec] = useState(false);
+  const [newSec, setNewSec] = useState({ name: '', ftePercent: 1.0 });
+  const [editingSecApproved, setEditingSecApproved] = useState(false);
+  const [secApprovedInput, setSecApprovedInput] = useState('');
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('');
   const [editing, setEditing] = useState({});
@@ -31,10 +36,11 @@ export default function Standards() {
   };
 
   const load = async () => {
-    const [emps, sett, markedIds] = await Promise.all([getEmployees(), getSettings(), getStandardsMarked()]);
+    const [emps, sett, markedIds, secs] = await Promise.all([getEmployees(), getSettings(), getStandardsMarked(), getSecretaries()]);
     setEmployees(emps);
     setSettings(sett);
     setMarked(new Set(markedIds));
+    setSecretaries(secs);
     setLoading(false);
   };
 
@@ -96,6 +102,41 @@ export default function Standards() {
     setEditingApproved(false);
   };
 
+  const saveSecApproved = async () => {
+    const val = parseFloat(secApprovedInput);
+    if (isNaN(val)) return;
+    const updated = await updateSettings({ approvedSecretaryPositions: val });
+    setSettings(updated);
+    setEditingSecApproved(false);
+  };
+
+  const handleAddSec = async () => {
+    if (!newSec.name.trim()) return;
+    const created = await createSecretary(newSec);
+    setSecretaries(prev => [...prev, created]);
+    setNewSec({ name: '', ftePercent: 1.0 });
+    setShowAddSec(false);
+  };
+
+  const handleDeleteSec = async (sec) => {
+    if (!confirm(`למחוק את ${sec.name}?`)) return;
+    await deleteSecretary(sec.id);
+    setSecretaries(prev => prev.filter(s => s.id !== sec.id));
+  };
+
+  const handleSecFte = async (sec, val) => {
+    const parsed = parseFloat(val);
+    if (isNaN(parsed)) return;
+    const updated = await updateSecretary(sec.id, { ftePercent: parsed });
+    setSecretaries(prev => prev.map(s => s.id === sec.id ? updated : s));
+  };
+
+  const handleSecName = async (sec, val) => {
+    if (!val.trim()) return;
+    const updated = await updateSecretary(sec.id, { name: val });
+    setSecretaries(prev => prev.map(s => s.id === sec.id ? updated : s));
+  };
+
   const saveFreeHoursTarget = async (fte, hours) => {
     const targets = (settings.freeHoursTargets || []).map(t =>
       t.fte === fte ? { ...t, hours: parseFloat(hours) || t.hours } : t
@@ -128,7 +169,7 @@ export default function Standards() {
     XLSX.writeFile(wb, `תקנים${isDraft ? '_טיוטה' : ''}.xlsx`);
   };
 
-  // חישובי לוח סיכום
+  // חישובי לוח סיכום — פסיכולוגים
   const active       = employees.filter(e => (e.status === 'active' || !e.status) && !e.isSubstitute);
   const maternity    = employees.filter(e => e.status === 'maternity');
   const substitutes  = employees.filter(e => e.isSubstitute && e.status !== 'inactive');
@@ -139,6 +180,13 @@ export default function Standards() {
   const subsSum      = substitutes.reduce((s, e) => s + e.ftePercent, 0);
   const vacantPos    = approved - activeSum - maternitySum;
   const vacantSubs   = maternitySum - subsSum;
+
+  // חישובי כוח אדם כולל (פסיכולוגים + מזכירות)
+  const approvedSec  = settings.approvedSecretaryPositions || 0;
+  const secSum       = secretaries.reduce((s, sec) => s + (sec.ftePercent || 0), 0);
+  const totalApproved = approved + approvedSec;
+  const totalActual   = activeSum + maternitySum + secSum;
+  const totalVacant   = totalApproved - totalActual;
 
   const fmt = (n) => Math.round(n * 100) / 100;
 
@@ -157,8 +205,8 @@ export default function Standards() {
       )}
       {/* לוח סיכום תקנים */}
       <div className="bg-white rounded shadow p-4 mb-4">
-        <h2 className="text-base font-bold text-gray-700 mb-3">סיכום תקנים</h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+        <h2 className="text-base font-bold text-gray-700 mb-2">סיכום תקנים — פסיכולוגים</h2>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-4">
           <SummaryCard
             label="תקנים מאושרים"
             value={approved}
@@ -185,6 +233,33 @@ export default function Standards() {
             textColor={vacantSubs < 0 ? 'text-red-700' : 'text-gray-700'}
             sub='חל"ד − מ"מ' />
         </div>
+
+        <div className="border-t border-gray-100 pt-3">
+          <h2 className="text-base font-bold text-gray-700 mb-2">כוח אדם כולל (כולל מזכירות)</h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+            <SummaryCard
+              label="תקנים מאושרים כולל"
+              value={fmt(totalApproved)}
+              color="bg-blue-50 border-blue-200"
+              textColor="text-blue-800"
+              sub={`פסיכולוגים ${fmt(approved)} + מזכירות ${fmt(approvedSec)}`}
+              editable
+              onEdit={() => { setSecApprovedInput(String(approvedSec)); setEditingSecApproved(true); }}
+              editing={editingSecApproved}
+              editValue={secApprovedInput}
+              onEditChange={setSecApprovedInput}
+              onEditSave={saveSecApproved}
+              onEditCancel={() => setEditingSecApproved(false)}
+              editLabel="תקנים מאושרים מזכירות"
+            />
+            <SummaryCard label="כוח אדם בפועל כולל" value={fmt(totalActual)} color="bg-green-50 border-green-200" textColor="text-green-800"
+              sub={`פסיכולוגים ${fmt(activeSum + maternitySum)} + מזכירות ${fmt(secSum)}`} />
+            <SummaryCard label="תקנים פנויים כולל" value={fmt(totalVacant)}
+              color={totalVacant < 0 ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-200'}
+              textColor={totalVacant < 0 ? 'text-red-700' : 'text-gray-700'}
+              sub="מאושרים כולל − בפועל כולל" />
+          </div>
+        </div>
       </div>
 
       {/* טבלת שעות פנויות יעד */}
@@ -210,6 +285,61 @@ export default function Standards() {
           </div>
         </div>
       )}
+
+      {/* מזכירות */}
+      <div className="bg-white rounded shadow p-4 mb-4">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-base font-bold text-gray-700">מזכירות</h2>
+          <button className="btn-primary text-sm" onClick={() => setShowAddSec(true)}>+ מזכירה חדשה</button>
+        </div>
+        {showAddSec && (
+          <div className="bg-blue-50 border border-blue-200 rounded p-3 mb-3 flex gap-3 items-end">
+            <div>
+              <label className="block text-xs text-gray-600 mb-1">שם</label>
+              <input className="input" value={newSec.name} onChange={e => setNewSec(p => ({...p, name: e.target.value}))} placeholder="שם מלא" autoFocus />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-600 mb-1">אחוז משרה</label>
+              <input className="input w-24" type="number" step="0.01" min="0.1" max="2" value={newSec.ftePercent}
+                onChange={e => setNewSec(p => ({...p, ftePercent: parseFloat(e.target.value)}))} />
+            </div>
+            <button className="btn-primary" onClick={handleAddSec}>הוסף</button>
+            <button className="btn-secondary" onClick={() => setShowAddSec(false)}>ביטול</button>
+          </div>
+        )}
+        {secretaries.length === 0 && !showAddSec ? (
+          <p className="text-sm text-gray-400">אין מזכירות רשומות</p>
+        ) : (
+          <table className="w-full text-sm">
+            <thead>
+              <tr>
+                <th className="table-header">שם</th>
+                <th className="table-header text-center">אחוז משרה</th>
+                <th className="table-header text-center">פעולות</th>
+              </tr>
+            </thead>
+            <tbody>
+              {secretaries.map(sec => (
+                <tr key={sec.id} className="hover:bg-gray-50">
+                  <td className="table-cell">
+                    <input className="input w-full text-sm py-0.5" defaultValue={sec.name}
+                      onBlur={e => handleSecName(sec, e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && e.target.blur()} />
+                  </td>
+                  <td className="table-cell text-center">
+                    <input className="input w-20 text-sm py-0.5 text-center" type="number" step="0.01" defaultValue={sec.ftePercent}
+                      onBlur={e => handleSecFte(sec, e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && e.target.blur()} />
+                  </td>
+                  <td className="table-cell text-center">
+                    <button className="text-red-400 hover:text-red-600 text-xs" onClick={() => handleDeleteSec(sec)}>🗑️</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
 
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-xl font-bold text-gray-800">תקנים</h1>
@@ -328,16 +458,19 @@ export default function Standards() {
   );
 }
 
-function SummaryCard({ label, value, color, textColor, sub, editable, onEdit, editing, editValue, onEditChange, onEditSave, onEditCancel }) {
+function SummaryCard({ label, value, color, textColor, sub, editable, onEdit, editing, editValue, onEditChange, onEditSave, onEditCancel, editLabel }) {
   return (
     <div className={`border rounded-lg p-3 ${color}`}>
       <p className="text-xs text-gray-500 mb-1">{label}</p>
       {editing ? (
-        <div className="flex gap-1 items-center">
-          <input type="number" step="0.01" className="input py-0.5 text-sm w-16" value={editValue} onChange={e => onEditChange(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter') onEditSave(); if (e.key === 'Escape') onEditCancel(); }} autoFocus />
-          <button className="text-green-600 text-xs" onClick={onEditSave}>✓</button>
-          <button className="text-gray-400 text-xs" onClick={onEditCancel}>✕</button>
+        <div>
+          {editLabel && <p className="text-xs text-gray-400 mb-1">{editLabel}:</p>}
+          <div className="flex gap-1 items-center">
+            <input type="number" step="0.01" className="input py-0.5 text-sm w-16" value={editValue} onChange={e => onEditChange(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') onEditSave(); if (e.key === 'Escape') onEditCancel(); }} autoFocus />
+            <button className="text-green-600 text-xs" onClick={onEditSave}>✓</button>
+            <button className="text-gray-400 text-xs" onClick={onEditCancel}>✕</button>
+          </div>
         </div>
       ) : (
         <div className="flex items-end gap-1">

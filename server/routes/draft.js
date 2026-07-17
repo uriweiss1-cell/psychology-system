@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { db } = require('../database');
 
-const DRAFT_COLS = ['employees', 'assignments', 'kinderAssignments', 'specEdClasses', 'teams', 'supervisions', 'frameworks'];
+const DRAFT_COLS = ['employees', 'assignments', 'kinderAssignments', 'specEdClasses', 'teams', 'supervisions', 'frameworks', 'secretaries'];
 const DRAFT_OBJECTS = ['settings']; // object collections (not arrays)
 
 function copyToDraft() {

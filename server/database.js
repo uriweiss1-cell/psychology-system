@@ -474,10 +474,11 @@ async function initDB() {
   db.defaults({
     employees: [], frameworks: [], assignments: [],
     kinderAssignments: [], teams: [], supervisions: [], specEdClasses: [],
+    secretaries: [], draft_secretaries: [],
     draft_employees: [], draft_assignments: [], draft_kinderAssignments: [], draft_specEdClasses: [],
     draft_teams: [], draft_supervisions: [],
     draftActive: false, draftSaved: false,
-    settings: { approvedPositions: 31.2 },
+    settings: { approvedPositions: 31.2, approvedSecretaryPositions: 0 },
     _migrationVersion: 0,
     _nextId: { employees: 100, frameworks: 300, assignments: 500, kinderAssignments: 600, supervisions: 100, specEdClasses: 100 }
   }).write();

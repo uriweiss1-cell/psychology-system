@@ -34,6 +34,11 @@ export const getStandardsMarked  = () => api.get('/settings/marks').then(r => r.
 export const putStandardsMarked  = (ids) => api.put('/settings/marks', { ids }).then(r => r.data);
 export const getHiddenSupTypes   = () => api.get('/settings/hidden-sup-types').then(r => r.data);
 export const putHiddenSupTypes   = (types) => api.put('/settings/hidden-sup-types', { types }).then(r => r.data);
+export const getSecretaries      = () => api.get('/secretaries').then(r => r.data);
+export const createSecretary    = (data) => api.post('/secretaries', data).then(r => r.data);
+export const updateSecretary    = (id, data) => api.put(`/secretaries/${id}`, data).then(r => r.data);
+export const deleteSecretary    = (id) => api.delete(`/secretaries/${id}`).then(r => r.data);
+
 export const getExemptions       = () => api.get('/settings/exemptions').then(r => r.data);
 export const putExemptions       = (exemptions) => api.put('/settings/exemptions', { exemptions }).then(r => r.data);
 

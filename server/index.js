@@ -22,6 +22,7 @@ async function main() {
   app.use('/api/settings',         require('./routes/settings'));
   app.use('/api/draft',            require('./routes/draft'));
   app.use('/api/import',           require('./routes/import'));
+  app.use('/api/secretaries',      require('./routes/secretaries'));
 
   app.get('/ping', (req, res) => res.json({ ok: true }));
 
