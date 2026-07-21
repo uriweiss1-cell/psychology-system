@@ -23,17 +23,19 @@ async function main() {
   app.use('/api/draft',            require('./routes/draft'));
   app.use('/api/import',           require('./routes/import'));
   app.use('/api/secretaries',      require('./routes/secretaries'));
+  app.use('/api/interest-groups',  require('./routes/interestGroups'));
 
   app.get('/ping', (req, res) => res.json({ ok: true }));
 
   app.get('/api/public/employee-summary', (req, res) => {
     const { db } = require('./database');
-    const employees    = db.get('employees').value().filter(e => e.status !== 'inactive');
-    const teams        = db.get('teams').value();
-    const supervisions = db.get('supervisions').value();
-    const frameworks   = db.get('frameworks').value();
-    const assignments  = db.get('assignments').value();
-    const kinder       = db.get('kinderAssignments').value();
+    const employees      = db.get('employees').value().filter(e => e.status !== 'inactive');
+    const teams          = db.get('teams').value();
+    const supervisions   = db.get('supervisions').value();
+    const frameworks     = db.get('frameworks').value();
+    const assignments    = db.get('assignments').value();
+    const kinder         = db.get('kinderAssignments').value();
+    const interestGroups = db.get('interestGroups').value() || [];
 
     const result = employees
       .slice()
@@ -53,7 +55,11 @@ async function main() {
           .filter(k => k.employeeId === emp.id)
           .map(k => k.gardenName)
           .filter(Boolean);
-        return { name, teams: empTeams, supReceived, supGiven, schools, gardens };
+        const interestGroup = interestGroups.find(g => (g.memberDisplayNames || []).includes(name)) || null;
+        const interestGroupInfo = interestGroup
+          ? { name: interestGroup.name, facilitatorNames: interestGroup.facilitatorNames || [] }
+          : null;
+        return { name, teams: empTeams, supReceived, supGiven, schools, gardens, interestGroup: interestGroupInfo };
       });
 
     res.json(result);

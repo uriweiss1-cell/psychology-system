@@ -475,6 +475,7 @@ async function initDB() {
     employees: [], frameworks: [], assignments: [],
     kinderAssignments: [], teams: [], supervisions: [], specEdClasses: [],
     secretaries: [], draft_secretaries: [],
+    interestGroups: [], draft_interestGroups: [],
     draft_employees: [], draft_assignments: [], draft_kinderAssignments: [], draft_specEdClasses: [],
     draft_teams: [], draft_supervisions: [],
     draftActive: false, draftSaved: false,

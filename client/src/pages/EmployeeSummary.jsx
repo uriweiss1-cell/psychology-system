@@ -166,6 +166,21 @@ export default function EmployeeSummary() {
                     <span className="text-sm text-gray-400">אין הדרכות רשומות</span>
                   </div>
                 )}
+
+                {/* Interest group */}
+                <div>
+                  <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">קבוצת עניין</div>
+                  {emp.interestGroup ? (
+                    <div className="text-sm">
+                      <span className="inline-block bg-purple-100 text-purple-800 px-2 py-0.5 rounded font-medium mb-1">{emp.interestGroup.name}</span>
+                      {emp.interestGroup.facilitatorNames?.length > 0 && (
+                        <span className="text-gray-500 mr-2">מנחים: {emp.interestGroup.facilitatorNames.join(', ')}</span>
+                      )}
+                    </div>
+                  ) : (
+                    <span className="text-sm text-gray-400">לא שובץ לקבוצת עניין</span>
+                  )}
+                </div>
               </div>
             </div>
           ))}

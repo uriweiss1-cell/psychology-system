@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useContext } from 'react';
-import { getSupervisions, createSupervision, updateSupervision, deleteSupervision, getAlerts, getEmployees, getHiddenSupTypes, putHiddenSupTypes } from '../api';
+import { getSupervisions, createSupervision, updateSupervision, deleteSupervision, getAlerts, getEmployees, getHiddenSupTypes, putHiddenSupTypes, getInterestGroups, createInterestGroup, updateInterestGroup, deleteInterestGroup } from '../api';
 import AlertsBanner from '../components/AlertsBanner';
 import { EmployeeCardContext } from '../App';
 import ClickableName from '../components/ClickableName';
@@ -75,14 +75,20 @@ export default function Supervisions() {
   const [selectedName, setSelectedName] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const searchRef = useRef(null);
+  const [interestGroups, setInterestGroups] = useState([]);
+  const [editingGroupId, setEditingGroupId] = useState(null);
+  const [editGroupData, setEditGroupData] = useState({});
+  const [showAddGroup, setShowAddGroup] = useState(false);
+  const [newGroup, setNewGroup] = useState({ name: '', facilitatorNames: '', memberDisplayNames: '' });
 
   const load = async () => {
-    const [sups, alertsData, emps, hidden] = await Promise.all([getSupervisions(), getAlerts(), getEmployees(true), getHiddenSupTypes()]);
+    const [sups, alertsData, emps, hidden, groups] = await Promise.all([getSupervisions(), getAlerts(), getEmployees(true), getHiddenSupTypes(), getInterestGroups()]);
     setSupervisions(sups);
     setHiddenTypes(hidden || []);
     setNoEdSupervision(alertsData.noEdSupervision || []);
     setSupAlerts(alertsData.supAlerts || []);
     setEmployees(emps);
+    setInterestGroups(groups || []);
     setLoading(false);
   };
 
@@ -558,6 +564,137 @@ export default function Supervisions() {
 
       <div className="space-y-5">
         {allGroups.map(renderGroup)}
+      </div>
+
+      {/* קבוצות עניין */}
+      <div className="mt-8">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-lg font-bold text-gray-800">קבוצות עניין</h2>
+          <button className="btn-primary text-sm" onClick={() => setShowAddGroup(true)}>+ קבוצה חדשה</button>
+        </div>
+
+        {showAddGroup && (
+          <div className="bg-purple-50 border border-purple-200 rounded p-4 mb-4">
+            <h3 className="font-semibold text-purple-800 mb-3">הוספת קבוצת עניין</h3>
+            <div className="grid grid-cols-1 gap-3 mb-3">
+              <div>
+                <label className="block text-xs text-gray-600 mb-1">שם הקבוצה *</label>
+                <input className="input w-full" value={newGroup.name} onChange={e => setNewGroup(p => ({...p, name: e.target.value}))} autoFocus />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-600 mb-1">מנחים (שם אחד בכל שורה)</label>
+                <textarea className="input w-full" rows={2} value={newGroup.facilitatorNames}
+                  onChange={e => setNewGroup(p => ({...p, facilitatorNames: e.target.value}))} />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-600 mb-1">חברים (שם אחד בכל שורה)</label>
+                <textarea className="input w-full" rows={4} value={newGroup.memberDisplayNames}
+                  onChange={e => setNewGroup(p => ({...p, memberDisplayNames: e.target.value}))} />
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button className="btn-primary" onClick={async () => {
+                if (!newGroup.name.trim()) return;
+                const created = await createInterestGroup({
+                  name: newGroup.name.trim(),
+                  facilitatorNames: newGroup.facilitatorNames.split('\n').map(s => s.trim()).filter(Boolean),
+                  memberDisplayNames: newGroup.memberDisplayNames.split('\n').map(s => s.trim()).filter(Boolean),
+                });
+                setInterestGroups(prev => [...prev, created]);
+                setNewGroup({ name: '', facilitatorNames: '', memberDisplayNames: '' });
+                setShowAddGroup(false);
+              }}>הוסף</button>
+              <button className="btn-secondary" onClick={() => setShowAddGroup(false)}>ביטול</button>
+            </div>
+          </div>
+        )}
+
+        {interestGroups.length === 0 && !showAddGroup && (
+          <p className="text-sm text-gray-400">אין קבוצות עניין רשומות</p>
+        )}
+
+        <div className="space-y-3">
+          {interestGroups.map(group => (
+            <div key={group.id} className="bg-white border border-purple-100 rounded-lg shadow-sm overflow-hidden">
+              {editingGroupId === group.id ? (
+                <div className="p-4 space-y-3">
+                  <div>
+                    <label className="block text-xs text-gray-600 mb-1">שם הקבוצה</label>
+                    <input className="input w-full" value={editGroupData.name}
+                      onChange={e => setEditGroupData(p => ({...p, name: e.target.value}))} />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-600 mb-1">מנחים (שם אחד בכל שורה)</label>
+                    <textarea className="input w-full" rows={2} value={editGroupData.facilitatorNames}
+                      onChange={e => setEditGroupData(p => ({...p, facilitatorNames: e.target.value}))} />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-600 mb-1">חברים (שם אחד בכל שורה)</label>
+                    <textarea className="input w-full" rows={5} value={editGroupData.memberDisplayNames}
+                      onChange={e => setEditGroupData(p => ({...p, memberDisplayNames: e.target.value}))} />
+                  </div>
+                  <div className="flex gap-2">
+                    <button className="btn-primary" onClick={async () => {
+                      const updated = await updateInterestGroup(group.id, {
+                        name: editGroupData.name.trim(),
+                        facilitatorNames: editGroupData.facilitatorNames.split('\n').map(s => s.trim()).filter(Boolean),
+                        memberDisplayNames: editGroupData.memberDisplayNames.split('\n').map(s => s.trim()).filter(Boolean),
+                      });
+                      setInterestGroups(prev => prev.map(g => g.id === group.id ? updated : g));
+                      setEditingGroupId(null);
+                    }}>שמור</button>
+                    <button className="btn-secondary" onClick={() => setEditingGroupId(null)}>ביטול</button>
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <div className="bg-purple-700 text-white px-4 py-2 flex items-center justify-between">
+                    <span className="font-semibold">{group.name}</span>
+                    <div className="flex gap-2">
+                      <button className="text-purple-200 hover:text-white text-xs" onClick={() => {
+                        setEditingGroupId(group.id);
+                        setEditGroupData({
+                          name: group.name,
+                          facilitatorNames: (group.facilitatorNames || []).join('\n'),
+                          memberDisplayNames: (group.memberDisplayNames || []).join('\n'),
+                        });
+                      }}>✏️ עריכה</button>
+                      <button className="text-purple-200 hover:text-red-300 text-xs" onClick={async () => {
+                        if (!confirm(`למחוק את ${group.name}?`)) return;
+                        await deleteInterestGroup(group.id);
+                        setInterestGroups(prev => prev.filter(g => g.id !== group.id));
+                      }}>🗑️</button>
+                    </div>
+                  </div>
+                  <div className="p-3 space-y-2">
+                    {group.facilitatorNames?.length > 0 && (
+                      <div>
+                        <span className="text-xs text-gray-500 ml-1">מנחים:</span>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {group.facilitatorNames.map((n, i) => (
+                            <span key={i} className="text-xs bg-purple-100 text-purple-800 px-2 py-0.5 rounded font-medium">{n}</span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {group.memberDisplayNames?.length > 0 ? (
+                      <div>
+                        <span className="text-xs text-gray-500">חברים ({group.memberDisplayNames.length}):</span>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {group.memberDisplayNames.map((n, i) => (
+                            <ClickableName key={i} name={n} className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded" />
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-gray-400">אין חברים משובצים</span>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
