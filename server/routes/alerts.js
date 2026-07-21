@@ -157,7 +157,7 @@ router.get('/', (req, res) => {
 
   // עובדים שאינם משובצים לקבוצת עניין
   const interestGroups       = db.get(activeCol('interestGroups')).value() || [];
-  const inInterestGroup      = new Set(interestGroups.flatMap(g => g.memberDisplayNames || []));
+  const inInterestGroup      = new Set(interestGroups.flatMap(g => [...(g.memberDisplayNames || []), ...(g.facilitatorNames || [])]));
   const noInterestGroup      = employees
     .filter(e => !inInterestGroup.has(e.displayName))
     .map(e => ({ id: e.id, displayName: e.displayName }));
