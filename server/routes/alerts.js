@@ -155,7 +155,14 @@ router.get('/', (req, res) => {
     .filter(e => !edSupervisors.has(e.displayName) && !edSupervisees.has(e.displayName) && !edExemptIds.has(e.id))
     .map(e => ({ id: e.id, displayName: e.displayName }));
 
-  res.json({ unassignedEmployees, unassignedFrameworks, frameworksWithVacancy, overBudget, freeHoursAlerts, supAlerts, noEdSupervision, schoolGapAlerts, kinderGapAlerts, exemptions });
+  // עובדים שאינם משובצים לקבוצת עניין
+  const interestGroups       = db.get(activeCol('interestGroups')).value() || [];
+  const inInterestGroup      = new Set(interestGroups.flatMap(g => g.memberDisplayNames || []));
+  const noInterestGroup      = employees
+    .filter(e => !inInterestGroup.has(e.displayName))
+    .map(e => ({ id: e.id, displayName: e.displayName }));
+
+  res.json({ unassignedEmployees, unassignedFrameworks, frameworksWithVacancy, overBudget, freeHoursAlerts, supAlerts, noEdSupervision, schoolGapAlerts, kinderGapAlerts, exemptions, noInterestGroup });
 });
 
 module.exports = router;

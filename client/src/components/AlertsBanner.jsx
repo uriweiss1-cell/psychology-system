@@ -94,7 +94,7 @@ export default function AlertsBanner({ page = 'workplan' }) {
   const {
     unassignedFrameworks, frameworksWithVacancy = [], freeHoursAlerts = [],
     supAlerts = [], noEdSupervision = [], schoolGapAlerts = [], kinderGapAlerts = [],
-    exemptions = [],
+    exemptions = [], noInterestGroup = [],
   } = alerts;
 
   const saveExemptions = async (newList) => {
@@ -112,16 +112,18 @@ export default function AlertsBanner({ page = 'workplan' }) {
     saveExemptions(exemptions.filter(x => !(x.empId === empId && x.type === type)));
   };
 
-  const showSchoolGaps  = page === 'workplan' || page === 'schools';
-  const showKinderGaps  = page === 'workplan' || page === 'kinder';
-  const showEdSup       = page === 'workplan' || page === 'supervisions';
-  const showGeneral     = page === 'workplan';
+  const showSchoolGaps    = page === 'workplan' || page === 'schools';
+  const showKinderGaps    = page === 'workplan' || page === 'kinder';
+  const showEdSup         = page === 'workplan' || page === 'supervisions';
+  const showInterestGroup = page === 'supervisions';
+  const showGeneral       = page === 'workplan';
 
   const visibleSchoolGaps = showSchoolGaps ? schoolGapAlerts : [];
   const visibleKinderGaps = showKinderGaps ? kinderGapAlerts : [];
 
   const total = (showGeneral ? unassignedFrameworks.length + frameworksWithVacancy.length + freeHoursAlerts.length + supAlerts.length : 0)
     + (showEdSup ? noEdSupervision.length : 0)
+    + (showInterestGroup ? noInterestGroup.length : 0)
     + visibleSchoolGaps.length + visibleKinderGaps.length;
   if (total === 0 && !exemptions.some(x => x.type === 'edSupervision')) return null;
 
@@ -172,6 +174,16 @@ export default function AlertsBanner({ page = 'workplan' }) {
                 </div>
               )}
               <ExemptedSection exemptions={exemptions} type="edSupervision" onUnexempt={removeExemption} />
+            </div>
+          )}
+          {showInterestGroup && noInterestGroup.length > 0 && (
+            <div>
+              <p className="font-semibold text-purple-700 mb-1">לא שובצו לקבוצת עניין ({noInterestGroup.length}):</p>
+              <div className="flex flex-wrap gap-1">
+                {noInterestGroup.map(e => (
+                  <span key={e.id} className="badge bg-purple-100 text-purple-800">{e.displayName}</span>
+                ))}
+              </div>
             </div>
           )}
           {showGeneral && supAlerts.length > 0 && (
