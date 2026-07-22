@@ -81,8 +81,9 @@ router.get('/', (req, res) => {
       (s.superviseeNames || []).includes(name) ? sum + (isGroupSup(s) ? 1.5 : 1) : sum, 0);
     const actualGiven = supervisions.reduce((sum, s) => {
       if (s.supervisorName !== name) return sum;
+      if (isGroupSup(s)) return sum + 1.5;
       const count = (s.superviseeNames || []).length;
-      return count ? sum + (isGroupSup(s) ? 1.5 : count * 1) : sum;
+      return count ? sum + count * 1 : sum;
     }, 0);
     const plannedReceived = emp.supReceivedHours || 0;
     const plannedGiven    = emp.supGivenHours    || 0;
