@@ -63,7 +63,16 @@ async function main() {
         const interestGroupInfo = interestGroup
           ? { name: interestGroup.name, facilitatorNames: interestGroup.facilitatorNames || [] }
           : null;
-        return { name, isExternal: false, teams: empTeams, supReceived, supGiven, schools, gardens, interestGroup: interestGroupInfo };
+        const ledTeams = teams
+          .filter(t => t.headDisplayName === name)
+          .map(t => ({
+            type: t.type,
+            members: [...(t.memberDisplayNames || []), ...(t.externalMembers || [])],
+          }));
+        const ledGroups = interestGroups
+          .filter(g => (g.facilitatorNames || []).includes(name))
+          .map(g => ({ name: g.name, members: g.memberDisplayNames || [] }));
+        return { name, isExternal: false, teams: empTeams, supReceived, supGiven, schools, gardens, interestGroup: interestGroupInfo, ledTeams, ledGroups };
       });
 
     // External employees — appear in supervisions/teams/interestGroups but not in employees

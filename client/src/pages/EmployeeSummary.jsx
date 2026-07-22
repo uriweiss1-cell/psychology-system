@@ -1,5 +1,33 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import axios from 'axios';
+
+function CollapsibleMembers({ title, members, color }) {
+  const [open, setOpen] = useState(false);
+  const bg   = color === 'purple' ? 'bg-purple-50 border-purple-200' : 'bg-blue-50 border-blue-200';
+  const chip = color === 'purple' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800';
+  const hdr  = color === 'purple' ? 'text-purple-700' : 'text-blue-700';
+  return (
+    <div className={`border rounded-lg overflow-hidden ${bg}`}>
+      <button
+        className={`w-full flex items-center justify-between px-3 py-2 text-sm font-semibold ${hdr}`}
+        onClick={() => setOpen(o => !o)}
+      >
+        <span>{title} ({members.length})</span>
+        <span className="text-xs">{open ? '▲' : '▼'}</span>
+      </button>
+      {open && (
+        <div className="px-3 pb-3 flex flex-wrap gap-1">
+          {members.length === 0
+            ? <span className="text-xs text-gray-400">אין חברים</span>
+            : members.map((m, i) => (
+                <span key={i} className={`text-xs px-2 py-0.5 rounded ${chip}`}>{m}</span>
+              ))
+          }
+        </div>
+      )}
+    </div>
+  );
+}
 
 const SUP_TYPE_LABELS = {
   educational:    'הדרכה חינוכית פרטנית',
@@ -186,6 +214,26 @@ export default function EmployeeSummary() {
                     <span className="text-sm text-gray-400">לא שובץ לקבוצת עניין</span>
                   )}
                 </div>
+
+                {/* Led teams */}
+                {(emp.ledTeams || []).map((t, i) => (
+                  <CollapsibleMembers
+                    key={i}
+                    title={`הצוות ה${t.type === 'educational' ? 'חינוכי' : 'קליני'} שלי`}
+                    members={t.members}
+                    color="blue"
+                  />
+                ))}
+
+                {/* Led interest groups */}
+                {(emp.ledGroups || []).map((g, i) => (
+                  <CollapsibleMembers
+                    key={i}
+                    title={`קבוצת העניין שלי — ${g.name}`}
+                    members={g.members}
+                    color="purple"
+                  />
+                ))}
               </div>
             </div>
           ))}
