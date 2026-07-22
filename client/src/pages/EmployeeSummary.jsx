@@ -72,24 +72,29 @@ export default function EmployeeSummary() {
           {results.map(emp => (
             <div key={emp.name} className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
               {/* Name bar */}
-              <div className="bg-blue-800 text-white px-4 py-2.5 font-semibold text-base">
-                {emp.name}
+              <div className={`${emp.isExternal ? 'bg-purple-800' : 'bg-blue-800'} text-white px-4 py-2.5 font-semibold text-base flex items-center justify-between`}>
+                <span>{emp.name}</span>
+                {emp.isExternal && <span className="text-xs bg-purple-600 px-2 py-0.5 rounded">חיצוני</span>}
               </div>
 
               <div className="px-4 py-3 space-y-3">
                 {/* Teams */}
                 <div>
-                  <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">צוותים</div>
+                  <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
+                    {emp.isExternal ? 'צוות קליני' : 'צוותים'}
+                  </div>
                   {emp.teams.length === 0
                     ? <span className="text-sm text-gray-400">לא משובץ לצוות</span>
                     : <div className="space-y-1">
                         {emp.teams.map((t, i) => (
                           <div key={i} className="flex items-center gap-2 text-sm">
-                            <span className={`text-xs px-2 py-0.5 rounded font-medium ${
-                              t.type === 'educational' ? 'bg-teal-100 text-teal-800' : 'bg-indigo-100 text-indigo-800'
-                            }`}>
-                              {t.type === 'educational' ? 'חינוכי' : 'קליני'}
-                            </span>
+                            {!emp.isExternal && (
+                              <span className={`text-xs px-2 py-0.5 rounded font-medium ${
+                                t.type === 'educational' ? 'bg-teal-100 text-teal-800' : 'bg-indigo-100 text-indigo-800'
+                              }`}>
+                                {t.type === 'educational' ? 'חינוכי' : 'קליני'}
+                              </span>
+                            )}
                             {t.isHead
                               ? <span className="text-gray-600">ראש צוות</span>
                               : <span className="text-gray-600">ראש צוות: <span className="font-medium text-gray-800">{t.headName}</span></span>
@@ -100,8 +105,8 @@ export default function EmployeeSummary() {
                   }
                 </div>
 
-                {/* Schools */}
-                {emp.schools?.length > 0 && (
+                {/* Schools — internal only */}
+                {!emp.isExternal && emp.schools?.length > 0 && (
                   <div>
                     <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">בתי ספר</div>
                     <div className="flex flex-wrap gap-1">
@@ -112,8 +117,8 @@ export default function EmployeeSummary() {
                   </div>
                 )}
 
-                {/* Gardens */}
-                {emp.gardens?.length > 0 && (
+                {/* Gardens — internal only */}
+                {!emp.isExternal && emp.gardens?.length > 0 && (
                   <div>
                     <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">גנים</div>
                     <div className="flex flex-wrap gap-1">
@@ -139,8 +144,8 @@ export default function EmployeeSummary() {
                   </div>
                 )}
 
-                {/* Supervisions given */}
-                {emp.supGiven.length > 0 && (
+                {/* Supervisions given — internal only */}
+                {!emp.isExternal && emp.supGiven.length > 0 && (
                   <div>
                     <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">הדרכות שאני נותן/ת</div>
                     <div className="space-y-2">
@@ -160,7 +165,7 @@ export default function EmployeeSummary() {
                   </div>
                 )}
 
-                {emp.supReceived.length === 0 && emp.supGiven.length === 0 && (
+                {emp.supReceived.length === 0 && (emp.isExternal || emp.supGiven.length === 0) && (
                   <div>
                     <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">הדרכות</div>
                     <span className="text-sm text-gray-400">אין הדרכות רשומות</span>

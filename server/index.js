@@ -37,7 +37,10 @@ async function main() {
     const kinder         = db.get('kinderAssignments').value();
     const interestGroups = db.get('interestGroups').value() || [];
 
-    const result = employees
+    const empNames = new Set(employees.map(e => e.displayName));
+
+    // Regular employees
+    const regular = employees
       .slice()
       .sort((a, b) => (a.displayName || '').localeCompare(b.displayName || '', 'he'))
       .map(emp => {
@@ -55,14 +58,42 @@ async function main() {
           .filter(k => k.employeeId === emp.id)
           .map(k => k.gardenName)
           .filter(Boolean);
-        const interestGroup = interestGroups.find(g => (g.memberDisplayNames || []).includes(name)) || null;
+        const interestGroup = interestGroups.find(g =>
+          (g.memberDisplayNames || []).includes(name) || (g.facilitatorNames || []).includes(name)) || null;
         const interestGroupInfo = interestGroup
           ? { name: interestGroup.name, facilitatorNames: interestGroup.facilitatorNames || [] }
           : null;
-        return { name, teams: empTeams, supReceived, supGiven, schools, gardens, interestGroup: interestGroupInfo };
+        return { name, isExternal: false, teams: empTeams, supReceived, supGiven, schools, gardens, interestGroup: interestGroupInfo };
       });
 
-    res.json(result);
+    // External employees — appear in supervisions/teams/interestGroups but not in employees
+    const externalNames = new Set();
+    supervisions.forEach(s => (s.superviseeNames || []).forEach(n => { if (!empNames.has(n)) externalNames.add(n); }));
+    teams.forEach(t => (t.externalMembers || []).forEach(n => { if (!empNames.has(n)) externalNames.add(n); }));
+    interestGroups.forEach(g => {
+      [...(g.memberDisplayNames || []), ...(g.facilitatorNames || [])].forEach(n => { if (!empNames.has(n)) externalNames.add(n); });
+    });
+
+    const external = [...externalNames].sort((a, b) => a.localeCompare(b, 'he')).map(name => {
+      const supReceived = supervisions.filter(s => (s.superviseeNames || []).includes(name));
+      const clinicalTeam = teams.find(t => t.type === 'clinical' && (t.externalMembers || []).includes(name));
+      const clinicalTeamInfo = clinicalTeam
+        ? { type: 'clinical', isHead: false, headName: clinicalTeam.headDisplayName }
+        : null;
+      const interestGroup = interestGroups.find(g =>
+        (g.memberDisplayNames || []).includes(name) || (g.facilitatorNames || []).includes(name)) || null;
+      const interestGroupInfo = interestGroup
+        ? { name: interestGroup.name, facilitatorNames: interestGroup.facilitatorNames || [] }
+        : null;
+      return {
+        name, isExternal: true,
+        teams: clinicalTeamInfo ? [clinicalTeamInfo] : [],
+        supReceived, supGiven: [], schools: [], gardens: [],
+        interestGroup: interestGroupInfo,
+      };
+    });
+
+    res.json([...regular, ...external]);
   });
 
   app.get('/api/public/frameworks', (req, res) => {
