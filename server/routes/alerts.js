@@ -70,29 +70,28 @@ router.get('/', (req, res) => {
     .filter(f => vacantSlotFwIds.has(f.id) && assignedActiveFwIds.has(f.id)) // יש גם מאויש וגם פנוי
     .map(f => ({ id: f.id, name: f.name, type: f.type }));
 
-  // הדרכות — פער בין מתוכנן לבפועל (סף: 0.5 שעות)
-  // כלל עסקי: פרטני=1ש למדריך/מודרך, קבוצתי=1.5ש סה"כ
+  // הדרכות — פער בין מתוכנן לבפועל
+  // כלל: hps=1 → פרטני (count×1ש); hps=1.5+count>1 → קבוצה (1.5ש); hps=1.5+count=1 → פרטני (1ש)
   const supervisions = db.get(activeCol('supervisions')).value();
-  const GROUP_TYPES = new Set(['psychotherapy', 'orientation', 'therapist_group']);
   const supAlerts = employees.map(emp => {
     const name = emp.displayName;
     const actualReceived = supervisions.reduce((sum, s) => {
-      if ((s.superviseeNames || []).includes(name))
-        return sum + (GROUP_TYPES.has(s.type) ? 1.5 : 1);
-      return sum;
+      if (!(s.superviseeNames || []).includes(name)) return sum;
+      return sum + (s.isGroup ? 1.5 : 1);
     }, 0);
     const actualGiven = supervisions.reduce((sum, s) => {
-      if (s.supervisorName === name)
-        return sum + (GROUP_TYPES.has(s.type) ? 1.5 : (s.superviseeNames || []).length * 1);
-      return sum;
+      if (s.supervisorName !== name) return sum;
+      const count = (s.superviseeNames || []).length;
+      if (!count) return sum;
+      return sum + (s.isGroup ? 1.5 : count * 1);
     }, 0);
     const plannedReceived = emp.supReceivedHours || 0;
     const plannedGiven    = emp.supGivenHours    || 0;
     const gapReceived = Math.round((actualReceived - plannedReceived) * 100) / 100;
     const gapGiven    = Math.round((actualGiven    - plannedGiven)    * 100) / 100;
     const alerts = [];
-    if (Math.abs(gapReceived) > 0.5) alerts.push({ field: 'מקבל', gap: gapReceived, actual: actualReceived, planned: plannedReceived });
-    if (Math.abs(gapGiven)    > 0.5) alerts.push({ field: 'נותן',  gap: gapGiven,    actual: actualGiven,    planned: plannedGiven });
+    if (gapReceived !== 0) alerts.push({ field: 'מקבל', gap: gapReceived, actual: actualReceived, planned: plannedReceived });
+    if (gapGiven    !== 0) alerts.push({ field: 'נותן',  gap: gapGiven,    actual: actualGiven,    planned: plannedGiven });
     if (!alerts.length) return null;
     return { id: emp.id, displayName: emp.displayName, alerts };
   }).filter(Boolean);
