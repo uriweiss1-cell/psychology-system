@@ -75,15 +75,19 @@ router.get('/', (req, res) => {
   const supervisions = db.get(activeCol('supervisions')).value();
   const supAlerts = employees.map(emp => {
     const name = emp.displayName;
-    const actualReceived = supervisions.reduce((sum, s) => {
-      if (!(s.superviseeNames || []).includes(name)) return sum;
-      return sum + (s.isGroup ? 1.5 : 1);
-    }, 0);
+    const supHours = (s, asGiver) => {
+      const count = (s.superviseeNames || []).length;
+      const hps = s.hoursPerSession || 1;
+      if (hps < 1.5) return asGiver ? count * 1 : 1; // hoursPerSession=1 → פרטני
+      if (count <= 1)  return 1;                       // 1.5 + מודרך יחיד → פרטני בפועל
+      return 1.5;                                      // 1.5 + קבוצה → 1.5ש סה"כ
+    };
+    const actualReceived = supervisions.reduce((sum, s) =>
+      (s.superviseeNames || []).includes(name) ? sum + supHours(s, false) : sum, 0);
     const actualGiven = supervisions.reduce((sum, s) => {
       if (s.supervisorName !== name) return sum;
       const count = (s.superviseeNames || []).length;
-      if (!count) return sum;
-      return sum + (s.isGroup ? 1.5 : count * 1);
+      return count ? sum + supHours(s, true) : sum;
     }, 0);
     const plannedReceived = emp.supReceivedHours || 0;
     const plannedGiven    = emp.supGivenHours    || 0;
