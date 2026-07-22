@@ -71,22 +71,19 @@ router.get('/', (req, res) => {
     .map(f => ({ id: f.id, name: f.name, type: f.type }));
 
   // הדרכות — פער בין מתוכנן לבפועל (סף: 0.5 שעות)
+  // כלל עסקי: פרטני=1ש למדריך/מודרך, קבוצתי=1.5ש סה"כ
   const supervisions = db.get(activeCol('supervisions')).value();
+  const GROUP_TYPES = new Set(['psychotherapy', 'orientation', 'therapist_group']);
   const supAlerts = employees.map(emp => {
     const name = emp.displayName;
-    // שעות שמקבל בפועל
     const actualReceived = supervisions.reduce((sum, s) => {
-      if ((s.superviseeNames || []).includes(name)) return sum + (s.hoursPerSession || 1);
+      if ((s.superviseeNames || []).includes(name))
+        return sum + (GROUP_TYPES.has(s.type) ? 1.5 : 1);
       return sum;
     }, 0);
-    // שעות שנותן בפועל
     const actualGiven = supervisions.reduce((sum, s) => {
-      if (s.supervisorName === name) {
-        const isIndividual = s.type === 'educational' || s.type === 'clinical';
-        return sum + (isIndividual
-          ? (s.superviseeNames || []).length * (s.hoursPerSession || 1)
-          : (s.hoursPerSession || 1.5));
-      }
+      if (s.supervisorName === name)
+        return sum + (GROUP_TYPES.has(s.type) ? 1.5 : (s.superviseeNames || []).length * 1);
       return sum;
     }, 0);
     const plannedReceived = emp.supReceivedHours || 0;
