@@ -75,19 +75,14 @@ router.get('/', (req, res) => {
   const supervisions = db.get(activeCol('supervisions')).value();
   const supAlerts = employees.map(emp => {
     const name = emp.displayName;
-    const supHours = (s, asGiver) => {
-      const count = (s.superviseeNames || []).length;
-      const hps = s.hoursPerSession || 1;
-      if (hps < 1.5) return asGiver ? count * 1 : 1; // hoursPerSession=1 → פרטני
-      if (count <= 1)  return 1;                       // 1.5 + מודרך יחיד → פרטני בפועל
-      return 1.5;                                      // 1.5 + קבוצה → 1.5ש סה"כ
-    };
+    const GROUP_TYPES = new Set(['psychotherapy', 'orientation', 'therapist_group', 'sup_of_sup', 'diagnostics', 'exam_prep']);
+    const isGroupSup = (s) => s.type === 'custom' ? s.isGroup === true : GROUP_TYPES.has(s.type);
     const actualReceived = supervisions.reduce((sum, s) =>
-      (s.superviseeNames || []).includes(name) ? sum + supHours(s, false) : sum, 0);
+      (s.superviseeNames || []).includes(name) ? sum + (isGroupSup(s) ? 1.5 : 1) : sum, 0);
     const actualGiven = supervisions.reduce((sum, s) => {
       if (s.supervisorName !== name) return sum;
       const count = (s.superviseeNames || []).length;
-      return count ? sum + supHours(s, true) : sum;
+      return count ? sum + (isGroupSup(s) ? 1.5 : count * 1) : sum;
     }, 0);
     const plannedReceived = emp.supReceivedHours || 0;
     const plannedGiven    = emp.supGivenHours    || 0;
