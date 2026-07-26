@@ -421,7 +421,10 @@ export default function Supervisions() {
                   <p className="font-semibold text-teal-700 mb-1">ללא הדרכה חינוכית פרטנית ({noEdSupervision.length}):</p>
                   <div className="flex flex-wrap gap-1">
                     {noEdSupervision.map(e => (
-                      <span key={e.id} className="badge bg-teal-100 text-teal-800">{e.displayName}</span>
+                      <span key={e.id} className="badge bg-teal-100 text-teal-800 flex items-center gap-1">
+                        {e.displayName}
+                        {e.isStudent && <span className="text-xs bg-amber-200 text-amber-800 px-1 rounded">סטודנטית</span>}
+                      </span>
                     ))}
                   </div>
                 </div>

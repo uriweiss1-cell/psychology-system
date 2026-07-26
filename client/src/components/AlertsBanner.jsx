@@ -168,8 +168,11 @@ export default function AlertsBanner({ page = 'workplan' }) {
               {noEdSupervision.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 items-start">
                   {noEdSupervision.map(e => (
-                    <ExemptableChip key={e.id} emp={e} exemptType="edSupervision"
-                      onExempt={addExemption} color="bg-teal-100 text-teal-800" />
+                    <span key={e.id} className="inline-flex items-center gap-1">
+                      <ExemptableChip emp={e} exemptType="edSupervision"
+                        onExempt={addExemption} color="bg-teal-100 text-teal-800" />
+                      {e.isStudent && <span className="text-xs bg-amber-200 text-amber-800 px-1 rounded -mr-1">סטודנטית</span>}
+                    </span>
                   ))}
                 </div>
               )}

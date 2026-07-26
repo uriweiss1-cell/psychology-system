@@ -400,7 +400,6 @@ export default function Standards() {
               <th className="table-header text-center">מ"מ</th>
               <th className="table-header">טלפון</th>
               <th className="table-header">הערות</th>
-              <th className="table-header text-center">סוג</th>
               <th className="table-header text-center">פעולות</th>
             </tr>
           </thead>
@@ -457,19 +456,6 @@ export default function Standards() {
                       onChange={v => setFieldEdit(emp.id, 'notes', v)} onSave={() => saveField(emp.id, 'notes')} />
                   </td>
                   <td className="table-cell text-center">
-                    <select
-                      className="input text-xs py-0.5"
-                      value={emp.type || 'employee'}
-                      onChange={async e => {
-                        await updateEmployee(emp.id, { type: e.target.value });
-                        load();
-                      }}
-                    >
-                      <option value="employee">עובד</option>
-                      <option value="student">סטודנטית</option>
-                    </select>
-                  </td>
-                  <td className="table-cell text-center">
                     <div className="flex items-center justify-center gap-1">
                       <button className="text-blue-400 hover:text-blue-600 text-xs" onClick={() => openCardByName(emp.displayName)} title="כרטיס עובד">👤</button>
                       <button className="text-red-400 hover:text-red-600 text-xs" onClick={() => handleDelete(emp)} title="מחק עובד">🗑️</button>
@@ -483,27 +469,28 @@ export default function Standards() {
       </div>
 
       {/* סטודנטיות */}
-      <div className="bg-white rounded shadow overflow-hidden">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-          <h2 className="text-base font-bold text-gray-700">סטודנטיות ({students.length})</h2>
+      <div className="rounded shadow overflow-hidden border-2 border-amber-400">
+        <div className="bg-amber-500 text-white px-4 py-3 flex items-center gap-2">
+          <span className="text-base font-bold">סטודנטיות</span>
+          <span className="bg-amber-300 text-amber-900 text-xs px-2 py-0.5 rounded font-semibold">{students.length}</span>
+          <span className="text-xs text-amber-100 mr-2">לא נכללות בחישובי תקנים · מקבלות התרעות הדרכה</span>
         </div>
         {filteredStudents.length === 0 ? (
-          <p className="text-sm text-gray-400 p-4">אין סטודנטיות רשומות</p>
+          <p className="text-sm text-gray-400 p-4 bg-white">אין סטודנטיות רשומות</p>
         ) : (
-          <table className="w-full text-sm">
+          <table className="w-full text-sm bg-amber-50">
             <thead>
-              <tr>
+              <tr className="bg-amber-100">
                 <th className="table-header">שם פרטי</th>
                 <th className="table-header">שם משפחה</th>
                 <th className="table-header">טלפון</th>
                 <th className="table-header">הערות</th>
-                <th className="table-header text-center">סוג</th>
                 <th className="table-header text-center">פעולות</th>
               </tr>
             </thead>
             <tbody>
               {filteredStudents.map(emp => (
-                <tr key={emp.id} className="hover:bg-yellow-50 bg-amber-50">
+                <tr key={emp.id} className="hover:bg-amber-100">
                   <td className="table-cell">
                     <EditField id={emp.id} field="firstName" value={getEditVal(emp, 'firstName')} type="text"
                       onChange={v => setFieldEdit(emp.id, 'firstName', v)} onSave={() => saveField(emp.id, 'firstName')} />
@@ -521,21 +508,13 @@ export default function Standards() {
                       onChange={v => setFieldEdit(emp.id, 'notes', v)} onSave={() => saveField(emp.id, 'notes')} />
                   </td>
                   <td className="table-cell text-center">
-                    <select
-                      className="input text-xs py-0.5 bg-amber-100 text-amber-800"
-                      value={emp.type || 'student'}
-                      onChange={async e => {
-                        await updateEmployee(emp.id, { type: e.target.value });
-                        load();
-                      }}
-                    >
-                      <option value="student">סטודנטית</option>
-                      <option value="employee">עובד</option>
-                    </select>
-                  </td>
-                  <td className="table-cell text-center">
-                    <div className="flex items-center justify-center gap-1">
+                    <div className="flex items-center justify-center gap-2">
                       <button className="text-blue-400 hover:text-blue-600 text-xs" onClick={() => openCardByName(emp.displayName)} title="כרטיס עובד">👤</button>
+                      <button
+                        className="text-xs bg-green-100 text-green-700 hover:bg-green-200 px-2 py-0.5 rounded"
+                        title="שדרג לעובד"
+                        onClick={async () => { await updateEmployee(emp.id, { type: 'employee' }); load(); }}
+                      >שדרג לעובד</button>
                       <button className="text-red-400 hover:text-red-600 text-xs" onClick={() => handleDelete(emp)} title="מחק">🗑️</button>
                     </div>
                   </td>

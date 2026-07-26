@@ -141,15 +141,16 @@ router.get('/', (req, res) => {
     return { id: emp.id, displayName: emp.displayName, gap, planned: plannedKinder, actual: actualKinder };
   }).filter(Boolean);
 
-  // עובדים שאינם מדריכי הדרכה חינוכית פרטנית ואינם מודרכים בה
+  // עובדים שאינם מדריכי הדרכה חינוכית פרטנית ואינם מודרכים בה (כולל סטודנטיות)
+  const allActiveEmps        = db.get(activeCol('employees')).value().filter(e => e.status === 'active' || !e.status);
   const educationalSups      = supervisions.filter(s => s.type === 'educational');
   const edSupervisors        = new Set(educationalSups.map(s => s.supervisorName).filter(Boolean));
   const edSupervisees        = new Set(educationalSups.flatMap(s => s.superviseeNames || []));
   const exemptions           = db.get('settings').get('exemptions').value() || [];
   const edExemptIds          = new Set(exemptions.filter(x => x.type === 'edSupervision').map(x => x.empId));
-  const noEdSupervision      = employees
+  const noEdSupervision      = allActiveEmps
     .filter(e => !edSupervisors.has(e.displayName) && !edSupervisees.has(e.displayName) && !edExemptIds.has(e.id))
-    .map(e => ({ id: e.id, displayName: e.displayName }));
+    .map(e => ({ id: e.id, displayName: e.displayName, isStudent: e.type === 'student' }));
 
   // עובדים שאינם משובצים לקבוצת עניין
   const interestGroups       = db.get(activeCol('interestGroups')).value() || [];
