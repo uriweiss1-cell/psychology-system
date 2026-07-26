@@ -145,6 +145,10 @@ export default function Standards() {
     setSettings(updated);
   };
 
+  // חישובי לוח סיכום — פסיכולוגים (ללא סטודנטיות)
+  const students     = employees.filter(e => e.type === 'student');
+  const nonStudents  = employees.filter(e => e.type !== 'student');
+
   const filtered = nonStudents.filter(e =>
     !filter || e.displayName?.includes(filter) || e.firstName?.includes(filter) || e.lastName?.includes(filter))
     .sort((a, b) => (a.displayName || '').localeCompare(b.displayName || '', 'he')
@@ -172,10 +176,6 @@ export default function Standards() {
     XLSX.utils.book_append_sheet(wb, ws, 'תקנים');
     XLSX.writeFile(wb, `תקנים${isDraft ? '_טיוטה' : ''}.xlsx`);
   };
-
-  // חישובי לוח סיכום — פסיכולוגים (ללא סטודנטיות)
-  const students     = employees.filter(e => e.type === 'student');
-  const nonStudents  = employees.filter(e => e.type !== 'student');
   const active       = nonStudents.filter(e => (e.status === 'active' || !e.status) && !e.isSubstitute);
   const maternity    = nonStudents.filter(e => e.status === 'maternity');
   const substitutes  = nonStudents.filter(e => e.isSubstitute && e.status !== 'inactive');
