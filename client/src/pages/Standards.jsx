@@ -21,7 +21,7 @@ export default function Standards() {
   const [editing, setEditing] = useState({});
   const [showAdd, setShowAdd] = useState(false);
   const [showImport, setShowImport] = useState(false);
-  const [newEmp, setNewEmp] = useState({ firstName: '', lastName: '', ftePercent: 1.0 });
+  const [newEmp, setNewEmp] = useState({ firstName: '', lastName: '', ftePercent: 1.0, type: 'employee' });
   const [editingApproved, setEditingApproved] = useState(false);
   const [approvedInput, setApprovedInput] = useState('');
   const [marked, setMarked] = useState(new Set());
@@ -79,7 +79,7 @@ export default function Standards() {
     const created = await createEmployee(newEmp);
     setEmployees(prev => prev.map(e => created.find ? created : e)); // update whole list (displayNames may have changed)
     load(); // reload all to reflect recalculated displayNames
-    setNewEmp({ firstName: '', lastName: '', ftePercent: 1.0 });
+    setNewEmp({ firstName: '', lastName: '', ftePercent: 1.0, type: 'employee' });
     setShowAdd(false);
   };
 
@@ -145,7 +145,11 @@ export default function Standards() {
     setSettings(updated);
   };
 
-  const filtered = employees.filter(e =>
+  const filtered = nonStudents.filter(e =>
+    !filter || e.displayName?.includes(filter) || e.firstName?.includes(filter) || e.lastName?.includes(filter))
+    .sort((a, b) => (a.displayName || '').localeCompare(b.displayName || '', 'he')
+  );
+  const filteredStudents = students.filter(e =>
     !filter || e.displayName?.includes(filter) || e.firstName?.includes(filter) || e.lastName?.includes(filter))
     .sort((a, b) => (a.displayName || '').localeCompare(b.displayName || '', 'he')
   );
@@ -169,10 +173,12 @@ export default function Standards() {
     XLSX.writeFile(wb, `תקנים${isDraft ? '_טיוטה' : ''}.xlsx`);
   };
 
-  // חישובי לוח סיכום — פסיכולוגים
-  const active       = employees.filter(e => (e.status === 'active' || !e.status) && !e.isSubstitute);
-  const maternity    = employees.filter(e => e.status === 'maternity');
-  const substitutes  = employees.filter(e => e.isSubstitute && e.status !== 'inactive');
+  // חישובי לוח סיכום — פסיכולוגים (ללא סטודנטיות)
+  const students     = employees.filter(e => e.type === 'student');
+  const nonStudents  = employees.filter(e => e.type !== 'student');
+  const active       = nonStudents.filter(e => (e.status === 'active' || !e.status) && !e.isSubstitute);
+  const maternity    = nonStudents.filter(e => e.status === 'maternity');
+  const substitutes  = nonStudents.filter(e => e.isSubstitute && e.status !== 'inactive');
   const approved     = settings.approvedPositions || 0;
 
   const activeSum    = active.reduce((s, e) => s + e.ftePercent, 0);
@@ -367,6 +373,13 @@ export default function Standards() {
               <label className="block text-xs text-gray-600 mb-1">אחוז משרה</label>
               <input className="input w-full" type="number" step="0.01" min="0.1" max="2" value={newEmp.ftePercent} onChange={e => setNewEmp(p => ({...p, ftePercent: parseFloat(e.target.value)}))} />
             </div>
+            <div>
+              <label className="block text-xs text-gray-600 mb-1">סוג</label>
+              <select className="input w-full" value={newEmp.type} onChange={e => setNewEmp(p => ({...p, type: e.target.value}))}>
+                <option value="employee">עובד</option>
+                <option value="student">סטודנטית</option>
+              </select>
+            </div>
           </div>
           <div className="flex gap-2">
             <button className="btn-primary" onClick={handleAdd}>הוסף</button>
@@ -375,7 +388,7 @@ export default function Standards() {
         </div>
       )}
 
-      <div className="bg-white rounded shadow overflow-hidden">
+      <div className="bg-white rounded shadow overflow-hidden mb-6">
         <table className="w-full text-sm">
           <thead>
             <tr>
@@ -387,6 +400,7 @@ export default function Standards() {
               <th className="table-header text-center">מ"מ</th>
               <th className="table-header">טלפון</th>
               <th className="table-header">הערות</th>
+              <th className="table-header text-center">סוג</th>
               <th className="table-header text-center">פעולות</th>
             </tr>
           </thead>
@@ -443,6 +457,19 @@ export default function Standards() {
                       onChange={v => setFieldEdit(emp.id, 'notes', v)} onSave={() => saveField(emp.id, 'notes')} />
                   </td>
                   <td className="table-cell text-center">
+                    <select
+                      className="input text-xs py-0.5"
+                      value={emp.type || 'employee'}
+                      onChange={async e => {
+                        await updateEmployee(emp.id, { type: e.target.value });
+                        load();
+                      }}
+                    >
+                      <option value="employee">עובד</option>
+                      <option value="student">סטודנטית</option>
+                    </select>
+                  </td>
+                  <td className="table-cell text-center">
                     <div className="flex items-center justify-center gap-1">
                       <button className="text-blue-400 hover:text-blue-600 text-xs" onClick={() => openCardByName(emp.displayName)} title="כרטיס עובד">👤</button>
                       <button className="text-red-400 hover:text-red-600 text-xs" onClick={() => handleDelete(emp)} title="מחק עובד">🗑️</button>
@@ -453,6 +480,70 @@ export default function Standards() {
             })}
           </tbody>
         </table>
+      </div>
+
+      {/* סטודנטיות */}
+      <div className="bg-white rounded shadow overflow-hidden">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+          <h2 className="text-base font-bold text-gray-700">סטודנטיות ({students.length})</h2>
+        </div>
+        {filteredStudents.length === 0 ? (
+          <p className="text-sm text-gray-400 p-4">אין סטודנטיות רשומות</p>
+        ) : (
+          <table className="w-full text-sm">
+            <thead>
+              <tr>
+                <th className="table-header">שם פרטי</th>
+                <th className="table-header">שם משפחה</th>
+                <th className="table-header">טלפון</th>
+                <th className="table-header">הערות</th>
+                <th className="table-header text-center">סוג</th>
+                <th className="table-header text-center">פעולות</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredStudents.map(emp => (
+                <tr key={emp.id} className="hover:bg-yellow-50 bg-amber-50">
+                  <td className="table-cell">
+                    <EditField id={emp.id} field="firstName" value={getEditVal(emp, 'firstName')} type="text"
+                      onChange={v => setFieldEdit(emp.id, 'firstName', v)} onSave={() => saveField(emp.id, 'firstName')} />
+                  </td>
+                  <td className="table-cell">
+                    <EditField id={emp.id} field="lastName" value={getEditVal(emp, 'lastName')} type="text"
+                      onChange={v => setFieldEdit(emp.id, 'lastName', v)} onSave={() => saveField(emp.id, 'lastName')} />
+                  </td>
+                  <td className="table-cell">
+                    <EditField id={emp.id} field="phone" value={getEditVal(emp, 'phone')} type="text"
+                      onChange={v => setFieldEdit(emp.id, 'phone', v)} onSave={() => saveField(emp.id, 'phone')} />
+                  </td>
+                  <td className="table-cell">
+                    <EditField id={emp.id} field="notes" value={getEditVal(emp, 'notes')} type="text"
+                      onChange={v => setFieldEdit(emp.id, 'notes', v)} onSave={() => saveField(emp.id, 'notes')} />
+                  </td>
+                  <td className="table-cell text-center">
+                    <select
+                      className="input text-xs py-0.5 bg-amber-100 text-amber-800"
+                      value={emp.type || 'student'}
+                      onChange={async e => {
+                        await updateEmployee(emp.id, { type: e.target.value });
+                        load();
+                      }}
+                    >
+                      <option value="student">סטודנטית</option>
+                      <option value="employee">עובד</option>
+                    </select>
+                  </td>
+                  <td className="table-cell text-center">
+                    <div className="flex items-center justify-center gap-1">
+                      <button className="text-blue-400 hover:text-blue-600 text-xs" onClick={() => openCardByName(emp.displayName)} title="כרטיס עובד">👤</button>
+                      <button className="text-red-400 hover:text-red-600 text-xs" onClick={() => handleDelete(emp)} title="מחק">🗑️</button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );

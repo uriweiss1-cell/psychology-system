@@ -17,7 +17,7 @@ function getTargetHours(ftePercent, targets) {
 }
 
 router.get('/', (req, res) => {
-  const employees = db.get(activeCol('employees')).value().filter(e => e.status === 'active' || !e.status);
+  const employees = db.get(activeCol('employees')).value().filter(e => (e.status === 'active' || !e.status) && e.type !== 'student');
   const frameworks = db.get(activeCol('frameworks')).value();
   const assignments = db.get(activeCol('assignments')).value();
   const kinderAssignments = db.get(activeCol('kinderAssignments')).value();

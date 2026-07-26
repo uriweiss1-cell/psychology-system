@@ -100,9 +100,10 @@ export default function EmployeeSummary() {
           {results.map(emp => (
             <div key={emp.name} className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
               {/* Name bar */}
-              <div className={`${emp.isExternal ? 'bg-purple-800' : 'bg-blue-800'} text-white px-4 py-2.5 font-semibold text-base flex items-center justify-between`}>
+              <div className={`${emp.isExternal ? 'bg-purple-800' : emp.isStudent ? 'bg-amber-700' : 'bg-blue-800'} text-white px-4 py-2.5 font-semibold text-base flex items-center justify-between`}>
                 <span>{emp.name}</span>
                 {emp.isExternal && <span className="text-xs bg-purple-600 px-2 py-0.5 rounded">חיצוני</span>}
+                {emp.isStudent && <span className="text-xs bg-amber-600 px-2 py-0.5 rounded">סטודנטית</span>}
               </div>
 
               <div className="px-4 py-3 space-y-3">

@@ -72,7 +72,7 @@ async function main() {
         const ledGroups = interestGroups
           .filter(g => (g.facilitatorNames || []).includes(name))
           .map(g => ({ name: g.name, members: g.memberDisplayNames || [] }));
-        return { name, isExternal: false, teams: empTeams, supReceived, supGiven, schools, gardens, interestGroup: interestGroupInfo, ledTeams, ledGroups };
+        return { name, isExternal: false, isStudent: emp.type === 'student', teams: empTeams, supReceived, supGiven, schools, gardens, interestGroup: interestGroupInfo, ledTeams, ledGroups };
       });
 
     // External employees — appear in supervisions/teams/interestGroups but not in employees
