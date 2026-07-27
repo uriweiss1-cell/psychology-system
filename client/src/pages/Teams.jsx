@@ -1,5 +1,5 @@
 import { useEffect, useState, useContext } from 'react';
-import { getTeams, updateTeam, createTeam, deleteTeam, getUnassigned, getEmployees, putExemptions } from '../api';
+import { getTeams, updateTeam, createTeam, deleteTeam, getUnassigned, getEmployees, putExemptions, getPublicVisibility, putPublicVisibility } from '../api';
 import { DraftContext } from '../App';
 import ClickableName from '../components/ClickableName';
 
@@ -66,13 +66,28 @@ export default function Teams() {
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState(null);
   const [editData, setEditData] = useState({});
+  const [pubHideEdTeams, setPubHideEdTeams] = useState(false);
+  const [pubHideClTeams, setPubHideClTeams] = useState(false);
 
   const load = async () => {
-    const [t, u, emps] = await Promise.all([getTeams(), getUnassigned(), getEmployees()]);
+    const [t, u, emps, vis] = await Promise.all([getTeams(), getUnassigned(), getEmployees(), getPublicVisibility()]);
     setTeams(t);
     setUnassigned(u);
     setEmployees(emps);
+    setPubHideEdTeams(vis.pubHideEducationalTeams || false);
+    setPubHideClTeams(vis.pubHideClinicalTeams || false);
     setLoading(false);
+  };
+
+  const togglePubEdTeams = async () => {
+    const next = !pubHideEdTeams;
+    setPubHideEdTeams(next);
+    await putPublicVisibility({ pubHideEducationalTeams: next });
+  };
+  const togglePubClTeams = async () => {
+    const next = !pubHideClTeams;
+    setPubHideClTeams(next);
+    await putPublicVisibility({ pubHideClinicalTeams: next });
   };
 
   useEffect(() => { load(); }, []);
@@ -112,10 +127,6 @@ export default function Teams() {
     setUnassigned(u);
   };
 
-  const handleToggleHidden = async (team) => {
-    const updated = await updateTeam(team.id, { hidden: !team.hidden });
-    setTeams(prev => prev.map(t => t.id === team.id ? { ...t, hidden: updated.hidden } : t));
-  };
 
   const exemptions = unassigned.exemptions || [];
   const edExemptions = exemptions.filter(x => x.type === 'teamEd');
@@ -181,28 +192,42 @@ export default function Teams() {
         {/* Educational teams */}
         <div>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-base font-bold text-teal-700 flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full bg-teal-600 inline-block"></span>
-              צוותים חינוכיים
-            </h2>
+            <div className="flex items-center gap-2">
+              <h2 className="text-base font-bold text-teal-700 flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full bg-teal-600 inline-block"></span>
+                צוותים חינוכיים
+              </h2>
+              <button
+                className={`text-xs px-2 py-0.5 rounded border ${pubHideEdTeams ? 'bg-red-50 border-red-300 text-red-700' : 'bg-green-50 border-green-300 text-green-700'}`}
+                onClick={togglePubEdTeams}
+                title={pubHideEdTeams ? 'מוסתר מהעובדים — לחץ להצגה' : 'גלוי לעובדים — לחץ להסתרה'}
+              >{pubHideEdTeams ? '🙈' : '👁'}</button>
+            </div>
             {isDraft && <button className="btn-secondary text-xs py-1" onClick={() => handleCreate('educational')}>+ צוות חדש</button>}
           </div>
           <div className="space-y-4">
-            {edTeams.map(team => <TeamCard key={team.id} team={team} editing={editingId === team.id} editData={editData} setEditData={setEditData} onEdit={startEdit} onSave={saveEdit} onCancel={() => setEditingId(null)} isDraft={isDraft} onDelete={handleDelete} onToggleHidden={handleToggleHidden} />)}
+            {edTeams.map(team => <TeamCard key={team.id} team={team} editing={editingId === team.id} editData={editData} setEditData={setEditData} onEdit={startEdit} onSave={saveEdit} onCancel={() => setEditingId(null)} isDraft={isDraft} onDelete={handleDelete} />)}
           </div>
         </div>
 
         {/* Clinical teams */}
         <div>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-base font-bold text-indigo-700 flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full bg-indigo-600 inline-block"></span>
-              צוותים קליניים
-            </h2>
+            <div className="flex items-center gap-2">
+              <h2 className="text-base font-bold text-indigo-700 flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full bg-indigo-600 inline-block"></span>
+                צוותים קליניים
+              </h2>
+              <button
+                className={`text-xs px-2 py-0.5 rounded border ${pubHideClTeams ? 'bg-red-50 border-red-300 text-red-700' : 'bg-green-50 border-green-300 text-green-700'}`}
+                onClick={togglePubClTeams}
+                title={pubHideClTeams ? 'מוסתר מהעובדים — לחץ להצגה' : 'גלוי לעובדים — לחץ להסתרה'}
+              >{pubHideClTeams ? '🙈' : '👁'}</button>
+            </div>
             {isDraft && <button className="btn-secondary text-xs py-1" onClick={() => handleCreate('clinical')}>+ צוות חדש</button>}
           </div>
           <div className="space-y-4">
-            {clTeams.map(team => <TeamCard key={team.id} team={team} editing={editingId === team.id} editData={editData} setEditData={setEditData} onEdit={startEdit} onSave={saveEdit} onCancel={() => setEditingId(null)} isDraft={isDraft} onDelete={handleDelete} onToggleHidden={handleToggleHidden} />)}
+            {clTeams.map(team => <TeamCard key={team.id} team={team} editing={editingId === team.id} editData={editData} setEditData={setEditData} onEdit={startEdit} onSave={saveEdit} onCancel={() => setEditingId(null)} isDraft={isDraft} onDelete={handleDelete} />)}
           </div>
         </div>
       </div>
@@ -210,7 +235,7 @@ export default function Teams() {
   );
 }
 
-function TeamCard({ team, editing, editData, setEditData, onEdit, onSave, onCancel, isDraft, onDelete, onToggleHidden }) {
+function TeamCard({ team, editing, editData, setEditData, onEdit, onSave, onCancel, isDraft, onDelete }) {
   const color = team.type === 'educational' ? 'teal' : 'indigo';
   const allMembers = [team.headDisplayName, ...(team.memberDisplayNames || [])];
   const extMembers = team.externalMembers || [];
@@ -240,19 +265,13 @@ function TeamCard({ team, editing, editData, setEditData, onEdit, onSave, onCanc
 
   return (
     <div className={`border border-${color}-200 rounded-lg overflow-hidden`}>
-      <div className={`bg-${color}-600 text-white px-4 py-2 flex items-center justify-between ${team.hidden ? 'opacity-60' : ''}`}>
+      <div className={`bg-${color}-600 text-white px-4 py-2 flex items-center justify-between`}>
         <div>
           <span className="text-xs opacity-75">ראש צוות:</span>
           <ClickableName name={team.headDisplayName} className="font-semibold mr-1 text-white" />
-          {team.hidden && <span className="text-xs bg-black/20 px-1.5 py-0.5 rounded mr-2">מוסתר מעובדים</span>}
         </div>
         <div className="flex items-center gap-2">
           <span className="text-xs opacity-75">{allMembers.length} חברים</span>
-          <button
-            className="text-white/80 hover:text-white text-xs"
-            title={team.hidden ? 'מוסתר מעובדים — לחץ להצגה' : 'גלוי לעובדים — לחץ להסתרה'}
-            onClick={() => onToggleHidden(team)}
-          >{team.hidden ? '🙈' : '👁'}</button>
           <button className="text-white/80 hover:text-white text-xs" onClick={() => onEdit(team)}>✏️ עריכה</button>
           {isDraft && <button className="text-white/60 hover:text-red-300 text-xs" onClick={() => onDelete(team.id)}>🗑️</button>}
         </div>

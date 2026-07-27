@@ -29,13 +29,27 @@ async function main() {
 
   app.get('/api/public/employee-summary', (req, res) => {
     const { db } = require('./database');
+    const settings       = db.get('settings').value();
+    const pubHideSupTypes      = new Set(settings.pubHideSupTypes || []);
+    const pubHideEdTeams       = !!settings.pubHideEducationalTeams;
+    const pubHideClTeams       = !!settings.pubHideClinicalTeams;
+    const pubHideInterestGroups = !!settings.pubHideInterestGroups;
+
     const employees      = db.get('employees').value().filter(e => e.status !== 'inactive');
     const teams          = db.get('teams').value();
     const supervisions   = db.get('supervisions').value();
     const frameworks     = db.get('frameworks').value();
     const assignments    = db.get('assignments').value();
     const kinder         = db.get('kinderAssignments').value();
-    const interestGroups = db.get('interestGroups').value() || [];
+    const allInterestGroups = db.get('interestGroups').value() || [];
+    const interestGroups = pubHideInterestGroups ? [] : allInterestGroups;
+
+    const isSupVisible = (s) => {
+      if (s.type === 'custom') return !pubHideSupTypes.has('custom_' + (s.customLabel || ''));
+      return !pubHideSupTypes.has(s.type);
+    };
+    const isTeamVisible = (t) =>
+      t.type === 'educational' ? !pubHideEdTeams : !pubHideClTeams;
 
     const empNames = new Set(employees.map(e => e.displayName));
 
@@ -46,10 +60,10 @@ async function main() {
       .map(emp => {
         const name = emp.displayName;
         const empTeams = teams
-          .filter(t => !t.hidden && (t.headDisplayName === name || (t.memberDisplayNames || []).includes(name)))
+          .filter(t => isTeamVisible(t) && (t.headDisplayName === name || (t.memberDisplayNames || []).includes(name)))
           .map(t => ({ type: t.type, isHead: t.headDisplayName === name, headName: t.headDisplayName }));
-        const supReceived = supervisions.filter(s => !s.hidden && (s.superviseeNames || []).includes(name));
-        const supGiven    = supervisions.filter(s => !s.hidden && s.supervisorName === name);
+        const supReceived = supervisions.filter(s => isSupVisible(s) && (s.superviseeNames || []).includes(name));
+        const supGiven    = supervisions.filter(s => isSupVisible(s) && s.supervisorName === name);
         const schools = assignments
           .filter(a => a.employeeId === emp.id && a.frameworkId !== 0)
           .map(a => { const fw = frameworks.find(f => f.id === a.frameworkId); return fw ? fw.name : null; })
@@ -64,12 +78,12 @@ async function main() {
           ? { name: interestGroup.name, facilitatorNames: interestGroup.facilitatorNames || [] }
           : null;
         const ledTeams = teams
-          .filter(t => !t.hidden && t.headDisplayName === name)
+          .filter(t => isTeamVisible(t) && t.headDisplayName === name)
           .map(t => ({
             type: t.type,
             members: [...(t.memberDisplayNames || []), ...(t.externalMembers || [])],
           }));
-        const ledGroups = interestGroups
+        const ledGroups = pubHideInterestGroups ? [] : allInterestGroups
           .filter(g => (g.facilitatorNames || []).includes(name))
           .map(g => ({ name: g.name, members: g.memberDisplayNames || [] }));
         return { name, isExternal: false, isStudent: emp.type === 'student', teams: empTeams, supReceived, supGiven, schools, gardens, interestGroup: interestGroupInfo, ledTeams, ledGroups };
@@ -77,15 +91,15 @@ async function main() {
 
     // External employees — appear in supervisions/teams/interestGroups but not in employees
     const externalNames = new Set();
-    supervisions.forEach(s => (s.superviseeNames || []).forEach(n => { if (!empNames.has(n)) externalNames.add(n); }));
-    teams.forEach(t => (t.externalMembers || []).forEach(n => { if (!empNames.has(n)) externalNames.add(n); }));
+    supervisions.filter(isSupVisible).forEach(s => (s.superviseeNames || []).forEach(n => { if (!empNames.has(n)) externalNames.add(n); }));
+    teams.filter(isTeamVisible).forEach(t => (t.externalMembers || []).forEach(n => { if (!empNames.has(n)) externalNames.add(n); }));
     interestGroups.forEach(g => {
       [...(g.memberDisplayNames || []), ...(g.facilitatorNames || [])].forEach(n => { if (!empNames.has(n)) externalNames.add(n); });
     });
 
     const external = [...externalNames].sort((a, b) => a.localeCompare(b, 'he')).map(name => {
-      const supReceived = supervisions.filter(s => (s.superviseeNames || []).includes(name));
-      const clinicalTeam = teams.find(t => t.type === 'clinical' && (t.externalMembers || []).includes(name));
+      const supReceived = supervisions.filter(s => isSupVisible(s) && (s.superviseeNames || []).includes(name));
+      const clinicalTeam = teams.find(t => isTeamVisible(t) && t.type === 'clinical' && (t.externalMembers || []).includes(name));
       const clinicalTeamInfo = clinicalTeam
         ? { type: 'clinical', isHead: false, headName: clinicalTeam.headDisplayName }
         : null;

@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useContext } from 'react';
-import { getSupervisions, createSupervision, updateSupervision, deleteSupervision, getAlerts, getEmployees, getHiddenSupTypes, putHiddenSupTypes, getInterestGroups, createInterestGroup, updateInterestGroup, deleteInterestGroup } from '../api';
+import { getSupervisions, createSupervision, updateSupervision, deleteSupervision, getAlerts, getEmployees, getHiddenSupTypes, putHiddenSupTypes, getInterestGroups, createInterestGroup, updateInterestGroup, deleteInterestGroup, getPublicVisibility, putPublicVisibility } from '../api';
 import AlertsBanner from '../components/AlertsBanner';
 import { EmployeeCardContext } from '../App';
 import ClickableName from '../components/ClickableName';
@@ -80,16 +80,34 @@ export default function Supervisions() {
   const [editGroupData, setEditGroupData] = useState({});
   const [showAddGroup, setShowAddGroup] = useState(false);
   const [newGroup, setNewGroup] = useState({ name: '', facilitatorNames: '', memberDisplayNames: '' });
+  const [pubHideSupTypes, setPubHideSupTypes] = useState([]);
+  const [pubHideInterestGroups, setPubHideInterestGroups] = useState(false);
 
   const load = async () => {
-    const [sups, alertsData, emps, hidden, groups] = await Promise.all([getSupervisions(), getAlerts(), getEmployees(true), getHiddenSupTypes(), getInterestGroups()]);
+    const [sups, alertsData, emps, hidden, groups, vis] = await Promise.all([getSupervisions(), getAlerts(), getEmployees(true), getHiddenSupTypes(), getInterestGroups(), getPublicVisibility()]);
     setSupervisions(sups);
     setHiddenTypes(hidden || []);
     setNoEdSupervision(alertsData.noEdSupervision || []);
     setSupAlerts(alertsData.supAlerts || []);
     setEmployees(emps);
     setInterestGroups(groups || []);
+    setPubHideSupTypes(vis.pubHideSupTypes || []);
+    setPubHideInterestGroups(vis.pubHideInterestGroups || false);
     setLoading(false);
+  };
+
+  const togglePubSupType = async (typeKey) => {
+    const next = pubHideSupTypes.includes(typeKey)
+      ? pubHideSupTypes.filter(t => t !== typeKey)
+      : [...pubHideSupTypes, typeKey];
+    setPubHideSupTypes(next);
+    await putPublicVisibility({ pubHideSupTypes: next });
+  };
+
+  const togglePubInterestGroups = async () => {
+    const next = !pubHideInterestGroups;
+    setPubHideInterestGroups(next);
+    await putPublicVisibility({ pubHideInterestGroups: next });
   };
 
   useEffect(() => { load(); }, []);
@@ -232,11 +250,14 @@ export default function Supervisions() {
   const renderGroup = (g) => {
     const { key, label, color, items, typeKey, customLabel: cLabel } = g;
     const isGroupVal = getGroupIsGroup(g);
+    const pubKey = typeKey === 'custom' ? 'custom_' + (cLabel || '') : typeKey;
+    const isHiddenFromPublic = pubHideSupTypes.includes(pubKey);
     return (
     <div key={key}>
-      <div className={`flex items-center justify-between text-white text-sm font-semibold px-3 py-2 rounded-t ${color}`}>
+      <div className={`flex items-center justify-between text-white text-sm font-semibold px-3 py-2 rounded-t ${color} ${isHiddenFromPublic ? 'opacity-60' : ''}`}>
         <div className="flex items-center gap-2">
           <span>{label}</span>
+          {isHiddenFromPublic && <span className="text-xs bg-black/20 px-1.5 py-0.5 rounded">מוסתר מעובדים</span>}
           <button
             className={`text-xs px-2 py-0.5 rounded-full border border-white/40 opacity-80 hover:opacity-100 ${isGroupVal ? 'bg-purple-800/60' : 'bg-teal-800/60'}`}
             title="לחץ לשינוי פרטני/קבוצתי"
@@ -245,11 +266,18 @@ export default function Supervisions() {
             {isGroupVal ? 'קבוצתי' : 'פרטני'}
           </button>
         </div>
-        <button
-          className="opacity-60 hover:opacity-100 text-xs px-1"
-          title="מחיקת קטגוריה"
-          onClick={() => handleDeleteCategory(typeKey, cLabel)}
-        >🗑️</button>
+        <div className="flex items-center gap-2">
+          <button
+            className="opacity-70 hover:opacity-100 text-xs"
+            title={isHiddenFromPublic ? 'מוסתר מהעובדים — לחץ להצגה' : 'גלוי לעובדים — לחץ להסתרה'}
+            onClick={() => togglePubSupType(pubKey)}
+          >{isHiddenFromPublic ? '🙈' : '👁'}</button>
+          <button
+            className="opacity-60 hover:opacity-100 text-xs px-1"
+            title="מחיקת קטגוריה"
+            onClick={() => handleDeleteCategory(typeKey, cLabel)}
+          >🗑️</button>
+        </div>
       </div>
       <div className="bg-white border border-gray-200 rounded-b overflow-hidden">
         <table className="w-full text-sm">
@@ -280,7 +308,7 @@ export default function Supervisions() {
                 </td>
               </tr>
             ) : (
-              <tr key={s.id} className={`hover:bg-gray-50 ${s.hidden ? 'opacity-50 bg-gray-50' : ''}`}>
+              <tr key={s.id} className="hover:bg-gray-50">
                 <td className="table-cell font-medium">
                   {s.supervisorName
                     ? s.isExternal
@@ -301,11 +329,6 @@ export default function Supervisions() {
                 </td>
                 <td className="table-cell text-gray-500 text-xs">{s.notes}</td>
                 <td className="table-cell text-center">
-                  <button
-                    className={`text-xs ml-1 ${s.hidden ? 'text-gray-400 hover:text-gray-600' : 'text-green-500 hover:text-green-700'}`}
-                    title={s.hidden ? 'מוסתר מהעובדים — לחץ להצגה' : 'גלוי לעובדים — לחץ להסתרה'}
-                    onClick={async () => { const updated = await updateSupervision(s.id, { hidden: !s.hidden }); setSupervisions(prev => prev.map(x => x.id === s.id ? { ...x, hidden: updated.hidden } : x)); }}
-                  >{s.hidden ? '🙈' : '👁'}</button>
                   <button className="text-blue-400 hover:text-blue-600 text-xs ml-1" onClick={() => startEdit(s)}>✏️</button>
                   <button className="text-red-400 hover:text-red-600 text-xs" onClick={() => handleDelete(s.id, s.supervisorName || 'הרשומה')}>🗑️</button>
                 </td>
@@ -577,7 +600,16 @@ export default function Supervisions() {
       {/* קבוצות עניין */}
       <div className="mt-8">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-bold text-gray-800">קבוצות עניין</h2>
+          <div className="flex items-center gap-3">
+            <h2 className="text-lg font-bold text-gray-800">קבוצות עניין</h2>
+            <button
+              className={`text-xs px-2 py-0.5 rounded border flex items-center gap-1 ${pubHideInterestGroups ? 'bg-red-50 border-red-300 text-red-700' : 'bg-green-50 border-green-300 text-green-700'}`}
+              title={pubHideInterestGroups ? 'מוסתר מהעובדים — לחץ להצגה' : 'גלוי לעובדים — לחץ להסתרה'}
+              onClick={togglePubInterestGroups}
+            >
+              {pubHideInterestGroups ? '🙈 מוסתר מעובדים' : '👁 גלוי לעובדים'}
+            </button>
+          </div>
           <button className="btn-primary text-sm" onClick={() => setShowAddGroup(true)}>+ קבוצה חדשה</button>
         </div>
 

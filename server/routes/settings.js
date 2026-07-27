@@ -16,7 +16,7 @@ router.get('/', (req, res) => {
 
 router.put('/', (req, res) => {
   const col = settingsCol();
-  const allowed = ['approvedPositions', 'approvedSecretaryPositions', 'freeHoursTargets', 'hideFrameworksPage'];
+  const allowed = ['approvedPositions', 'approvedSecretaryPositions', 'freeHoursTargets', 'hideFrameworksPage', 'pubHideSupTypes', 'pubHideEducationalTeams', 'pubHideClinicalTeams', 'pubHideInterestGroups'];
   const update = {};
   allowed.forEach(k => { if (req.body[k] !== undefined) update[k] = req.body[k]; });
   db.get(col).assign(update).write();

@@ -63,7 +63,13 @@ export const updateSpecEdClass   = (id, data) => api.put(`/spec-ed/${id}`, data)
 export const deleteSpecEdClass   = (id) => api.delete(`/spec-ed/${id}`).then(r => r.data);
 export const advanceSpecEdYear   = () => api.post('/spec-ed/advance-year').then(r => r.data);
 
-export const getPublicVisibility  = () => api.get('/settings').then(r => ({ hideFrameworksPage: r.data.hideFrameworksPage || false }));
+export const getPublicVisibility  = () => api.get('/settings').then(r => ({
+  hideFrameworksPage:       r.data.hideFrameworksPage || false,
+  pubHideSupTypes:          r.data.pubHideSupTypes || [],
+  pubHideEducationalTeams:  r.data.pubHideEducationalTeams || false,
+  pubHideClinicalTeams:     r.data.pubHideClinicalTeams || false,
+  pubHideInterestGroups:    r.data.pubHideInterestGroups || false,
+}));
 export const putPublicVisibility  = (data) => api.put('/settings', data).then(r => r.data);
 
 export const getSupervisions   = () => api.get('/supervisions').then(r => r.data);

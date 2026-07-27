@@ -28,7 +28,7 @@ router.put('/:id', (req, res) => {
     }
   }
 
-  const allowed = ['headDisplayName','memberDisplayNames','externalMembers','hidden'];
+  const allowed = ['headDisplayName','memberDisplayNames','externalMembers'];
   const update = {};
   allowed.forEach(k => { if (req.body[k] !== undefined) update[k] = req.body[k]; });
   db.get(col).find({ id }).assign(update).write();
