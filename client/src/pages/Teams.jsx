@@ -112,6 +112,11 @@ export default function Teams() {
     setUnassigned(u);
   };
 
+  const handleToggleHidden = async (team) => {
+    const updated = await updateTeam(team.id, { hidden: !team.hidden });
+    setTeams(prev => prev.map(t => t.id === team.id ? { ...t, hidden: updated.hidden } : t));
+  };
+
   const exemptions = unassigned.exemptions || [];
   const edExemptions = exemptions.filter(x => x.type === 'teamEd');
   const clExemptions = exemptions.filter(x => x.type === 'teamClin');
@@ -183,7 +188,7 @@ export default function Teams() {
             {isDraft && <button className="btn-secondary text-xs py-1" onClick={() => handleCreate('educational')}>+ צוות חדש</button>}
           </div>
           <div className="space-y-4">
-            {edTeams.map(team => <TeamCard key={team.id} team={team} editing={editingId === team.id} editData={editData} setEditData={setEditData} onEdit={startEdit} onSave={saveEdit} onCancel={() => setEditingId(null)} isDraft={isDraft} onDelete={handleDelete} />)}
+            {edTeams.map(team => <TeamCard key={team.id} team={team} editing={editingId === team.id} editData={editData} setEditData={setEditData} onEdit={startEdit} onSave={saveEdit} onCancel={() => setEditingId(null)} isDraft={isDraft} onDelete={handleDelete} onToggleHidden={handleToggleHidden} />)}
           </div>
         </div>
 
@@ -197,7 +202,7 @@ export default function Teams() {
             {isDraft && <button className="btn-secondary text-xs py-1" onClick={() => handleCreate('clinical')}>+ צוות חדש</button>}
           </div>
           <div className="space-y-4">
-            {clTeams.map(team => <TeamCard key={team.id} team={team} editing={editingId === team.id} editData={editData} setEditData={setEditData} onEdit={startEdit} onSave={saveEdit} onCancel={() => setEditingId(null)} isDraft={isDraft} onDelete={handleDelete} />)}
+            {clTeams.map(team => <TeamCard key={team.id} team={team} editing={editingId === team.id} editData={editData} setEditData={setEditData} onEdit={startEdit} onSave={saveEdit} onCancel={() => setEditingId(null)} isDraft={isDraft} onDelete={handleDelete} onToggleHidden={handleToggleHidden} />)}
           </div>
         </div>
       </div>
@@ -205,7 +210,7 @@ export default function Teams() {
   );
 }
 
-function TeamCard({ team, editing, editData, setEditData, onEdit, onSave, onCancel, isDraft, onDelete }) {
+function TeamCard({ team, editing, editData, setEditData, onEdit, onSave, onCancel, isDraft, onDelete, onToggleHidden }) {
   const color = team.type === 'educational' ? 'teal' : 'indigo';
   const allMembers = [team.headDisplayName, ...(team.memberDisplayNames || [])];
   const extMembers = team.externalMembers || [];
@@ -235,13 +240,19 @@ function TeamCard({ team, editing, editData, setEditData, onEdit, onSave, onCanc
 
   return (
     <div className={`border border-${color}-200 rounded-lg overflow-hidden`}>
-      <div className={`bg-${color}-600 text-white px-4 py-2 flex items-center justify-between`}>
+      <div className={`bg-${color}-600 text-white px-4 py-2 flex items-center justify-between ${team.hidden ? 'opacity-60' : ''}`}>
         <div>
           <span className="text-xs opacity-75">ראש צוות:</span>
           <ClickableName name={team.headDisplayName} className="font-semibold mr-1 text-white" />
+          {team.hidden && <span className="text-xs bg-black/20 px-1.5 py-0.5 rounded mr-2">מוסתר מעובדים</span>}
         </div>
         <div className="flex items-center gap-2">
           <span className="text-xs opacity-75">{allMembers.length} חברים</span>
+          <button
+            className="text-white/80 hover:text-white text-xs"
+            title={team.hidden ? 'מוסתר מעובדים — לחץ להצגה' : 'גלוי לעובדים — לחץ להסתרה'}
+            onClick={() => onToggleHidden(team)}
+          >{team.hidden ? '🙈' : '👁'}</button>
           <button className="text-white/80 hover:text-white text-xs" onClick={() => onEdit(team)}>✏️ עריכה</button>
           {isDraft && <button className="text-white/60 hover:text-red-300 text-xs" onClick={() => onDelete(team.id)}>🗑️</button>}
         </div>

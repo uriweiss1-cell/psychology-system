@@ -1,6 +1,6 @@
 import { useEffect, useState, useContext } from 'react';
 import * as XLSX from 'xlsx';
-import { getKinder, getEmployees, createKinder, updateKinder, deleteKinder, previewImport, applyImport, getAlerts } from '../api';
+import { getKinder, getEmployees, createKinder, updateKinder, deleteKinder, previewImport, applyImport, getAlerts, getPublicVisibility, putPublicVisibility } from '../api';
 import ImportModal from '../components/ImportModal';
 import AlertsBanner from '../components/AlertsBanner';
 import { DraftContext, EmployeeCardContext } from '../App';
@@ -28,13 +28,21 @@ export default function Kindergartens() {
   const { openCardById } = useContext(EmployeeCardContext);
   const [freeHoursAlerts, setFreeHoursAlerts] = useState([]);
   const [alertsOpen, setAlertsOpen] = useState(true);
+  const [hideFrameworksPage, setHideFrameworksPage] = useState(false);
 
   const load = async () => {
-    const [asgns, emps, alertsData] = await Promise.all([getKinder(), getEmployees(true), getAlerts()]);
+    const [asgns, emps, alertsData, vis] = await Promise.all([getKinder(), getEmployees(true), getAlerts(), getPublicVisibility()]);
     setAssignments(asgns);
     setEmployees(emps);
     setFreeHoursAlerts(alertsData.freeHoursAlerts || []);
+    setHideFrameworksPage(vis.hideFrameworksPage);
     setLoading(false);
+  };
+
+  const toggleHideFrameworks = async () => {
+    const next = !hideFrameworksPage;
+    await putPublicVisibility({ hideFrameworksPage: next });
+    setHideFrameworksPage(next);
   };
 
   useEffect(() => { load(); }, []);
@@ -100,6 +108,12 @@ export default function Kindergartens() {
 
   return (
     <div>
+      <div className={`flex items-center justify-between mb-3 px-3 py-2 rounded border text-sm ${hideFrameworksPage ? 'bg-red-50 border-red-200 text-red-800' : 'bg-green-50 border-green-200 text-green-800'}`}>
+        <span>{hideFrameworksPage ? '🙈 דף שיבוצי בתי הספר והגנים מוסתר מהעובדים' : '👁 דף שיבוצי בתי הספר והגנים גלוי לעובדים'}</span>
+        <button className="text-xs border px-2 py-0.5 rounded hover:opacity-80" onClick={toggleHideFrameworks}>
+          {hideFrameworksPage ? 'הצג לעובדים' : 'הסתר מהעובדים'}
+        </button>
+      </div>
       <AlertsBanner page="kinder" />
       {showImport && (
         <ImportModal

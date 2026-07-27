@@ -280,7 +280,7 @@ export default function Supervisions() {
                 </td>
               </tr>
             ) : (
-              <tr key={s.id} className="hover:bg-gray-50">
+              <tr key={s.id} className={`hover:bg-gray-50 ${s.hidden ? 'opacity-50 bg-gray-50' : ''}`}>
                 <td className="table-cell font-medium">
                   {s.supervisorName
                     ? s.isExternal
@@ -301,6 +301,11 @@ export default function Supervisions() {
                 </td>
                 <td className="table-cell text-gray-500 text-xs">{s.notes}</td>
                 <td className="table-cell text-center">
+                  <button
+                    className={`text-xs ml-1 ${s.hidden ? 'text-gray-400 hover:text-gray-600' : 'text-green-500 hover:text-green-700'}`}
+                    title={s.hidden ? 'מוסתר מהעובדים — לחץ להצגה' : 'גלוי לעובדים — לחץ להסתרה'}
+                    onClick={async () => { const updated = await updateSupervision(s.id, { hidden: !s.hidden }); setSupervisions(prev => prev.map(x => x.id === s.id ? { ...x, hidden: updated.hidden } : x)); }}
+                  >{s.hidden ? '🙈' : '👁'}</button>
                   <button className="text-blue-400 hover:text-blue-600 text-xs ml-1" onClick={() => startEdit(s)}>✏️</button>
                   <button className="text-red-400 hover:text-red-600 text-xs" onClick={() => handleDelete(s.id, s.supervisorName || 'הרשומה')}>🗑️</button>
                 </td>

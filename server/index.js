@@ -46,10 +46,10 @@ async function main() {
       .map(emp => {
         const name = emp.displayName;
         const empTeams = teams
-          .filter(t => t.headDisplayName === name || (t.memberDisplayNames || []).includes(name))
+          .filter(t => !t.hidden && (t.headDisplayName === name || (t.memberDisplayNames || []).includes(name)))
           .map(t => ({ type: t.type, isHead: t.headDisplayName === name, headName: t.headDisplayName }));
-        const supReceived = supervisions.filter(s => (s.superviseeNames || []).includes(name));
-        const supGiven    = supervisions.filter(s => s.supervisorName === name);
+        const supReceived = supervisions.filter(s => !s.hidden && (s.superviseeNames || []).includes(name));
+        const supGiven    = supervisions.filter(s => !s.hidden && s.supervisorName === name);
         const schools = assignments
           .filter(a => a.employeeId === emp.id && a.frameworkId !== 0)
           .map(a => { const fw = frameworks.find(f => f.id === a.frameworkId); return fw ? fw.name : null; })
@@ -64,7 +64,7 @@ async function main() {
           ? { name: interestGroup.name, facilitatorNames: interestGroup.facilitatorNames || [] }
           : null;
         const ledTeams = teams
-          .filter(t => t.headDisplayName === name)
+          .filter(t => !t.hidden && t.headDisplayName === name)
           .map(t => ({
             type: t.type,
             members: [...(t.memberDisplayNames || []), ...(t.externalMembers || [])],
@@ -107,6 +107,7 @@ async function main() {
 
   app.get('/api/public/frameworks', (req, res) => {
     const { db } = require('./database');
+    if (db.get('settings').get('hideFrameworksPage').value()) return res.json([]);
     const employees  = db.get('employees').value();
     const frameworks = db.get('frameworks').value();
     const assignments = db.get('assignments').value();

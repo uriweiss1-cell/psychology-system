@@ -1,7 +1,7 @@
 import { useEffect, useState, useContext } from 'react';
 import * as XLSX from 'xlsx';
 import AlertsBanner from '../components/AlertsBanner';
-import { getAssignmentSummary, getEmployees, getAssignments, updateAssignment, getFrameworks, updateFramework, getSpecEdClasses, createSpecEdClass, updateSpecEdClass, deleteSpecEdClass, advanceSpecEdYear, getAlerts, createFramework } from '../api';
+import { getAssignmentSummary, getEmployees, getAssignments, updateAssignment, getFrameworks, updateFramework, getSpecEdClasses, createSpecEdClass, updateSpecEdClass, deleteSpecEdClass, advanceSpecEdYear, getAlerts, createFramework, getPublicVisibility, putPublicVisibility } from '../api';
 import axios from 'axios';
 import { EmployeeCardContext } from '../App';
 
@@ -68,17 +68,25 @@ export default function Schools() {
   const [editingTarget, setEditingTarget] = useState(null); // { id, value }
   const [showAddSchool, setShowAddSchool] = useState(false);
   const [newSchool, setNewSchool] = useState({ name: '', subType: 'יסודי', sector: 'ממלכתי' });
+  const [hideFrameworksPage, setHideFrameworksPage] = useState(false);
 
   const load = async () => {
-    const [sum, emps, asgns, spec, alertsData] = await Promise.all([
-      getAssignmentSummary(), getEmployees(true), getAssignments(), getSpecEdClasses(), getAlerts()
+    const [sum, emps, asgns, spec, alertsData, vis] = await Promise.all([
+      getAssignmentSummary(), getEmployees(true), getAssignments(), getSpecEdClasses(), getAlerts(), getPublicVisibility()
     ]);
     setSummary(sum);
     setEmployees(emps);
     setAssignments(asgns);
     setSpecEdClasses(spec);
     setFreeHoursAlerts(alertsData.freeHoursAlerts || []);
+    setHideFrameworksPage(vis.hideFrameworksPage);
     setLoading(false);
+  };
+
+  const toggleHideFrameworks = async () => {
+    const next = !hideFrameworksPage;
+    await putPublicVisibility({ hideFrameworksPage: next });
+    setHideFrameworksPage(next);
   };
 
   useEffect(() => { load(); }, []);
@@ -226,6 +234,12 @@ export default function Schools() {
 
   return (
     <div>
+      <div className={`flex items-center justify-between mb-3 px-3 py-2 rounded border text-sm ${hideFrameworksPage ? 'bg-red-50 border-red-200 text-red-800' : 'bg-green-50 border-green-200 text-green-800'}`}>
+        <span>{hideFrameworksPage ? '🙈 דף שיבוצי בתי הספר והגנים מוסתר מהעובדים' : '👁 דף שיבוצי בתי הספר והגנים גלוי לעובדים'}</span>
+        <button className="text-xs border px-2 py-0.5 rounded hover:opacity-80" onClick={toggleHideFrameworks}>
+          {hideFrameworksPage ? 'הצג לעובדים' : 'הסתר מהעובדים'}
+        </button>
+      </div>
       <AlertsBanner page="schools" />
       {freeHoursAlerts.length > 0 && (
         <div className="mb-4 border border-orange-200 rounded overflow-hidden">
