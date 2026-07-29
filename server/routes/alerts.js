@@ -36,8 +36,8 @@ router.get('/', (req, res) => {
     const target     = getTargetHours(emp.ftePercent, freeHoursTargets);
     if (target === null) return null;
     const gap = Math.round((freeHours - target) * 100) / 100;
-    if (gap > 2)           return { id: emp.id, displayName: emp.displayName, gap, type: 'over' };
-    if (freeHours < 2 || gap < -2) return { id: emp.id, displayName: emp.displayName, gap, type: 'under' };
+    if (gap > 1)           return { id: emp.id, displayName: emp.displayName, gap, type: 'over' };
+    if (freeHours < 1 || gap < -1) return { id: emp.id, displayName: emp.displayName, gap, type: 'under' };
     return null;
   }).filter(Boolean);
 
