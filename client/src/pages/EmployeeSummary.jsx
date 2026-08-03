@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import axios from 'axios';
 
 function CollapsibleMembers({ title, members, color }) {
@@ -45,6 +45,58 @@ const SUP_TYPE_LABELS = {
 function supLabel(s) {
   if (s.type === 'custom') return s.customLabel || 'אחר';
   return SUP_TYPE_LABELS[s.type] || s.type;
+}
+
+function KinderChip({ garden }) {
+  const [popup, setPopup] = useState(null); // null | 'loading' | { data }
+  const ref = useRef();
+
+  const handleClick = async () => {
+    if (popup) { setPopup(null); return; }
+    setPopup('loading');
+    try {
+      const r = await axios.get(`/api/public/kinder/${garden.id}`);
+      setPopup(r.data);
+    } catch { setPopup(null); }
+  };
+
+  useEffect(() => {
+    if (!popup || popup === 'loading') return;
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setPopup(null); };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [popup]);
+
+  return (
+    <span ref={ref} className="relative inline-block">
+      <button
+        onClick={handleClick}
+        className="text-xs bg-green-50 text-green-800 border border-green-200 px-2 py-0.5 rounded hover:bg-green-100 transition-colors"
+      >
+        {garden.name}
+      </button>
+      {popup && popup !== 'loading' && (
+        <div className="absolute z-50 top-full mt-1 right-0 bg-white border border-gray-200 rounded-lg shadow-lg p-3 text-sm min-w-[200px] space-y-1.5" dir="rtl">
+          <div className="font-semibold text-gray-800 border-b border-gray-100 pb-1 mb-1">{popup.name}</div>
+          {popup.address && (
+            <div className="flex gap-1.5 text-gray-600"><span className="text-gray-400">📍</span><span>{popup.address}</span></div>
+          )}
+          {popup.phone && (
+            <div className="flex gap-1.5 text-gray-600"><span className="text-gray-400">☎️</span><a href={`tel:${popup.phone}`} className="text-blue-600 hover:underline">{popup.phone}</a></div>
+          )}
+          {popup.teacher && (
+            <div className="flex gap-1.5 text-gray-600"><span className="text-gray-400">👩‍🏫</span><span>{popup.teacher}</span></div>
+          )}
+          {popup.teacherPhone && (
+            <div className="flex gap-1.5 text-gray-600"><span className="text-gray-400">📱</span><a href={`tel:${popup.teacherPhone}`} className="text-blue-600 hover:underline">{popup.teacherPhone}</a></div>
+          )}
+        </div>
+      )}
+      {popup === 'loading' && (
+        <div className="absolute z-50 top-full mt-1 right-0 bg-white border border-gray-200 rounded-lg shadow p-2 text-xs text-gray-400">טוען...</div>
+      )}
+    </span>
+  );
 }
 
 export default function EmployeeSummary() {
@@ -152,7 +204,7 @@ export default function EmployeeSummary() {
                     <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">גנים</div>
                     <div className="flex flex-wrap gap-1">
                       {emp.gardens.map((g, i) => (
-                        <span key={i} className="text-xs bg-green-50 text-green-800 border border-green-200 px-2 py-0.5 rounded">{g}</span>
+                        <KinderChip key={i} garden={g} />
                       ))}
                     </div>
                   </div>

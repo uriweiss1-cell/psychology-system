@@ -69,9 +69,8 @@ async function main() {
           .map(a => { const fw = frameworks.find(f => f.id === a.frameworkId); return fw ? fw.name : null; })
           .filter(Boolean);
         const gardens = kinder
-          .filter(k => k.employeeId === emp.id)
-          .map(k => k.gardenName)
-          .filter(Boolean);
+          .filter(k => k.employeeId === emp.id && k.gardenName)
+          .map(k => ({ id: k.id, name: k.gardenName }));
         const interestGroup = interestGroups.find(g =>
           (g.memberDisplayNames || []).includes(name) || (g.facilitatorNames || []).includes(name)) || null;
         const interestGroupInfo = interestGroup
@@ -141,6 +140,21 @@ async function main() {
     });
 
     res.json([...schools, ...gardens]);
+  });
+
+  app.get('/api/public/kinder/:id', (req, res) => {
+    const { db } = require('./database');
+    const id = +req.params.id;
+    const k = db.get('kinderAssignments').find({ id }).value();
+    if (!k) return res.status(404).json({ error: 'לא נמצא' });
+    res.json({
+      id: k.id,
+      name: k.gardenName,
+      address: k.address || '',
+      phone: k.phone || '',
+      teacher: k.teacher || '',
+      teacherPhone: k.teacherPhone || '',
+    });
   });
 
   const clientDist = path.join(__dirname, '..', 'client', 'dist');
