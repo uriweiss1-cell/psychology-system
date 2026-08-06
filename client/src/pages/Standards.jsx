@@ -151,8 +151,12 @@ export default function Standards() {
 
   const filtered = nonStudents.filter(e =>
     !filter || e.displayName?.includes(filter) || e.firstName?.includes(filter) || e.lastName?.includes(filter))
-    .sort((a, b) => (a.displayName || '').localeCompare(b.displayName || '', 'he')
-  );
+    .sort((a, b) => {
+      const aNotes = !!(a.notes || '').trim();
+      const bNotes = !!(b.notes || '').trim();
+      if (aNotes !== bNotes) return aNotes ? -1 : 1;
+      return (a.displayName || '').localeCompare(b.displayName || '', 'he');
+    });
   const filteredStudents = students.filter(e =>
     !filter || e.displayName?.includes(filter) || e.firstName?.includes(filter) || e.lastName?.includes(filter))
     .sort((a, b) => (a.displayName || '').localeCompare(b.displayName || '', 'he')
