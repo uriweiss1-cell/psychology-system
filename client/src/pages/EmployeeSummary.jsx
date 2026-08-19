@@ -190,9 +190,13 @@ export default function EmployeeSummary() {
                 {!emp.isExternal && emp.schools?.length > 0 && (
                   <div>
                     <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">בתי ספר</div>
-                    <div className="flex flex-wrap gap-1">
+                    <div className="flex flex-wrap gap-1.5">
                       {emp.schools.map((s, i) => (
-                        <span key={i} className="text-xs bg-blue-50 text-blue-800 border border-blue-200 px-2 py-0.5 rounded">{s}</span>
+                        <span key={i} className="inline-flex items-center gap-1 text-xs bg-blue-50 text-blue-800 border border-blue-200 px-2 py-0.5 rounded">
+                          <span>{s.name}</span>
+                          {s.hours > 0 && <span className="bg-blue-200 text-blue-900 rounded px-1 font-medium">{s.hours}ש׳</span>}
+                          {s.specEdHours > 0 && <span className="bg-indigo-100 text-indigo-800 rounded px-1 font-medium">חמ״י {s.specEdHours}ש׳</span>}
+                        </span>
                       ))}
                     </div>
                   </div>

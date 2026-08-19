@@ -66,7 +66,7 @@ async function main() {
         const supGiven    = supervisions.filter(s => isSupVisible(s) && s.supervisorName === name);
         const schools = assignments
           .filter(a => a.employeeId === emp.id && a.frameworkId !== 0)
-          .map(a => { const fw = frameworks.find(f => f.id === a.frameworkId); return fw ? fw.name : null; })
+          .map(a => { const fw = frameworks.find(f => f.id === a.frameworkId); return fw ? { name: fw.name, hours: a.hours || 0, specEdHours: a.specEdHours || 0 } : null; })
           .filter(Boolean);
         const gardens = kinder
           .filter(k => k.employeeId === emp.id && k.gardenName)
