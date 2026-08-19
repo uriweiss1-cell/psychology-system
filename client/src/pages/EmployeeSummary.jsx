@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import axios from 'axios';
 
 function CollapsibleMembers({ title, members, color }) {
@@ -49,10 +50,13 @@ function supLabel(s) {
 
 function KinderChip({ garden }) {
   const [popup, setPopup] = useState(null); // null | 'loading' | { data }
-  const ref = useRef();
+  const btnRef = useRef();
+  const [pos, setPos] = useState({ top: 0, left: 0 });
 
   const handleClick = async () => {
     if (popup) { setPopup(null); return; }
+    const rect = btnRef.current.getBoundingClientRect();
+    setPos({ top: rect.bottom + window.scrollY + 4, left: rect.right + window.scrollX });
     setPopup('loading');
     try {
       const r = await axios.get(`/api/public/kinder/${garden.id}`);
@@ -62,39 +66,44 @@ function KinderChip({ garden }) {
 
   useEffect(() => {
     if (!popup || popup === 'loading') return;
-    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setPopup(null); };
+    const handler = (e) => { if (btnRef.current && !btnRef.current.contains(e.target)) setPopup(null); };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, [popup]);
 
+  const popupContent = popup && popup !== 'loading' && createPortal(
+    <div
+      style={{ position: 'absolute', top: pos.top, right: `calc(100vw - ${pos.left}px)`, zIndex: 9999 }}
+      className="bg-white border border-gray-200 rounded-lg shadow-lg p-3 text-sm min-w-[200px] space-y-1.5"
+      dir="rtl"
+    >
+      <div className="font-semibold text-gray-800 border-b border-gray-100 pb-1 mb-1">{popup.name}</div>
+      {popup.address && (
+        <div className="flex gap-1.5 text-gray-600"><span>📍</span><span>{popup.address}</span></div>
+      )}
+      {popup.phone && (
+        <div className="flex gap-1.5 text-gray-600"><span>☎️</span><a href={`tel:${popup.phone}`} className="text-blue-600 hover:underline">{popup.phone}</a></div>
+      )}
+      {popup.teacher && (
+        <div className="flex gap-1.5 text-gray-600"><span>👩‍🏫</span><span>{popup.teacher}</span></div>
+      )}
+      {popup.teacherPhone && (
+        <div className="flex gap-1.5 text-gray-600"><span>📱</span><a href={`tel:${popup.teacherPhone}`} className="text-blue-600 hover:underline">{popup.teacherPhone}</a></div>
+      )}
+    </div>,
+    document.body
+  );
+
   return (
-    <span ref={ref} className="relative inline-block">
+    <span className="inline-block">
       <button
+        ref={btnRef}
         onClick={handleClick}
         className="text-xs bg-green-50 text-green-800 border border-green-200 px-2 py-0.5 rounded hover:bg-green-100 transition-colors"
       >
         {garden.name}
       </button>
-      {popup && popup !== 'loading' && (
-        <div className="absolute z-50 top-full mt-1 right-0 bg-white border border-gray-200 rounded-lg shadow-lg p-3 text-sm min-w-[200px] space-y-1.5" dir="rtl">
-          <div className="font-semibold text-gray-800 border-b border-gray-100 pb-1 mb-1">{popup.name}</div>
-          {popup.address && (
-            <div className="flex gap-1.5 text-gray-600"><span className="text-gray-400">📍</span><span>{popup.address}</span></div>
-          )}
-          {popup.phone && (
-            <div className="flex gap-1.5 text-gray-600"><span className="text-gray-400">☎️</span><a href={`tel:${popup.phone}`} className="text-blue-600 hover:underline">{popup.phone}</a></div>
-          )}
-          {popup.teacher && (
-            <div className="flex gap-1.5 text-gray-600"><span className="text-gray-400">👩‍🏫</span><span>{popup.teacher}</span></div>
-          )}
-          {popup.teacherPhone && (
-            <div className="flex gap-1.5 text-gray-600"><span className="text-gray-400">📱</span><a href={`tel:${popup.teacherPhone}`} className="text-blue-600 hover:underline">{popup.teacherPhone}</a></div>
-          )}
-        </div>
-      )}
-      {popup === 'loading' && (
-        <div className="absolute z-50 top-full mt-1 right-0 bg-white border border-gray-200 rounded-lg shadow p-2 text-xs text-gray-400">טוען...</div>
-      )}
+      {popupContent}
     </span>
   );
 }
