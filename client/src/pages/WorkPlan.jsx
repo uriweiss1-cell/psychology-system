@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, useContext } from 'react';
+import * as XLSX from 'xlsx';
 import { getEmployees, updateEmployee, getAssignments, updateAssignment, getFrameworks, deleteEmployee } from '../api';
 import axios from 'axios';
 import AlertsBanner from '../components/AlertsBanner';
@@ -99,6 +100,17 @@ export default function WorkPlan() {
     (!filter || e.displayName.includes(filter) || e.firstName?.includes(filter) || e.lastName?.includes(filter))
   ).sort((a, b) => (a.displayName || '').localeCompare(b.displayName || '', 'he'));
 
+  const exportTherapy = () => {
+    const rows = employees
+      .filter(e => e.type !== 'student' && (e.therapyHours || 0) > 0)
+      .sort((a, b) => (a.displayName || '').localeCompare(b.displayName || '', 'he'))
+      .map(e => ({ 'שם': e.displayName, 'מספר טיפולים': Math.round((e.therapyHours / 1.5) * 100) / 100 }));
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'טיפולים');
+    XLSX.writeFile(wb, 'רשימת_טיפולים.xlsx');
+  };
+
   if (loading) return <div className="p-6 text-gray-500">טוען...</div>;
 
   const getAsgn = (empId) => assignments.find(a => a.employeeId === empId && a.frameworkId === 0) || {};
@@ -123,6 +135,7 @@ export default function WorkPlan() {
               ⚠️ {overBudget.length} עובדים בחריגה
             </span>
           )}
+          <button className="btn-secondary" onClick={exportTherapy}>📊 ייצוא טיפולים</button>
           <input
             className="input"
             placeholder="חיפוש עובד..."
