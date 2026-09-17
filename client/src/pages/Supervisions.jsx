@@ -30,12 +30,6 @@ const TYPE_COLORS = {
   custom:         'bg-gray-600',
 };
 
-const TYPE_HOURS = {
-  educational: 1, clinical: 1, art_therapy: 1.5,
-  psychotherapy: 1.5, orientation: 1.5, sup_of_sup: 1.5,
-  diagnostics: 1.5, therapist_group: 1.5, exam_prep: 1.5,
-  custom: 1.5,
-};
 
 const TYPE_IS_GROUP = {
   educational: false, clinical: false, art_therapy: false,
@@ -173,7 +167,7 @@ export default function Supervisions() {
       const created = await createSupervision({
         ...newSup,
         superviseeNames: newSup.superviseeNames.split('\n').map(x => x.trim()).filter(Boolean),
-        hoursPerSession: TYPE_HOURS[newSup.type] || 1.5,
+        hoursPerSession: parseFloat(newSup.hoursPerSession) || 1,
       });
       setSupervisions(prev => [...prev, created]);
       setNewSup({ type: 'educational', customLabel: '', isNewCustomLabel: false, isGroup: false, supervisorName: '', superviseeNames: '', hoursPerSession: 1, isExternal: false, notes: '' });
@@ -286,6 +280,7 @@ export default function Supervisions() {
               <th className="table-header w-36">מדריך/ה</th>
               <th className="table-header">מודרכים</th>
               <th className="table-header w-48">הערות</th>
+              <th className="table-header text-center w-16">משך</th>
               <th className="table-header text-center w-20">פעולות</th>
             </tr>
           </thead>
@@ -301,6 +296,13 @@ export default function Supervisions() {
                 </td>
                 <td className="table-cell">
                   <input className="input w-full text-sm" value={editData.notes} onChange={e => setEditData(p => ({...p, notes: e.target.value}))} />
+                </td>
+                <td className="table-cell">
+                  <select className="input w-full text-sm" value={editData.hoursPerSession || 1} onChange={e => setEditData(p => ({...p, hoursPerSession: e.target.value}))}>
+                    <option value="1">1ש׳</option>
+                    <option value="1.5">1.5ש׳</option>
+                    <option value="2">2ש׳</option>
+                  </select>
                 </td>
                 <td className="table-cell text-center">
                   <button className="text-green-600 text-xs ml-1" onClick={saveEdit}>✓</button>
@@ -328,6 +330,9 @@ export default function Supervisions() {
                   }
                 </td>
                 <td className="table-cell text-gray-500 text-xs">{s.notes}</td>
+                <td className="table-cell text-center text-xs text-gray-500">
+                  {(s.hoursPerSession && s.hoursPerSession !== 1) ? <span className="badge bg-blue-100 text-blue-700">{s.hoursPerSession}ש׳</span> : '1ש׳'}
+                </td>
                 <td className="table-cell text-center">
                   <button className="text-blue-400 hover:text-blue-600 text-xs ml-1" onClick={() => startEdit(s)}>✏️</button>
                   <button className="text-red-400 hover:text-red-600 text-xs" onClick={() => handleDelete(s.id, s.supervisorName || 'הרשומה')}>🗑️</button>
@@ -579,6 +584,14 @@ export default function Supervisions() {
             <div>
               <label className="block text-xs text-gray-600 mb-1">הערות</label>
               <input className="input w-full" value={newSup.notes} onChange={e => setNewSup(p => ({...p, notes: e.target.value}))} />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-600 mb-1">משך הדרכה (שעות)</label>
+              <select className="input w-full" value={newSup.hoursPerSession} onChange={e => setNewSup(p => ({...p, hoursPerSession: e.target.value}))}>
+                <option value="1">1 שעה</option>
+                <option value="1.5">1.5 שעות</option>
+                <option value="2">2 שעות</option>
+              </select>
             </div>
             <div className="col-span-2">
               <label className="block text-xs text-gray-600 mb-1">מודרכים (שם אחד בכל שורה)</label>

@@ -77,13 +77,14 @@ router.get('/', (req, res) => {
     const name = emp.displayName;
     const GROUP_TYPES = new Set(['psychotherapy', 'orientation', 'therapist_group', 'sup_of_sup', 'diagnostics', 'exam_prep']);
     const isGroupSup = (s) => s.type === 'custom' ? s.isGroup === true : GROUP_TYPES.has(s.type);
+    const supHours = (s) => s.hoursPerSession || 1;
     const actualReceived = supervisions.reduce((sum, s) =>
-      (s.superviseeNames || []).includes(name) ? sum + (isGroupSup(s) ? 1.5 : 1) : sum, 0);
+      (s.superviseeNames || []).includes(name) ? sum + supHours(s) : sum, 0);
     const actualGiven = supervisions.reduce((sum, s) => {
       if (s.supervisorName !== name) return sum;
-      if (isGroupSup(s)) return sum + 1.5;
+      if (isGroupSup(s)) return sum + supHours(s);
       const count = (s.superviseeNames || []).length;
-      return count ? sum + count * 1 : sum;
+      return count ? sum + count * supHours(s) : sum;
     }, 0);
     const plannedReceived = emp.supReceivedHours || 0;
     const plannedGiven    = emp.supGivenHours    || 0;
