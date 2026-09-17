@@ -84,7 +84,7 @@ router.get('/', (req, res) => {
       if (s.supervisorName !== name) return sum;
       if (isGroupSup(s)) return sum + supHours(s);
       const count = (s.superviseeNames || []).length;
-      return count ? sum + count * supHours(s) : sum;
+      return count ? sum + count * 1 : sum;
     }, 0);
     const plannedReceived = emp.supReceivedHours || 0;
     const plannedGiven    = emp.supGivenHours    || 0;
