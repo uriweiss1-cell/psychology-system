@@ -108,10 +108,77 @@ function KinderChip({ garden }) {
   );
 }
 
+function FrameworkSearch() {
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const search = async () => {
+    const q = query.trim();
+    if (!q) return;
+    setLoading(true);
+    setError('');
+    try {
+      const res = await axios.get('/api/public/frameworks');
+      setResults(res.data.filter(f => f.name.includes(q)));
+    } catch {
+      setError('לא ניתן לטעון נתונים');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="max-w-2xl mx-auto w-full p-4">
+      <div className="flex gap-2 mb-4">
+        <input
+          className="border border-gray-300 rounded-lg px-4 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 flex-1"
+          placeholder="שם גן או בית ספר..."
+          value={query}
+          onChange={e => setQuery(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && search()}
+          autoFocus
+        />
+        <button
+          className="bg-blue-800 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-900 disabled:opacity-50"
+          onClick={search}
+          disabled={loading}
+        >{loading ? '...' : 'חיפוש'}</button>
+      </div>
+      {error && <p className="text-red-600 text-sm">{error}</p>}
+      {results && (
+        results.length === 0
+          ? <p className="text-gray-400 text-center py-8 text-sm">לא נמצאו תוצאות</p>
+          : <div className="space-y-2">
+              {results.map((f, i) => (
+                <div key={i} className="bg-white border border-gray-200 rounded-xl shadow-sm p-3 text-sm">
+                  <div className="font-semibold text-gray-800">{f.name}</div>
+                  <div className="text-xs text-gray-400 mb-1">{f.type === 'kinder' ? 'גן' : 'בית ספר'}</div>
+                  {f.psychologists.length > 0
+                    ? <div className="space-y-0.5">
+                        {f.psychologists.map((p, j) => (
+                          <div key={j} className="flex items-center gap-2">
+                            <span className="text-blue-700 font-medium">{p.name}</span>
+                            {p.phone && <span className="text-gray-400 text-xs">{p.phone}</span>}
+                          </div>
+                        ))}
+                      </div>
+                    : <div className="text-gray-400 italic text-xs">לא מאויש</div>
+                  }
+                </div>
+              ))}
+            </div>
+      )}
+    </div>
+  );
+}
+
 export default function EmployeeSummary() {
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
+  const [tab, setTab] = useState('employees'); // 'employees' | 'frameworks'
 
   useEffect(() => {
     axios.get('/api/public/employee-summary')
@@ -131,6 +198,21 @@ export default function EmployeeSummary() {
         <div className="text-xs text-blue-300 mt-0.5">מערכת שיבוץ פסיכולוגים</div>
       </div>
 
+      {/* Tabs */}
+      <div className="bg-white border-b border-gray-200 px-4 flex gap-0">
+        <button
+          onClick={() => setTab('employees')}
+          className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${tab === 'employees' ? 'border-blue-700 text-blue-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+        >חיפוש עובד</button>
+        <button
+          onClick={() => setTab('frameworks')}
+          className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${tab === 'frameworks' ? 'border-blue-700 text-blue-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+        >חיפוש מסגרת</button>
+      </div>
+
+      {tab === 'frameworks' && <FrameworkSearch />}
+
+      {tab === 'employees' && <>
       {/* Search */}
       <div className="bg-white border-b border-gray-200 px-4 py-4">
         <div className="max-w-lg mx-auto">
@@ -305,6 +387,7 @@ export default function EmployeeSummary() {
           ))}
         </div>
       </div>
+      </>}
     </div>
   );
 }
