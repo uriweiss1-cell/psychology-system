@@ -1,8 +1,7 @@
 import { useEffect, useState, useContext } from 'react';
 import * as XLSX from 'xlsx';
 import AlertsBanner from '../components/AlertsBanner';
-import { getAssignmentSummary, getEmployees, getAssignments, updateAssignment, getFrameworks, updateFramework, getSpecEdClasses, createSpecEdClass, updateSpecEdClass, deleteSpecEdClass, advanceSpecEdYear, getAlerts, createFramework, getPublicVisibility, putPublicVisibility } from '../api';
-import axios from 'axios';
+import { getAssignmentSummary, getEmployees, getAssignments, updateAssignment, createAssignment, deleteAssignment, getFrameworks, updateFramework, getSpecEdClasses, createSpecEdClass, updateSpecEdClass, deleteSpecEdClass, advanceSpecEdYear, getAlerts, createFramework, getPublicVisibility, putPublicVisibility } from '../api';
 import { EmployeeCardContext } from '../App';
 
 // כיתות שמחושבות כ-2 שעות שבועיות: א (כיתה א'), ז (מעבר לחטב"ע), י (מעבר לתיכון)
@@ -118,17 +117,17 @@ export default function Schools() {
     setSummary(await getAssignmentSummary());
   };
 
-  const deleteAssignment = async (id) => {
+  const deleteAssignmentById = async (id) => {
     if (!confirm('למחוק שיבוץ זה?')) return;
-    await axios.delete(`/api/assignments/${id}`);
+    await deleteAssignment(id);
     setAssignments(prev => prev.filter(a => a.id !== id));
     setSummary(await getAssignmentSummary());
   };
 
   const addAssignment = async (frameworkId) => {
-    const res = await axios.post('/api/assignments', { frameworkId, employeeId: 0, hours: 0, specEdHours: 0, kinderHours: 0 });
-    setAssignments(prev => [...prev, res.data]);
-    setEditingAsgn({ ...res.data });
+    const asgn = await createAssignment({ frameworkId, employeeId: 0, hours: 0, specEdHours: 0, kinderHours: 0 });
+    setAssignments(prev => [...prev, asgn]);
+    setEditingAsgn({ ...asgn });
   };
 
   const saveTargetHours = async (fwId, value) => {
@@ -347,7 +346,7 @@ export default function Schools() {
           <SchoolTable items={unassignedItems} assignments={assignments} employees={employees}
             specEdClasses={specEdClasses} editingAsgn={editingAsgn} setEditingAsgn={setEditingAsgn}
             editingSpec={editingSpec} setEditingSpec={setEditingSpec}
-            saveAssignment={saveAssignment} deleteAssignment={deleteAssignment} addAssignment={addAssignment}
+            saveAssignment={saveAssignment} deleteAssignment={deleteAssignmentById} addAssignment={addAssignment}
             saveSpec={saveSpec} addSpec={addSpec} deleteSpec={deleteSpec}
             setSummary={setSummary} editingTarget={editingTarget} setEditingTarget={setEditingTarget}
             saveTargetHours={saveTargetHours} rowBg="bg-red-50/40" openCardById={openCardById} />
@@ -362,7 +361,7 @@ export default function Schools() {
           <SchoolTable items={partialCoverage.slice().sort((a, b) => getGap(a) - getGap(b))} assignments={assignments} employees={employees}
             specEdClasses={specEdClasses} editingAsgn={editingAsgn} setEditingAsgn={setEditingAsgn}
             editingSpec={editingSpec} setEditingSpec={setEditingSpec}
-            saveAssignment={saveAssignment} deleteAssignment={deleteAssignment} addAssignment={addAssignment}
+            saveAssignment={saveAssignment} deleteAssignment={deleteAssignmentById} addAssignment={addAssignment}
             saveSpec={saveSpec} addSpec={addSpec} deleteSpec={deleteSpec}
             setSummary={setSummary} editingTarget={editingTarget} setEditingTarget={setEditingTarget}
             saveTargetHours={saveTargetHours} rowBg="bg-amber-50" openCardById={openCardById} />
@@ -377,7 +376,7 @@ export default function Schools() {
           <SchoolTable items={items} assignments={assignments} employees={employees}
             specEdClasses={specEdClasses} editingAsgn={editingAsgn} setEditingAsgn={setEditingAsgn}
             editingSpec={editingSpec} setEditingSpec={setEditingSpec}
-            saveAssignment={saveAssignment} deleteAssignment={deleteAssignment} addAssignment={addAssignment}
+            saveAssignment={saveAssignment} deleteAssignment={deleteAssignmentById} addAssignment={addAssignment}
             saveSpec={saveSpec} addSpec={addSpec} deleteSpec={deleteSpec}
             setSummary={setSummary} editingTarget={editingTarget} setEditingTarget={setEditingTarget}
             saveTargetHours={saveTargetHours} openCardById={openCardById} />

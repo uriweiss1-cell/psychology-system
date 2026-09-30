@@ -16,6 +16,8 @@ function getTargetHours(ftePercent, targets) {
   return closest.hours;
 }
 
+const fteHours = (emp) => Math.ceil(emp.ftePercent * 40);
+
 router.get('/', (req, res) => {
   const employees = db.get(activeCol('employees')).value().filter(e => (e.status === 'active' || !e.status) && e.type !== 'student');
   const frameworks = db.get(activeCol('frameworks')).value();
@@ -27,12 +29,12 @@ router.get('/', (req, res) => {
 
   // שעות פנויות — חריגה מהיעד
   const freeHoursAlerts = employees.map(emp => {
-    const fteHours   = Math.ceil(emp.ftePercent * 40);
+    const fte        = fteHours(emp);
     const internal   = (emp.meetingHours||0) + (emp.supReceivedHours||0) +
                        (emp.supGivenHours||0) + (emp.therapyHours||0) + (emp.roleHours||0);
     const planAsgn   = assignments.find(a => a.employeeId === emp.id && a.frameworkId === 0);
     const frameworks = planAsgn ? (planAsgn.hours||0) + (planAsgn.specEdHours||0) + (planAsgn.kinderHours||0) : 0;
-    const freeHours  = Math.round((fteHours - internal - frameworks) * 100) / 100;
+    const freeHours  = Math.round((fte - internal - frameworks) * 100) / 100;
     const target     = getTargetHours(emp.ftePercent, freeHoursTargets);
     if (target === null) return null;
     const gap = Math.round((freeHours - target) * 100) / 100;
@@ -100,14 +102,14 @@ router.get('/', (req, res) => {
   // פסיכולוגים עם חריגת שעות
   const overBudget = employees
     .map(emp => {
-      const fteHours = Math.ceil(emp.ftePercent * 40);
+      const fte      = fteHours(emp);
       const internal = (emp.meetingHours || 0) + (emp.supReceivedHours || 0) +
         (emp.supGivenHours || 0) + (emp.therapyHours || 0) + (emp.roleHours || 0);
       const planAsgn   = assignments.find(a => a.employeeId === emp.id && a.frameworkId === 0);
       const frameworks = planAsgn ? (planAsgn.hours||0) + (planAsgn.specEdHours||0) + (planAsgn.kinderHours||0) : 0;
       const total = internal + frameworks;
-      const balance = Math.round((fteHours - total) * 100) / 100;
-      return { id: emp.id, displayName: emp.displayName, balance, fteHours };
+      const balance = Math.round((fte - total) * 100) / 100;
+      return { id: emp.id, displayName: emp.displayName, balance, fteHours: fte };
     })
     .filter(e => e.balance < -0.5);
 

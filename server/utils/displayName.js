@@ -25,8 +25,15 @@ function recalcDisplayNames(db, col, firstName, activeColFn) {
   if (group.length <= 1) {
     group.forEach(e => updates.push({ id: e.id, oldName: e.displayName, newName: e.firstName }));
   } else {
+    let noLastNameIdx = 0;
     group.forEach(e => {
-      const suffix = e.lastName ? ' ' + e.lastName[0] + '.' : ' .';
+      let suffix;
+      if (e.lastName) {
+        suffix = ' ' + e.lastName[0] + '.';
+      } else {
+        noLastNameIdx++;
+        suffix = noLastNameIdx === 1 ? ' .' : ` .${noLastNameIdx}`;
+      }
       updates.push({ id: e.id, oldName: e.displayName, newName: e.firstName + suffix });
     });
   }

@@ -163,7 +163,8 @@ router.delete('/:id', (req, res) => {
   db.get(col).remove({ id }).write();
   db.get(activeCol('assignments')).filter({ employeeId: id }).value()
     .forEach(a => db.get(activeCol('assignments')).find({ id: a.id }).assign({ employeeId: 0 }).write());
-  db.get(activeCol('kinderAssignments')).remove({ employeeId: id }).write();
+  db.get(activeCol('kinderAssignments')).filter({ employeeId: id }).value()
+    .forEach(a => db.get(activeCol('kinderAssignments')).find({ id: a.id }).assign({ employeeId: 0 }).write());
   if (emp) removeFromTeamsAndSupervisions(db, activeCol, emp.displayName);
   res.json({ ok: true });
 });

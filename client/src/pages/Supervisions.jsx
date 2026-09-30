@@ -575,7 +575,10 @@ export default function Supervisions() {
             )}
             <div>
               <label className="block text-xs text-gray-600 mb-1">מדריך/ה</label>
-              <input className="input w-full" value={newSup.supervisorName} onChange={e => setNewSup(p => ({...p, supervisorName: e.target.value}))} placeholder="שם המדריך" />
+              <input className="input w-full" list="supervisor-names" value={newSup.supervisorName} onChange={e => setNewSup(p => ({...p, supervisorName: e.target.value}))} placeholder="שם המדריך" />
+              <datalist id="supervisor-names">
+                {employees.map(e => <option key={e.id} value={e.displayName} />)}
+              </datalist>
             </div>
             <div className="flex items-center gap-2 pt-5">
               <input type="checkbox" id="ext" checked={newSup.isExternal} onChange={e => setNewSup(p => ({...p, isExternal: e.target.checked}))} />
