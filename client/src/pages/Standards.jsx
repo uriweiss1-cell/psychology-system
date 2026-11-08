@@ -53,7 +53,7 @@ export default function Standards() {
     const key = `${id}_${field}`;
     const value = editing[key];
     if (value === undefined) return;
-    const val = field === 'ftePercent' ? parseFloat(value) : value;
+    const val = (field === 'ftePercent' || field === 'replacementPercent') ? (parseFloat(value) || 0) : value;
     await updateEmployee(id, { [field]: val });
     setEditing(prev => { const n = {...prev}; delete n[key]; return n; });
     // Reload all when name changes — other employees' displayNames may have changed too
@@ -69,10 +69,6 @@ export default function Standards() {
     return editing[key] !== undefined ? editing[key] : emp[field];
   };
 
-  const toggleSubstitute = async (emp) => {
-    const updated = await updateEmployee(emp.id, { isSubstitute: !emp.isSubstitute });
-    setEmployees(prev => prev.map(e => e.id === emp.id ? { ...e, ...updated } : e));
-  };
 
   const handleAdd = async () => {
     if (!newEmp.firstName.trim()) return;
@@ -170,8 +166,9 @@ export default function Standards() {
       'שם משפחה':   emp.lastName || '',
       'שם מלא':     emp.displayName || '',
       'אחוז משרה':  emp.ftePercent,
+      'אחוז מ"מ':   emp.replacementPercent || '',
       'סטטוס':      STATUS_LABELS[emp.status || 'active'] || emp.status,
-      'מ"מ':        emp.isSubstitute ? 'כן' : '',
+      'מ"מ':        emp.isSubstitute ? (emp.replacementPercent < emp.ftePercent ? 'חלקי' : 'כן') : '',
       'טלפון':      emp.phone || '',
       'הערות':      emp.notes || '',
     }));
@@ -180,14 +177,18 @@ export default function Standards() {
     XLSX.utils.book_append_sheet(wb, ws, 'תקנים');
     XLSX.writeFile(wb, `תקנים${isDraft ? '_טיוטה' : ''}.xlsx`);
   };
-  const active       = nonStudents.filter(e => (e.status === 'active' || !e.status) && !e.isSubstitute);
+  const isActive = (e) => e.status === 'active' || !e.status;
+  const repPct   = (e) => e.replacementPercent || 0;
+  const tenurePct = (e) => Math.max(0, e.ftePercent - repPct(e));
+
+  const active       = nonStudents.filter(e => isActive(e) && tenurePct(e) > 0);
   const maternity    = nonStudents.filter(e => e.status === 'maternity');
-  const substitutes  = nonStudents.filter(e => e.isSubstitute && e.status !== 'inactive');
+  const substitutes  = nonStudents.filter(e => repPct(e) > 0 && e.status !== 'inactive');
   const approved     = settings.approvedPositions || 0;
 
-  const activeSum    = active.reduce((s, e) => s + e.ftePercent, 0);
+  const activeSum    = nonStudents.filter(isActive).reduce((s, e) => s + tenurePct(e), 0);
   const maternitySum = maternity.reduce((s, e) => s + e.ftePercent, 0);
-  const subsSum      = substitutes.reduce((s, e) => s + e.ftePercent, 0);
+  const subsSum      = substitutes.reduce((s, e) => s + repPct(e), 0);
   const vacantPos    = approved - activeSum - maternitySum;
   const vacantSubs   = maternitySum - subsSum;
 
@@ -443,13 +444,10 @@ export default function Standards() {
                     </select>
                   </td>
                   <td className="table-cell text-center">
-                    <input
-                      type="checkbox"
-                      checked={!!emp.isSubstitute}
-                      onChange={() => toggleSubstitute(emp)}
-                      title="מילוי מקום"
-                      className="w-4 h-4 cursor-pointer"
-                    />
+                    <EditField id={emp.id} field="replacementPercent"
+                      value={getEditVal(emp, 'replacementPercent')} type="number"
+                      onChange={v => setFieldEdit(emp.id, 'replacementPercent', v)}
+                      onSave={() => saveField(emp.id, 'replacementPercent')} />
                   </td>
                   <td className="table-cell">
                     <EditField id={emp.id} field="phone" value={getEditVal(emp, 'phone')} type="text"

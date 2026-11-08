@@ -81,8 +81,22 @@ export default function EmployeeCard({ empId, onClose }) {
                 <span className={`badge ${STATUS_COLORS[emp.status || 'active']}`}>
                   {STATUS_LABELS[emp.status || 'active']}
                 </span>
-                {emp.isSubstitute && <span className="badge bg-purple-100 text-purple-800">מ"מ</span>}
-                <span className="text-sm text-gray-700">{Math.round(emp.ftePercent * 100)}% משרה ({emp.fteHours} ש"ש)</span>
+                {emp.replacementPercent > 0 && emp.replacementPercent >= emp.ftePercent && (
+                  <span className="badge bg-purple-100 text-purple-800">מ"מ</span>
+                )}
+                {emp.replacementPercent > 0 && emp.replacementPercent < emp.ftePercent ? (
+                  <span className="text-sm text-gray-700">
+                    {Math.round(emp.ftePercent * 100)}% משרה ({emp.fteHours} ש"ש)
+                    {' — '}
+                    <span className="text-purple-700">
+                      {Math.round((emp.ftePercent - emp.replacementPercent) * 100)}% תקן
+                      {' + '}
+                      {Math.round(emp.replacementPercent * 100)}% מ"מ
+                    </span>
+                  </span>
+                ) : (
+                  <span className="text-sm text-gray-700">{Math.round(emp.ftePercent * 100)}% משרה ({emp.fteHours} ש"ש)</span>
+                )}
                 {emp.phone && <span className="text-sm text-gray-600">📞 {emp.phone}</span>}
                 {emp.roleName && <span className="text-sm text-gray-600">תפקיד: {emp.roleName}</span>}
               </div>

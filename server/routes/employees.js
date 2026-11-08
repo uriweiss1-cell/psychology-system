@@ -58,7 +58,13 @@ function withComputed(emp) {
   const freeHours = Math.round((fteHours - totalInternal - totalFrameworks) * 100) / 100;
   const balance = freeHours;
 
-  return { ...emp, fteHours, totalInternal, totalFrameworks, freeHours, balance };
+  // replacementPercent: explicit value OR fallback for legacy isSubstitute=true employees
+  const replacementPercent = emp.replacementPercent != null
+    ? emp.replacementPercent
+    : (emp.isSubstitute ? emp.ftePercent : 0);
+  const isSubstitute = replacementPercent > 0;
+
+  return { ...emp, fteHours, totalInternal, totalFrameworks, freeHours, balance, replacementPercent, isSubstitute };
 }
 
 router.get('/', (req, res) => {
@@ -81,7 +87,7 @@ router.put('/:id', (req, res) => {
   const emp = db.get(col).find({ id }).value();
   if (!emp) return res.status(404).json({ error: 'לא נמצא' });
 
-  const allowed = ['displayName','firstName','lastName','ftePercent','type','status','isSubstitute',
+  const allowed = ['displayName','firstName','lastName','ftePercent','replacementPercent','type','status','isSubstitute',
     'meetingHours','supReceivedHours','supGivenHours','therapyHours',
     'roleHours','roleName','officeHours','notes','phone'];
   const update = {};
