@@ -400,9 +400,9 @@ export default function Standards() {
               {isDraft && <th className="table-header w-8"></th>}
               <th className="table-header">שם פרטי</th>
               <th className="table-header">שם משפחה</th>
-              <th className="table-header text-center">אחוז משרה</th>
-              <th className="table-header text-center">סטטוס</th>
+              <th className="table-header text-center">משרה בתקן</th>
               <th className="table-header text-center">מ"מ</th>
+              <th className="table-header text-center">סטטוס</th>
               <th className="table-header">טלפון</th>
               <th className="table-header">הערות</th>
               <th className="table-header text-center">פעולות</th>
@@ -429,8 +429,17 @@ export default function Standards() {
                       onChange={v => setFieldEdit(emp.id, 'lastName', v)} onSave={() => saveField(emp.id, 'lastName')} />
                   </td>
                   <td className="table-cell text-center">
-                    <EditField id={emp.id} field="ftePercent" value={getEditVal(emp, 'ftePercent')} type="number"
-                      onChange={v => setFieldEdit(emp.id, 'ftePercent', v)} onSave={() => saveField(emp.id, 'ftePercent')} />
+                    <EditField id={emp.id} field="ftePercent"
+                      value={getEditVal(emp, 'ftePercent') - (emp.replacementPercent || 0)}
+                      type="number"
+                      onChange={v => setFieldEdit(emp.id, 'ftePercent', parseFloat(v) + (emp.replacementPercent || 0))}
+                      onSave={() => saveField(emp.id, 'ftePercent')} />
+                  </td>
+                  <td className="table-cell text-center">
+                    <EditField id={emp.id} field="replacementPercent"
+                      value={getEditVal(emp, 'replacementPercent')} type="number"
+                      onChange={v => setFieldEdit(emp.id, 'replacementPercent', v)}
+                      onSave={() => saveField(emp.id, 'replacementPercent')} />
                   </td>
                   <td className="table-cell text-center">
                     <select
@@ -442,12 +451,6 @@ export default function Standards() {
                       <option value="maternity">חל"ד</option>
                       <option value="inactive">לא פעיל</option>
                     </select>
-                  </td>
-                  <td className="table-cell text-center">
-                    <EditField id={emp.id} field="replacementPercent"
-                      value={getEditVal(emp, 'replacementPercent')} type="number"
-                      onChange={v => setFieldEdit(emp.id, 'replacementPercent', v)}
-                      onSave={() => saveField(emp.id, 'replacementPercent')} />
                   </td>
                   <td className="table-cell">
                     <EditField id={emp.id} field="phone" value={getEditVal(emp, 'phone')} type="text"
