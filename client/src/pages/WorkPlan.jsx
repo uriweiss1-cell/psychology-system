@@ -163,6 +163,7 @@ export default function WorkPlan() {
               <th className="table-header text-center bg-green-100">סה"כ מסגרות</th>
               <th className="table-header text-center">שם בי"ס/מסגרת</th>
               <th className="table-header text-center">שעות פנויות</th>
+              <th className="table-header text-center bg-orange-50">שעות חדר</th>
               <th className="table-header"></th>
             </tr>
           </thead>
@@ -194,6 +195,9 @@ export default function WorkPlan() {
                   <td className="table-cell text-center bg-green-50 font-semibold">{emp.totalFrameworks}</td>
                   <td className="table-cell text-center text-xs text-gray-500">{getAllFwNames(emp.id)}</td>
                   <td className="table-cell text-center"><FreeHoursBadge freeHours={emp.freeHours} /></td>
+                  <td className="table-cell text-center bg-orange-50/40 font-semibold">
+                    {Math.round((emp.fteHours - emp.totalFrameworks - (emp.meetingHours||0) - (emp.supReceivedHours||0)) * 100) / 100}
+                  </td>
                   <td className="table-cell">
                     <button className="text-red-400 hover:text-red-600 text-xs" onClick={() => removeEmployee(emp.id, emp.displayName)}>מחק</button>
                   </td>
